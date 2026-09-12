@@ -44,10 +44,10 @@ function togglePasswordVisibility(inputId, btnElement) {
     
     if (input.type === 'password') {
         input.type = 'text';
-        btnElement.innerHTML = '👁️';
+        btnElement.innerHTML = 'Hide';
     } else {
         input.type = 'password';
-        btnElement.innerHTML = '👁️‍🗨️';
+        btnElement.innerHTML = 'Show';
     }
 }
 

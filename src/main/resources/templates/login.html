@@ -31,6 +31,29 @@
                         Access real-time smart classroom allocation, shuttle bus GPS tracking, attendance verification, and campus emergency broadcasting from a single unified portal.
                     </p>
 
+                    <div class="campus-ops-visual" aria-hidden="true">
+                        <div class="visual-topline">
+                            <span>Live Campus Grid</span>
+                            <strong>08:42 PM</strong>
+                        </div>
+                        <div class="campus-map-grid">
+                            <span class="map-cell active"></span>
+                            <span class="map-cell"></span>
+                            <span class="map-cell bus"></span>
+                            <span class="map-cell"></span>
+                            <span class="map-cell gate"></span>
+                            <span class="map-cell active"></span>
+                            <span class="map-cell"></span>
+                            <span class="map-cell alert"></span>
+                            <span class="map-cell"></span>
+                        </div>
+                        <div class="visual-metrics">
+                            <span><strong>42</strong> rooms</span>
+                            <span><strong>6</strong> buses</span>
+                            <span><strong>12</strong> gates</span>
+                        </div>
+                    </div>
+
                     <div class="brand-features-list">
                         <div class="feature-pill-item">
                             <div class="feat-title">Smart Classrooms</div>
@@ -75,7 +98,7 @@
                 <div class="evaluator-quickbar">
                     <div class="quickbar-label">
                         <span>Quick Demo Sign-In</span>
-                        <span style="color: var(--text-muted); font-size: 0.7rem;">Click to Autofill</span>
+                        <span class="quickbar-hint">Click to Autofill</span>
                     </div>
                     <div class="quickbar-buttons">
                         <button type="button" class="quick-btn" onclick="fillDemoAccount('admin')">Admin</button>
@@ -118,15 +141,15 @@
                         </div>
 
                         <div class="form-field-group">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
-                                <label for="loginPassword" style="margin-bottom: 0;">Password</label>
+                            <div class="field-label-row">
+                                <label for="loginPassword">Password</label>
                                 <a href="javascript:void(0)" onclick="alert('For password resets, please visit UIU CITS Helpdesk at Ground Floor.')" 
-                                   style="font-size: 0.75rem; color: var(--primary); text-decoration: none; font-weight: 600;">Forgot Password?</a>
+                                   class="field-link">Forgot Password?</a>
                             </div>
                             <div class="input-password-wrapper">
                                 <input type="password" id="loginPassword" name="password" class="input-box" 
                                        placeholder="Enter your password" required value="admin123">
-                                <button type="button" class="pwd-toggle-icon" onclick="togglePasswordVisibility('loginPassword', this)">👁</button>
+                                <button type="button" class="pwd-toggle-icon" onclick="togglePasswordVisibility('loginPassword', this)">Show</button>
                             </div>
                         </div>
 
@@ -177,7 +200,7 @@
                             <label>Password</label>
                             <div class="input-password-wrapper">
                                 <input type="password" id="regPassword" th:field="*{password}" class="input-box" placeholder="Minimum 6 characters" required>
-                                <button type="button" class="pwd-toggle-icon" onclick="togglePasswordVisibility('regPassword', this)">👁</button>
+                                <button type="button" class="pwd-toggle-icon" onclick="togglePasswordVisibility('regPassword', this)">Show</button>
                             </div>
                         </div>
 
@@ -187,8 +210,8 @@
                     </form>
                 </div>
 
-                <div style="margin-top: 2rem; text-align: center; font-size: 0.78rem; color: var(--text-muted);">
-                    Need technical assistance? Contact <a href="mailto:support@uiu.ac.bd" style="color: var(--primary); font-weight: 600; text-decoration: none;">ithelpdesk@uiu.ac.bd</a>
+                <div class="auth-help-text">
+                    Need technical assistance? Contact <a href="mailto:support@uiu.ac.bd">ithelpdesk@uiu.ac.bd</a>
                 </div>
 
             </div>

@@ -263,7 +263,7 @@ body {
   font-size: 1.7rem;
   font-weight: 800;
   color: var(--text-main);
-  letter-spacing: -0.5px;
+  letter-spacing: 0;
 }
 
 .auth-header-block p {
@@ -906,5 +906,355 @@ body {
   }
   .dashboard-content-area {
     padding: 1rem;
+  }
+}
+
+/* ==========================================================================
+   VISUAL REFRESH - sharper auth surface and richer campus operations UI
+   ========================================================================== */
+.auth-page-container {
+  background: #f5f7fb;
+}
+
+.auth-brand-side {
+  flex: 1;
+  padding: 3.25rem;
+  background:
+    linear-gradient(135deg, rgba(15, 23, 42, 0.96), rgba(24, 36, 58, 0.98)),
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.05) 0 1px, transparent 1px 96px),
+    repeating-linear-gradient(0deg, rgba(255,255,255,0.04) 0 1px, transparent 1px 96px);
+}
+
+.auth-brand-side::before {
+  top: auto;
+  right: 2.5rem;
+  bottom: 8.5rem;
+  width: 260px;
+  height: 260px;
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, rgba(234, 88, 12, 0.22), rgba(2, 132, 199, 0.08));
+  transform: rotate(10deg);
+  opacity: 0.45;
+}
+
+.auth-brand-side::after {
+  left: 3rem;
+  bottom: 2.5rem;
+  width: calc(100% - 6rem);
+  height: 1px;
+  border-radius: 0;
+  background: linear-gradient(90deg, transparent, rgba(148, 163, 184, 0.45), transparent);
+}
+
+.uiu-logo-group {
+  margin-bottom: 2.8rem;
+}
+
+.uiu-crest,
+.sidebar-crest {
+  border-radius: 8px;
+  background: linear-gradient(135deg, #f97316, #ea580c);
+}
+
+.brand-hero-content {
+  max-width: 600px;
+}
+
+.brand-badge-pill {
+  border-radius: 8px;
+  background: rgba(255, 247, 237, 0.08);
+  border-color: rgba(251, 146, 60, 0.38);
+}
+
+.brand-hero-content h2 {
+  max-width: 560px;
+  font-size: clamp(2rem, 4vw, 3.15rem);
+  line-height: 1.12;
+  letter-spacing: 0;
+}
+
+.brand-hero-content p {
+  max-width: 560px;
+  color: #b6c4d6;
+}
+
+.campus-ops-visual {
+  width: min(520px, 100%);
+  margin-top: 1.7rem;
+  padding: 1rem;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.58);
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.2);
+}
+
+.visual-topline,
+.visual-metrics {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.75rem;
+  color: #b6c4d6;
+}
+
+.visual-topline strong,
+.visual-metrics strong {
+  color: #ffffff;
+  font-family: var(--font-mono);
+}
+
+.campus-map-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.55rem;
+  margin: 0.8rem 0;
+}
+
+.map-cell {
+  min-height: 42px;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 6px;
+  background:
+    linear-gradient(135deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02));
+}
+
+.map-cell.active {
+  border-color: rgba(16, 185, 129, 0.5);
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.34), rgba(16, 185, 129, 0.08));
+}
+
+.map-cell.bus {
+  border-color: rgba(2, 132, 199, 0.58);
+  background: linear-gradient(135deg, rgba(2, 132, 199, 0.42), rgba(2, 132, 199, 0.08));
+}
+
+.map-cell.gate {
+  border-color: rgba(249, 115, 22, 0.62);
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.42), rgba(249, 115, 22, 0.08));
+}
+
+.map-cell.alert {
+  border-color: rgba(245, 158, 11, 0.62);
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.38), rgba(245, 158, 11, 0.08));
+}
+
+.brand-features-list {
+  width: min(520px, 100%);
+  gap: 0.8rem;
+}
+
+.feature-pill-item {
+  border-radius: 8px;
+  padding: 0.9rem 1rem;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.auth-form-side {
+  flex: 0.92;
+  align-items: center;
+  background:
+    linear-gradient(180deg, #ffffff 0%, #f7f9fc 100%);
+  padding: 2.5rem;
+}
+
+.auth-card-inner {
+  max-width: 468px;
+  padding: 2rem;
+  border: 1px solid #d9e2ee;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 22px 60px rgba(15, 23, 42, 0.12);
+}
+
+.auth-header-block {
+  margin-bottom: 1.25rem;
+}
+
+.auth-header-block h3 {
+  font-size: 1.85rem;
+  letter-spacing: 0;
+}
+
+.evaluator-quickbar {
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.quickbar-hint {
+  color: var(--text-muted);
+  font-size: 0.7rem;
+}
+
+.quick-btn,
+.btn-action-sm,
+.btn-submit-primary,
+.input-box {
+  border-radius: 8px;
+}
+
+.quick-btn {
+  min-height: 36px;
+}
+
+.auth-nav-tabs {
+  padding: 0.25rem;
+  border: 1px solid #dce4ef;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.tab-nav-btn {
+  border-radius: 6px;
+  padding: 0.65rem 0.5rem;
+}
+
+.tab-nav-btn.active {
+  background: #ffffff;
+  box-shadow: var(--shadow-sm);
+}
+
+.tab-nav-btn.active::after {
+  display: none;
+}
+
+.field-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.4rem;
+}
+
+.field-label-row label {
+  margin-bottom: 0;
+}
+
+.field-link,
+.auth-help-text a {
+  color: var(--primary);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.field-link {
+  font-size: 0.75rem;
+}
+
+.input-box {
+  min-height: 46px;
+}
+
+.input-password-wrapper .input-box {
+  padding-right: 4.2rem;
+}
+
+.pwd-toggle-icon {
+  right: 0.45rem;
+  min-width: 3rem;
+  height: 32px;
+  border-radius: 6px;
+  color: var(--text-muted);
+  font-size: 0.74rem;
+  font-weight: 800;
+}
+
+.pwd-toggle-icon:hover {
+  background: #f1f5f9;
+  color: var(--primary);
+}
+
+.btn-submit-primary {
+  min-height: 48px;
+  box-shadow: 0 12px 28px rgba(234, 88, 12, 0.24);
+}
+
+.auth-help-text {
+  margin-top: 1.5rem;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.glow-input {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px rgba(234, 88, 12, 0.14);
+}
+
+.app-main {
+  background:
+    linear-gradient(180deg, #f7f9fc 0%, #f8fafc 42%, #ffffff 100%);
+}
+
+.app-sidebar {
+  background: linear-gradient(180deg, #101827 0%, #162135 100%);
+}
+
+.nav-item,
+.metric-card,
+.content-panel,
+.welcome-hero {
+  border-radius: 8px;
+}
+
+.metric-card,
+.content-panel,
+.welcome-hero {
+  border-color: #dfe7f1;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+}
+
+.metric-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: linear-gradient(180deg, var(--primary), var(--secondary));
+}
+
+.metric-card:hover,
+.content-panel:hover {
+  border-color: #cbd5e1;
+}
+
+@media (max-width: 1100px) {
+  .auth-brand-side,
+  .auth-form-side {
+    padding: 2rem;
+  }
+
+  .auth-card-inner {
+    max-width: 520px;
+  }
+}
+
+@media (max-width: 900px) {
+  .auth-page-container {
+    min-height: 100vh;
+  }
+
+  .auth-brand-side {
+    min-height: auto;
+  }
+
+  .campus-ops-visual,
+  .brand-features-list {
+    width: 100%;
+  }
+
+  .auth-card-inner {
+    padding: 1.25rem;
+    box-shadow: var(--shadow-lg);
+  }
+
+  .quickbar-buttons {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .brand-footer-note {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.45rem;
   }
 }
