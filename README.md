@@ -50,10 +50,10 @@ http://localhost:8085/login
 ## Demo Accounts
 
 ```text
-Admin:    admin@uiu.ac.bd    / admin123
-Teacher:  teacher@uiu.ac.bd  / teacher123
-Student:  student@uiu.ac.bd  / student123
-Security: security@uiu.ac.bd / security123
+Admin:    admin-demo    / demo-admin-pass
+Teacher:  teacher-demo  / demo-teacher-pass
+Student:  student-demo  / demo-student-pass
+Security: security-demo / demo-security-pass
 ```
 
 ## Source Layout

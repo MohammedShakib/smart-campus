@@ -24,10 +24,10 @@ import './styles.css';
 const projectName = 'Smart Campus';
 
 const demoAccounts = {
-  admin: ['admin@uiu.ac.bd', 'admin123'],
-  teacher: ['teacher@uiu.ac.bd', 'teacher123'],
-  student: ['student@uiu.ac.bd', 'student123'],
-  security: ['security@uiu.ac.bd', 'security123']
+  admin: ['admin-demo', 'demo-admin-pass'],
+  teacher: ['teacher-demo', 'demo-teacher-pass'],
+  student: ['student-demo', 'demo-student-pass'],
+  security: ['security-demo', 'demo-security-pass']
 };
 
 const dashboardConfig = {
@@ -211,11 +211,11 @@ function AuthPage() {
             <form className="form-stack" action="/login" method="post">
               <label>
                 University Email or ID
-                <input id="loginEmail" name="email" defaultValue="admin@uiu.ac.bd" required />
+                <input id="loginEmail" name="email" defaultValue="admin-demo" required />
               </label>
               <label>
                 <span className="label-row">Password <button type="button" onClick={() => setShowPassword((v) => !v)}>{showPassword ? 'Hide' : 'Show'}</button></span>
-                <input id="loginPassword" name="password" type={showPassword ? 'text' : 'password'} defaultValue="admin123" required />
+                <input id="loginPassword" name="password" type={showPassword ? 'text' : 'password'} defaultValue="demo-admin-pass" required />
               </label>
               <button className="primary-btn" type="submit"><LockKeyhole size={17} /> Sign In</button>
             </form>

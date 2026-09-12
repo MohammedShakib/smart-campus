@@ -9,10 +9,10 @@ echo.
 echo   Web Portal URL: http://localhost:8085/login
 echo.
 echo   Demo Accounts:
-echo     [Admin]    admin@uiu.ac.bd    / admin123
-echo     [Teacher]  teacher@uiu.ac.bd  / teacher123
-echo     [Student]  student@uiu.ac.bd  / student123
-echo     [Security] security@uiu.ac.bd / security123
+echo     [Admin]    admin-demo    / demo-admin-pass
+echo     [Teacher]  teacher-demo  / demo-teacher-pass
+echo     [Student]  student-demo  / demo-student-pass
+echo     [Security] security-demo / demo-security-pass
 echo =====================================================================
 
 if defined JAVA_HOME if not exist "%JAVA_HOME%\bin\java.exe" set "JAVA_HOME="

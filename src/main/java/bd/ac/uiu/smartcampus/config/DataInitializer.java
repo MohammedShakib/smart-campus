@@ -41,10 +41,10 @@ public class DataInitializer implements CommandLineRunner {
         logger.info("Initializing UIU Smart Campus seed data...");
 
         // 1. Seed Users (if not exists)
-        seedUser("admin@uiu.ac.bd", "admin123", "Dr. Mahmudul Hasan (Admin)", "EMP-ADMIN-01", "Administration", Role.ROLE_ADMIN);
-        seedUser("teacher@uiu.ac.bd", "teacher123", "Prof. Tariqul Islam", "EMP-CSE-104", "Computer Science & Engineering", Role.ROLE_TEACHER);
-        seedUser("student@uiu.ac.bd", "student123", "Rahat Hossain", "011211001", "Computer Science & Engineering", Role.ROLE_STUDENT);
-        seedUser("security@uiu.ac.bd", "security123", "Officer Abul Kalam", "SEC-GATE-02", "Campus Security & Safety", Role.ROLE_SECURITY);
+        seedUser("admin-demo", "demo-admin-pass", "Dr. Mahmudul Hasan (Admin)", "EMP-ADMIN-01", "Administration", Role.ROLE_ADMIN);
+        seedUser("teacher-demo", "demo-teacher-pass", "Prof. Tariqul Islam", "EMP-CSE-104", "Computer Science & Engineering", Role.ROLE_TEACHER);
+        seedUser("student-demo", "demo-student-pass", "Rahat Hossain", "011211001", "Computer Science & Engineering", Role.ROLE_STUDENT);
+        seedUser("security-demo", "demo-security-pass", "Officer Abul Kalam", "SEC-GATE-02", "Campus Security & Safety", Role.ROLE_SECURITY);
 
         // 2. Seed Initial Campus Notices (if empty)
         if (noticeRepository.count() == 0) {
@@ -105,9 +105,9 @@ public class DataInitializer implements CommandLineRunner {
 
         // 4. Seed Admin Action History (for AOOP Stack Demo)
         if (actionLogRepository.count() == 0) {
-            actionLogRepository.save(new AdminActionLog("admin@uiu.ac.bd", "SYSTEM_INIT", "Initial Smart Campus environment booted with XAMPP MySQL and Spring Security."));
-            actionLogRepository.save(new AdminActionLog("admin@uiu.ac.bd", "SECURITY_POLICY", "Enforced BCrypt 10-round salt password hashing for all user accounts."));
-            actionLogRepository.save(new AdminActionLog("admin@uiu.ac.bd", "ROOM_CALIBRATION", "Calibrated 48 smart classrooms and 12 laboratory telemetry profiles."));
+            actionLogRepository.save(new AdminActionLog("admin-demo", "SYSTEM_INIT", "Initial Smart Campus environment booted with XAMPP MySQL and Spring Security."));
+            actionLogRepository.save(new AdminActionLog("admin-demo", "SECURITY_POLICY", "Enforced BCrypt 10-round salt password hashing for all user accounts."));
+            actionLogRepository.save(new AdminActionLog("admin-demo", "ROOM_CALIBRATION", "Calibrated 48 smart classrooms and 12 laboratory telemetry profiles."));
         }
 
         logger.info("Seed data initialization completed successfully!");

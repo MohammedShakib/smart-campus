@@ -63,7 +63,7 @@ public class CampusApiController {
     @PostMapping("/admin/action")
     public ApiResponse<AdminActionLog> recordAdminAction(@RequestParam String actionType,
                                                          @RequestParam String details,
-                                                         @RequestParam(defaultValue = "admin@uiu.ac.bd") String email) {
+                                                         @RequestParam(defaultValue = "admin-demo") String email) {
         AdminActionLog log = actionStackService.recordAction(email, actionType, details);
         logFileWriter.appendAuditLog("ADMIN_STACK_PUSH", actionType + ": " + details);
         return ApiResponse.ok("Pushed to Admin Action Stack (LIFO)", log);

@@ -12,10 +12,10 @@ public class SmartCampusApplication {
         System.out.println("  UIU SMART CAMPUS IS NOW ONLINE!                               ");
         System.out.println("  Access Web Portal: http://localhost:8085/login                ");
         System.out.println("  Demo Accounts:");
-        System.out.println("    - Admin:    admin@uiu.ac.bd    / admin123                   ");
-        System.out.println("    - Teacher:  teacher@uiu.ac.bd  / teacher123                 ");
-        System.out.println("    - Student:  student@uiu.ac.bd  / student123                 ");
-        System.out.println("    - Security: security@uiu.ac.bd / security123                ");
+        System.out.println("    - Admin:    admin-demo    / demo-admin-pass                 ");
+        System.out.println("    - Teacher:  teacher-demo  / demo-teacher-pass               ");
+        System.out.println("    - Student:  student-demo  / demo-student-pass               ");
+        System.out.println("    - Security: security-demo / demo-security-pass              ");
         System.out.println("=================================================================");
     }
 }
