@@ -1,0 +1,21 @@
+target/
+
+# Runtime-generated local files
+*.log
+*.dat
+logs/
+data/
+
+# IDE/editor files
+.idea/
+.vscode/
+*.iml
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Local environment overrides
+.env
+.env.*
+!/.mvn/wrapper/maven-wrapper.properties

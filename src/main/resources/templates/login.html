@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>United International University | Smart Campus Portal</title>
+    <link rel="stylesheet" th:href="@{/css/digital-twin.css}">
+</head>
+<body>
+
+    <div class="auth-page-container">
+
+        <!-- Left Column: UIU Institutional Showcase -->
+        <div class="auth-brand-side">
+            
+            <div class="brand-header-box">
+                <div class="uiu-logo-group">
+                    <div class="uiu-crest">UIU</div>
+                    <div class="uiu-title-text">
+                        <h1>United International University</h1>
+                        <p>Smart Campus Management System (SCMS)</p>
+                    </div>
+                </div>
+
+                <div class="brand-hero-content">
+                    <div class="brand-badge-pill">
+                        <span>System Status: Online &amp; Synchronized</span>
+                    </div>
+                    <h2>Centralized Campus Digital Operations</h2>
+                    <p>
+                        Access real-time smart classroom allocation, shuttle bus GPS tracking, attendance verification, and campus emergency broadcasting from a single unified portal.
+                    </p>
+
+                    <div class="brand-features-list">
+                        <div class="feature-pill-item">
+                            <div class="feat-title">Smart Classrooms</div>
+                            <div class="feat-desc">Live occupancy &amp; smart scheduling</div>
+                        </div>
+
+                        <div class="feature-pill-item">
+                            <div class="feat-title">Shuttle Tracking</div>
+                            <div class="feat-desc">Real-time socket telemetry feed</div>
+                        </div>
+
+                        <div class="feature-pill-item">
+                            <div class="feat-title">Gate Pass Access</div>
+                            <div class="feat-desc">Set-validated turnstile entry</div>
+                        </div>
+
+                        <div class="feature-pill-item">
+                            <div class="feat-title">Facility Dispatch</div>
+                            <div class="feat-desc">FIFO maintenance queue resolver</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="brand-footer-note">
+                <span>UIU Center for Information Technology Services (CITS)</span>
+                <span>Fall 2026 Academic Session</span>
+            </div>
+
+        </div>
+
+        <!-- Right Column: Authentication Card -->
+        <div class="auth-form-side">
+            <div class="auth-card-inner">
+
+                <div class="auth-header-block">
+                    <h3>Account Sign In</h3>
+                    <p>Enter your university email or ID to access your dashboard</p>
+                </div>
+
+                <!-- Evaluator Demo Quick Access Bar -->
+                <div class="evaluator-quickbar">
+                    <div class="quickbar-label">
+                        <span>Quick Demo Sign-In</span>
+                        <span style="color: var(--text-muted); font-size: 0.7rem;">Click to Autofill</span>
+                    </div>
+                    <div class="quickbar-buttons">
+                        <button type="button" class="quick-btn" onclick="fillDemoAccount('admin')">Admin</button>
+                        <button type="button" class="quick-btn" onclick="fillDemoAccount('teacher')">Faculty</button>
+                        <button type="button" class="quick-btn" onclick="fillDemoAccount('student')">Student</button>
+                        <button type="button" class="quick-btn" onclick="fillDemoAccount('security')">Security</button>
+                    </div>
+                </div>
+
+                <!-- Tab Navigation -->
+                <div class="auth-nav-tabs">
+                    <button type="button" class="tab-nav-btn" id="tabBtnLogin"
+                            th:classappend="${activeTab != 'register'} ? 'active' : ''"
+                            onclick="switchAuthTab('login')">
+                        Log In
+                    </button>
+                    <button type="button" class="tab-nav-btn" id="tabBtnRegister"
+                            th:classappend="${activeTab == 'register'} ? 'active' : ''"
+                            onclick="switchAuthTab('register')">
+                        Register
+                    </button>
+                </div>
+
+                <!-- Alert Messages -->
+                <div th:if="${errorMessage}" class="status-banner error">
+                    <span th:text="${errorMessage}">Error notification</span>
+                </div>
+                <div th:if="${successMessage}" class="status-banner success">
+                    <span th:text="${successMessage}">Success notification</span>
+                </div>
+
+                <!-- LOGIN FORM -->
+                <div id="loginFormContainer" th:style="${activeTab == 'register'} ? 'display: none;' : 'display: block;'">
+                    <form th:action="@{/login}" method="post">
+                        
+                        <div class="form-field-group">
+                            <label for="loginEmail">University Email or Student/Staff ID</label>
+                            <input type="text" id="loginEmail" name="email" class="input-box" 
+                                   placeholder="e.g. admin@uiu.ac.bd or 011211001" required value="admin@uiu.ac.bd">
+                        </div>
+
+                        <div class="form-field-group">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+                                <label for="loginPassword" style="margin-bottom: 0;">Password</label>
+                                <a href="javascript:void(0)" onclick="alert('For password resets, please visit UIU CITS Helpdesk at Ground Floor.')" 
+                                   style="font-size: 0.75rem; color: var(--primary); text-decoration: none; font-weight: 600;">Forgot Password?</a>
+                            </div>
+                            <div class="input-password-wrapper">
+                                <input type="password" id="loginPassword" name="password" class="input-box" 
+                                       placeholder="Enter your password" required value="admin123">
+                                <button type="button" class="pwd-toggle-icon" onclick="togglePasswordVisibility('loginPassword', this)">👁</button>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn-submit-primary">
+                            Sign In to Smart Campus
+                        </button>
+                    </form>
+                </div>
+
+                <!-- REGISTRATION FORM -->
+                <div id="registerFormContainer" th:style="${activeTab != 'register'} ? 'display: none;' : 'display: block;'">
+                    <form th:action="@{/register}" th:object="${registerRequest}" method="post">
+                        
+                        <div class="form-field-group">
+                            <label>Full Name</label>
+                            <input type="text" th:field="*{fullName}" class="input-box" placeholder="e.g. Rahat Hossain" required>
+                        </div>
+
+                        <div class="form-field-group">
+                            <label>UIU Email Address</label>
+                            <input type="email" th:field="*{email}" class="input-box" placeholder="e.g. rhossain@bscse.uiu.ac.bd" required>
+                        </div>
+
+                        <div class="form-field-group">
+                            <label>Student / Employee ID</label>
+                            <input type="text" th:field="*{studentOrEmpId}" class="input-box" placeholder="e.g. 011211001 or EMP-104" required>
+                        </div>
+
+                        <div class="form-field-group">
+                            <label>Department</label>
+                            <select th:field="*{department}" class="input-box" required>
+                                <option value="Computer Science & Engineering">Computer Science & Engineering (CSE)</option>
+                                <option value="Electrical & Electronic Engineering">Electrical & Electronic Engineering (EEE)</option>
+                                <option value="School of Business & Economics">School of Business & Economics (SOBE)</option>
+                                <option value="Civil Engineering">Civil Engineering (CE)</option>
+                                <option value="Campus Administration & Operations">Campus Administration & Operations</option>
+                            </select>
+                        </div>
+
+                        <div class="form-field-group">
+                            <label>Account Role</label>
+                            <select th:field="*{role}" class="input-box" required>
+                                <option th:each="r : ${roles}" th:value="${r}" th:text="${r.displayName}"></option>
+                            </select>
+                        </div>
+
+                        <div class="form-field-group">
+                            <label>Password</label>
+                            <div class="input-password-wrapper">
+                                <input type="password" id="regPassword" th:field="*{password}" class="input-box" placeholder="Minimum 6 characters" required>
+                                <button type="button" class="pwd-toggle-icon" onclick="togglePasswordVisibility('regPassword', this)">👁</button>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn-submit-primary">
+                            Create Account
+                        </button>
+                    </form>
+                </div>
+
+                <div style="margin-top: 2rem; text-align: center; font-size: 0.78rem; color: var(--text-muted);">
+                    Need technical assistance? Contact <a href="mailto:support@uiu.ac.bd" style="color: var(--primary); font-weight: 600; text-decoration: none;">ithelpdesk@uiu.ac.bd</a>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <script th:src="@{/js/digital-twin.js}"></script>
+</body>
+</html>
