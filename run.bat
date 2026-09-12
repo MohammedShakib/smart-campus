@@ -26,5 +26,13 @@ if not exist "%MAVEN_EXE%" (
     set "MAVEN_EXE=mvn"
 )
 
-"%MAVEN_EXE%" spring-boot:run
+"%MAVEN_EXE%" -DskipTests package
+if errorlevel 1 (
+    echo.
+    echo Build failed. Please check the messages above.
+    pause
+    exit /b 1
+)
+
+java -jar "%~dp0target\smart-campus-1.0.0-SNAPSHOT.jar"
 pause
