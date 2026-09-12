@@ -9,7 +9,7 @@ import java.io.*;
 
 /**
  * AOOP Syllabus Requirement: Object Serialization (ObjectOutputStream / ObjectInputStream)
- * Demonstrates saving and restoring complete in-memory Digital Twin campus state to binary disk backup.
+ * Demonstrates saving and restoring complete in-memory Smart Campus state to binary disk backup.
  */
 @Service
 public class CampusStateBackupService {

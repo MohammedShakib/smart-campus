@@ -1,6 +1,6 @@
-# Smart Campus Digital Twin
+# Smart Campus
 
-Spring Boot web application for a real-time smart campus digital twin demo.
+Spring Boot + ReactJS web application for a real-time smart campus operations demo.
 
 ## Requirements
 
@@ -8,6 +8,22 @@ Spring Boot web application for a real-time smart campus digital twin demo.
 - XAMPP MySQL running on `localhost:3306`
 
 The project includes the Maven wrapper, so a separate Maven installation is not required.
+
+## Frontend
+
+The frontend is a ReactJS app located in:
+
+```text
+frontend/
+```
+
+Build it into Spring Boot static resources with:
+
+```bat
+cd frontend
+npm install
+npm run build
+```
 
 ## Run
 
@@ -44,7 +60,8 @@ Security: security@uiu.ac.bd / security123
 
 ```text
 src/main/java        Java source code
-src/main/resources   application config, templates, static assets
+frontend             ReactJS frontend source
+src/main/resources   application config and built static assets
 pom.xml              Maven project definition
 mvnw, mvnw.cmd       Maven wrapper scripts
 .mvn/wrapper         Maven wrapper configuration

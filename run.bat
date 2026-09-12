@@ -1,7 +1,7 @@
 @echo off
-title UIU Real-Time Smart Campus Digital Twin - Spring Boot Launcher
+title UIU Smart Campus - Spring Boot Launcher
 echo =====================================================================
-echo   UIU REAL-TIME SMART CAMPUS DIGITAL TWIN (AOOP UPDATE 1)
+echo   UIU SMART CAMPUS (AOOP UPDATE 1)
 echo =====================================================================
 echo   Starting Spring Boot with XAMPP MySQL Support...
 echo   Please ensure XAMPP MySQL is running on localhost:3306.

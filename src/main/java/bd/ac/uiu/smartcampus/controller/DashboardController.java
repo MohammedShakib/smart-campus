@@ -73,7 +73,7 @@ public class DashboardController {
         model.addAttribute("busLocations", busServerManager.getLatestBusLocations());
         model.addAttribute("notices", noticeRepository.findTop10ByOrderByPostedAtDesc());
 
-        return "dashboard-admin";
+        return "forward:/app/index.html";
     }
 
     @GetMapping("/teacher")
@@ -89,7 +89,7 @@ public class DashboardController {
         Collections.sort(classrooms); // Uses Comparable natural order
         model.addAttribute("classrooms", classrooms);
 
-        return "dashboard-teacher";
+        return "forward:/app/index.html";
     }
 
     @GetMapping("/student")
@@ -103,7 +103,7 @@ public class DashboardController {
         model.addAttribute("myComplaints", complaintRepository.findByStudentIdOrderByReportedAtDesc(
                 userDetails != null ? userDetails.getStudentOrEmpId() : "011211001"));
 
-        return "dashboard-student";
+        return "forward:/app/index.html";
     }
 
     @GetMapping("/security")
@@ -116,7 +116,7 @@ public class DashboardController {
         model.addAttribute("busLocations", busServerManager.getLatestBusLocations());
         model.addAttribute("notices", noticeRepository.findTop10ByOrderByPostedAtDesc());
 
-        return "dashboard-security";
+        return "forward:/app/index.html";
     }
 
     private void addUserAttributes(Model model, CustomUserDetails userDetails) {

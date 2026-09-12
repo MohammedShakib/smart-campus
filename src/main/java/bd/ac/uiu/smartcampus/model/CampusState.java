@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 
 /**
  * Demonstrates AOOP Syllabus Topic: Object Serialization (ObjectOutputStream / ObjectInputStream)
- * Represents an in-memory snapshot of the Smart Campus Digital Twin state for backup/restore.
+ * Represents an in-memory snapshot of the Smart Campus state for backup/restore.
  */
 public class CampusState implements Serializable {
     private static final long serialVersionUID = 1L;

@@ -38,7 +38,7 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        logger.info("Initializing UIU Smart Campus Digital Twin seed data...");
+        logger.info("Initializing UIU Smart Campus seed data...");
 
         // 1. Seed Users (if not exists)
         seedUser("admin@uiu.ac.bd", "admin123", "Dr. Mahmudul Hasan (Admin)", "EMP-ADMIN-01", "Administration", Role.ROLE_ADMIN);
@@ -49,8 +49,8 @@ public class DataInitializer implements CommandLineRunner {
         // 2. Seed Initial Campus Notices (if empty)
         if (noticeRepository.count() == 0) {
             noticeRepository.save(new CampusNotice(
-                    "Smart Campus Digital Twin System Live",
-                    "Welcome to the UIU Real-Time Smart Campus Digital Twin. All classroom occupancy, shuttle routes, and gate controls are now operating in real-time simulation.",
+                    "Smart Campus System Live",
+                    "Welcome to UIU Smart Campus. Classroom occupancy, shuttle routes, and gate controls are now operating in real-time simulation.",
                     "GENERAL",
                     "HIGH",
                     "System Administrator"
@@ -105,9 +105,9 @@ public class DataInitializer implements CommandLineRunner {
 
         // 4. Seed Admin Action History (for AOOP Stack Demo)
         if (actionLogRepository.count() == 0) {
-            actionLogRepository.save(new AdminActionLog("admin@uiu.ac.bd", "SYSTEM_INIT", "Initial digital twin environment booted with XAMPP MySQL and Spring Security."));
+            actionLogRepository.save(new AdminActionLog("admin@uiu.ac.bd", "SYSTEM_INIT", "Initial Smart Campus environment booted with XAMPP MySQL and Spring Security."));
             actionLogRepository.save(new AdminActionLog("admin@uiu.ac.bd", "SECURITY_POLICY", "Enforced BCrypt 10-round salt password hashing for all user accounts."));
-            actionLogRepository.save(new AdminActionLog("admin@uiu.ac.bd", "ROOM_CALIBRATION", "Calibrated 48 smart classrooms and 12 laboratory digital twins."));
+            actionLogRepository.save(new AdminActionLog("admin@uiu.ac.bd", "ROOM_CALIBRATION", "Calibrated 48 smart classrooms and 12 laboratory telemetry profiles."));
         }
 
         logger.info("Seed data initialization completed successfully!");

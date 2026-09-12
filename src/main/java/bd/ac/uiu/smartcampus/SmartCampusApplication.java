@@ -9,7 +9,7 @@ public class SmartCampusApplication {
     public static void main(String[] args) {
         SpringApplication.run(SmartCampusApplication.class, args);
         System.out.println("=================================================================");
-        System.out.println("  UIU REAL-TIME SMART CAMPUS DIGITAL TWIN IS NOW ONLINE!        ");
+        System.out.println("  UIU SMART CAMPUS IS NOW ONLINE!                               ");
         System.out.println("  Access Web Portal: http://localhost:8085/login                ");
         System.out.println("  Demo Accounts:");
         System.out.println("    - Admin:    admin@uiu.ac.bd    / admin123                   ");

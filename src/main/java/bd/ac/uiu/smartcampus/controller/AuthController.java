@@ -1,8 +1,6 @@
 package bd.ac.uiu.smartcampus.controller;
 
 import bd.ac.uiu.smartcampus.dto.RegisterRequest;
-import bd.ac.uiu.smartcampus.model.Role;
-import bd.ac.uiu.smartcampus.model.User;
 import bd.ac.uiu.smartcampus.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.security.core.Authentication;
@@ -52,9 +50,7 @@ public class AuthController {
             model.addAttribute("successMessage", "Account created successfully! You can now log in.");
         }
 
-        model.addAttribute("registerRequest", new RegisterRequest());
-        model.addAttribute("roles", Role.values());
-        return "login";
+        return "forward:/app/index.html";
     }
 
     @PostMapping("/register")
@@ -62,20 +58,14 @@ public class AuthController {
                                       BindingResult bindingResult,
                                       Model model) {
         if (bindingResult.hasErrors()) {
-            model.addAttribute("errorMessage", bindingResult.getAllErrors().get(0).getDefaultMessage());
-            model.addAttribute("roles", Role.values());
-            model.addAttribute("activeTab", "register");
-            return "login";
+            return "redirect:/login?error=true";
         }
 
         try {
             authService.registerUser(registerRequest);
             return "redirect:/login?registered=true";
         } catch (IllegalArgumentException e) {
-            model.addAttribute("errorMessage", e.getMessage());
-            model.addAttribute("roles", Role.values());
-            model.addAttribute("activeTab", "register");
-            return "login";
+            return "redirect:/login?error=true";
         }
     }
 }

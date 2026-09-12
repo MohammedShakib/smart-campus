@@ -50,8 +50,15 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable()) // Disabled for simple REST & prototype form submissions
             .authorizeHttpRequests(auth -> auth
                 // Static Assets & Public pages
-                .requestMatchers("/css/**", "/js/**", "/images/**", "/webjars/**", "/favicon.ico").permitAll()
-                .requestMatchers("/", "/login", "/register", "/api/auth/**", "/api/campus/**", "/h2-console/**").permitAll()
+                .requestMatchers("/app/**", "/css/**", "/js/**", "/images/**", "/webjars/**", "/favicon.ico").permitAll()
+                .requestMatchers("/", "/login", "/register", "/api/auth/register", "/api/auth/me", "/api/campus/**", "/h2-console/**").permitAll()
+
+                // React dashboard data endpoints
+                .requestMatchers("/api/dashboard/admin/**").hasRole("ADMIN")
+                .requestMatchers("/api/dashboard/teacher/**").hasAnyRole("TEACHER", "ADMIN")
+                .requestMatchers("/api/dashboard/student/**").hasAnyRole("STUDENT", "ADMIN")
+                .requestMatchers("/api/dashboard/security/**").hasAnyRole("SECURITY", "ADMIN")
+                .requestMatchers("/api/dashboard/**").authenticated()
                 
                 // Role-based Dashboards
                 .requestMatchers("/dashboard/admin/**").hasRole("ADMIN")
