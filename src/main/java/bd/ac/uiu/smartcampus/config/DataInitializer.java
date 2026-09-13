@@ -4,6 +4,7 @@ import bd.ac.uiu.smartcampus.model.*;
 import bd.ac.uiu.smartcampus.repository.AdminActionLogRepository;
 import bd.ac.uiu.smartcampus.repository.CampusNoticeRepository;
 import bd.ac.uiu.smartcampus.repository.MaintenanceComplaintRepository;
+import bd.ac.uiu.smartcampus.repository.TeachingScheduleRepository;
 import bd.ac.uiu.smartcampus.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,6 +13,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 @Component
 public class DataInitializer implements CommandLineRunner {
@@ -22,17 +24,20 @@ public class DataInitializer implements CommandLineRunner {
     private final CampusNoticeRepository noticeRepository;
     private final MaintenanceComplaintRepository complaintRepository;
     private final AdminActionLogRepository actionLogRepository;
+    private final TeachingScheduleRepository teachingScheduleRepository;
     private final PasswordEncoder passwordEncoder;
 
     public DataInitializer(UserRepository userRepository,
                            CampusNoticeRepository noticeRepository,
                            MaintenanceComplaintRepository complaintRepository,
                            AdminActionLogRepository actionLogRepository,
+                           TeachingScheduleRepository teachingScheduleRepository,
                            PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.noticeRepository = noticeRepository;
         this.complaintRepository = complaintRepository;
         this.actionLogRepository = actionLogRepository;
+        this.teachingScheduleRepository = teachingScheduleRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -45,6 +50,10 @@ public class DataInitializer implements CommandLineRunner {
         seedUser("teacher-demo", "demo-teacher-pass", "Prof. Tariqul Islam", "EMP-CSE-104", "Computer Science & Engineering", Role.ROLE_TEACHER);
         seedUser("student-demo", "demo-student-pass", "Rahat Hossain", "011211001", "Computer Science & Engineering", Role.ROLE_STUDENT);
         seedUser("security-demo", "demo-security-pass", "Officer Abul Kalam", "SEC-GATE-02", "Campus Security & Safety", Role.ROLE_SECURITY);
+        seedTeacherSchedule("teacher-demo", "CSE 2211", "Advanced Object Oriented Programming", "Section A", "Room 524", "Sunday", "10:30", "12:00");
+        seedTeacherSchedule("teacher-demo", "CSE 2211", "Advanced Object Oriented Programming", "Section A", "Room 524", "Tuesday", "10:30", "12:00");
+        seedTeacherSchedule("teacher-demo", "CSE 3312", "Database Systems", "Section B", "Room 412", "Monday", "14:00", "15:30");
+        seedTeacherSchedule("teacher-demo", "CSE 3312", "Database Systems", "Section B", "Room 412", "Wednesday", "14:00", "15:30");
 
         // 2. Seed Initial Campus Notices (if empty)
         if (noticeRepository.count() == 0) {
@@ -126,6 +135,24 @@ public class DataInitializer implements CommandLineRunner {
             user.setCreatedAt(LocalDateTime.now().minusDays(2));
             userRepository.save(user);
             logger.info("Created default user: {} [{}]", email, role);
+        }
+    }
+
+    private void seedTeacherSchedule(String teacherEmail, String courseCode, String courseTitle, String sectionName,
+                                     String roomNumber, String dayOfWeek, String startTime, String endTime) {
+        if (!teachingScheduleRepository.existsByTeacherEmailAndCourseCodeAndSectionNameAndDayOfWeek(teacherEmail, courseCode, sectionName, dayOfWeek)) {
+            TeachingSchedule schedule = new TeachingSchedule(
+                    teacherEmail,
+                    courseCode,
+                    courseTitle,
+                    sectionName,
+                    roomNumber,
+                    dayOfWeek,
+                    LocalTime.parse(startTime),
+                    LocalTime.parse(endTime)
+            );
+            teachingScheduleRepository.save(schedule);
+            logger.info("Created teacher schedule: {} {} {}", teacherEmail, courseCode, dayOfWeek);
         }
     }
 }

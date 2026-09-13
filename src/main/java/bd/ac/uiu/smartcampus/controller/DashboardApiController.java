@@ -7,6 +7,7 @@ import bd.ac.uiu.smartcampus.repository.CampusNoticeRepository;
 import bd.ac.uiu.smartcampus.repository.MaintenanceComplaintRepository;
 import bd.ac.uiu.smartcampus.repository.UserRepository;
 import bd.ac.uiu.smartcampus.security.CustomUserDetails;
+import bd.ac.uiu.smartcampus.service.TeacherDashboardService;
 import bd.ac.uiu.smartcampus.syllabus.collections.AdminActionStackService;
 import bd.ac.uiu.smartcampus.syllabus.collections.ClassroomModel;
 import bd.ac.uiu.smartcampus.syllabus.collections.ComplaintQueueService;
@@ -36,6 +37,7 @@ public class DashboardApiController {
     private final UniqueAttendeeSetService attendeeSetService;
     private final CampusSimulationWorker simulationWorker;
     private final BusServerSocketManager busServerManager;
+    private final TeacherDashboardService teacherDashboardService;
 
     public DashboardApiController(UserRepository userRepository,
                                   CampusNoticeRepository noticeRepository,
@@ -44,7 +46,8 @@ public class DashboardApiController {
                                   ComplaintQueueService complaintQueueService,
                                   UniqueAttendeeSetService attendeeSetService,
                                   CampusSimulationWorker simulationWorker,
-                                  BusServerSocketManager busServerManager) {
+                                  BusServerSocketManager busServerManager,
+                                  TeacherDashboardService teacherDashboardService) {
         this.userRepository = userRepository;
         this.noticeRepository = noticeRepository;
         this.complaintRepository = complaintRepository;
@@ -53,6 +56,7 @@ public class DashboardApiController {
         this.attendeeSetService = attendeeSetService;
         this.simulationWorker = simulationWorker;
         this.busServerManager = busServerManager;
+        this.teacherDashboardService = teacherDashboardService;
     }
 
     @GetMapping("/admin")
@@ -75,8 +79,14 @@ public class DashboardApiController {
     @GetMapping("/teacher")
     public ApiResponse<Map<String, Object>> teacher(@AuthenticationPrincipal CustomUserDetails userDetails) {
         Map<String, Object> data = basePayload(userDetails, "teacher");
+        String teacherEmail = userDetails != null ? userDetails.getUsername() : "teacher-demo";
         data.put("notices", noticeRepository.findTop10ByOrderByPostedAtDesc());
         data.put("classrooms", sampleClassrooms());
+        data.put("schedule", teacherDashboardService.getSchedule(teacherEmail));
+        data.put("classes", teacherDashboardService.getTeacherClasses(teacherEmail, sampleClassrooms()));
+        data.put("attendanceSessions", teacherDashboardService.getAttendanceSessions(teacherEmail));
+        data.put("reservations", teacherDashboardService.getReservations(teacherEmail));
+        teacherDashboardService.getNextClass(teacherEmail).ifPresent(next -> data.put("nextClass", next));
         return ApiResponse.ok("Faculty dashboard data", data);
     }
 
@@ -122,7 +132,7 @@ public class DashboardApiController {
         return user;
     }
 
-    private List<ClassroomModel> sampleClassrooms() {
+    public static List<ClassroomModel> sampleClassrooms() {
         List<ClassroomModel> list = new ArrayList<>();
         list.add(new ClassroomModel("Room 524 (CSE Lab 4)", 60, 5, true, 3.8));
         list.add(new ClassroomModel("Room 522 (Theory)", 55, 5, false, 0.4));

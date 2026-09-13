@@ -6,7 +6,9 @@ export function api(path, options = {}) {
   }).then(async (response) => {
     if (response.status === 401 || response.status === 403) throw new Error('SESSION_REQUIRED');
     const text = await response.text();
-    return text ? JSON.parse(text) : null;
+    const payload = text ? JSON.parse(text) : null;
+    if (payload?.success === false) throw new Error(payload.message || 'Request failed');
+    return payload;
   });
 }
 

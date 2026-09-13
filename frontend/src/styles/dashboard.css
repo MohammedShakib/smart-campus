@@ -472,6 +472,32 @@
   margin-bottom: 1rem;
 }
 
+.primary-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.42rem;
+  min-height: 40px;
+  padding: 0 0.95rem;
+  border: 1px solid rgba(79,70,229,0.36);
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+  color: #ffffff;
+  box-shadow: var(--shadow-btn);
+  cursor: pointer;
+  font-weight: 750;
+  font-size: 0.82rem;
+  line-height: 1;
+  white-space: nowrap;
+  transition: transform 0.18s, box-shadow 0.18s, border-color 0.18s, background 0.18s;
+}
+
+.primary-btn:hover {
+  transform: translateY(-1px);
+  border-color: rgba(79,70,229,0.54);
+  box-shadow: 0 8px 18px rgba(79,70,229,0.24), 0 1px 0 rgba(255,255,255,0.32) inset;
+}
+
 .ghost-btn {
   display: inline-flex;
   align-items: center;
@@ -492,6 +518,14 @@
   border-color: var(--accent-border);
   color: var(--accent-dark);
   background: var(--accent-soft);
+}
+
+.ghost-btn:disabled,
+.primary-btn:disabled {
+  opacity: 0.58;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 /* Table */
@@ -599,18 +633,56 @@
 }
 
 .ticket-form input,
-.ticket-form select {
-  padding: 0 1rem;
+.ticket-form select,
+.ticket-form textarea,
+.scan-form input {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #ffffff;
+  color: var(--tx-primary);
+  box-shadow: 0 1px 2px rgba(15,23,42,0.03);
+  outline: none;
+  font-size: 0.84rem;
+  transition: border-color 0.18s, box-shadow 0.18s, background 0.18s;
+}
+
+.ticket-form input,
+.ticket-form select,
+.scan-form input {
+  min-height: 40px;
+  padding: 0 0.86rem;
+}
+
+.ticket-form textarea {
+  min-height: 96px;
+  resize: vertical;
+  padding: 0.78rem 0.86rem;
+}
+
+.ticket-form input::placeholder,
+.ticket-form textarea::placeholder,
+.scan-form input::placeholder {
+  color: var(--tx-muted);
+}
+
+.ticket-form input:focus,
+.ticket-form select:focus,
+.ticket-form textarea:focus,
+.scan-form input:focus {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.10);
+  background: #ffffff;
 }
 
 .ticket-form textarea {
   grid-column: 1 / -1;
-  min-height: 88px;
-  resize: vertical;
-  padding: 0.75rem 1rem;
 }
 
-.ticket-form button { justify-self: start; width: auto; }
+.ticket-form button {
+  justify-self: start;
+  width: auto;
+}
 
 /* Scan form */
 .scan-form {
@@ -620,7 +692,7 @@
   align-items: flex-start;
 }
 
-.scan-form input { flex: 1; padding: 0 1rem; }
+.scan-form input { flex: 1; }
 .scan-form .primary-btn { width: auto; white-space: nowrap; }
 
 /* Notice list */
@@ -1063,6 +1135,172 @@
 .stat-row-item--sky strong { color: var(--sky); }
 .stat-row-item--violet strong { color: var(--violet); }
 .stat-row-item--amber strong { color: var(--amber); }
+.stat-row-item--rose strong { color: var(--rose); }
+
+/* Teacher extensions */
+.teacher-overview-stack {
+  display: grid;
+  gap: 1rem;
+}
+
+.teacher-today-card,
+.teacher-focus {
+  padding: 0.95rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.teacher-today-card span,
+.teacher-focus span {
+  display: inline-flex;
+  width: fit-content;
+  margin-bottom: 0.35rem;
+  color: var(--accent-dark);
+  background: var(--accent-soft);
+  border: 1px solid rgba(99,102,241,0.16);
+  border-radius: var(--r-pill);
+  padding: 0.14rem 0.48rem;
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.teacher-today-card strong,
+.teacher-focus strong {
+  display: block;
+  color: var(--tx-primary);
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.teacher-today-card p,
+.teacher-focus p,
+.teacher-card-copy {
+  color: var(--tx-secondary);
+  font-size: 0.82rem;
+  line-height: 1.5;
+  margin-top: 0.26rem;
+}
+
+.room-card .teacher-card-copy {
+  min-height: 42px;
+  margin-bottom: 0.72rem;
+}
+
+.teacher-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.9rem;
+}
+
+.teacher-card-actions .ghost-btn {
+  min-width: 104px;
+}
+
+.attendance-session {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.qr-box {
+  display: grid;
+  justify-items: center;
+  gap: 0.55rem;
+  width: fit-content;
+  padding: 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.qr-box code {
+  max-width: 220px;
+  color: var(--tx-muted);
+  font-size: 0.66rem;
+  overflow-wrap: anywhere;
+}
+
+.attendance-stats {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.teacher-attendance-form {
+  grid-template-columns: minmax(260px, 1fr) auto;
+  align-items: start;
+}
+
+.teacher-attendance-form .primary-btn {
+  width: 100%;
+}
+
+.teacher-room-list {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.teacher-room-option {
+  text-align: left;
+  padding: 0.78rem 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #ffffff;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+
+.teacher-room-option:hover {
+  border-color: var(--accent-border);
+  background: var(--accent-soft);
+}
+
+.teacher-room-option strong {
+  display: block;
+  color: var(--tx-primary);
+  font-size: 0.85rem;
+}
+
+.teacher-room-option span {
+  display: block;
+  margin-top: 0.2rem;
+  color: var(--tx-muted);
+  font-size: 0.76rem;
+}
+
+.teacher-room-option.is-selected {
+  border-color: var(--accent-border);
+  background: var(--accent-soft);
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.08);
+}
+
+.teacher-reservation-form {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.teacher-reservation-form select,
+.teacher-reservation-form .teacher-purpose-input,
+.teacher-reservation-form .primary-btn {
+  grid-column: 1 / -1;
+}
+
+.teacher-notice-form,
+.teacher-report-form {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.teacher-notice-form input,
+.teacher-notice-form textarea,
+.teacher-notice-form .primary-btn {
+  grid-column: 1 / -1;
+}
+
+.teacher-report-form textarea,
+.teacher-report-form .primary-btn {
+  grid-column: 1 / -1;
+}
 
 /* ── AUDIT LOG ───────────────────────────────────────────── */
 .audit-log-list {

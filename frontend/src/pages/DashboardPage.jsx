@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Activity, Bus, Building2, ChevronRight, ClipboardCheck, DoorOpen, FileText, LogOut, RadioTower, RefreshCw, UsersRound, Wrench } from 'lucide-react';
+import { Activity, BookOpen, Bus, Building2, CalendarCheck, CalendarDays, ChevronRight, ClipboardCheck, DoorOpen, FileText, LogOut, RadioTower, RefreshCw, UsersRound, Wrench } from 'lucide-react';
 import { api } from '../utils/api';
 import { initials, prettyRole } from '../utils/helpers';
 import { ErrorState, LoadingState } from '../components/shared/SharedComponents';
@@ -24,8 +24,12 @@ const dashboardConfig = {
     path: '/dashboard/teacher',
     sections: [
       { key: 'overview',     label: 'Overview',       icon: Activity },
-      { key: 'classrooms',   label: 'Classrooms',     icon: Building2 },
+      { key: 'schedule',     label: 'My Schedule',    icon: CalendarDays },
+      { key: 'classes',      label: 'My Classes',     icon: BookOpen },
+      { key: 'attendance',   label: 'Attendance',     icon: ClipboardCheck },
+      { key: 'reservations', label: 'Reserve Room',   icon: CalendarCheck },
       { key: 'notices',      label: 'Announcements',  icon: RadioTower },
+      { key: 'reportIssue',  label: 'Report Issue',   icon: Wrench },
     ]
   },
   student: {

@@ -3,6 +3,15 @@ import { Building2, BusFront, ClipboardCheck, Database, DoorOpen, Layers, RadioT
 import { api, postAction } from '../../utils/api';
 import { sampleClassrooms, roleSummary } from '../../utils/helpers';
 import { SectionHeader, NoticeList, BusLocations, StatRow, Panel, Table, ActionButton } from '../shared/SharedComponents';
+import {
+  TeacherAttendanceSection,
+  TeacherClassesSection,
+  TeacherNoticesSection,
+  TeacherOverviewToday,
+  TeacherReportIssueSection,
+  TeacherReservationSection,
+  TeacherScheduleSection
+} from './TeacherSections';
 
 /* ─────────────────────────────────────────────────────────
    SECTION ROUTER
@@ -36,8 +45,12 @@ export function DashboardSection({ role, section, data, telemetry, auditLogs, re
   }
 
   if (role === 'teacher') {
-    if (section === 'classrooms') return <ClassroomsSection classrooms={data.classrooms || []} />;
-    if (section === 'notices') return <NoticesSection notices={data.notices || []} />;
+    if (section === 'schedule') return <TeacherScheduleSection data={data} />;
+    if (section === 'classes') return <TeacherClassesSection data={data} reload={reload} />;
+    if (section === 'attendance') return <TeacherAttendanceSection data={data} reload={reload} />;
+    if (section === 'reservations') return <TeacherReservationSection data={data} reload={reload} />;
+    if (section === 'notices') return <TeacherNoticesSection notices={data.notices || []} reload={reload} />;
+    if (section === 'reportIssue') return <TeacherReportIssueSection data={data} reload={reload} />;
   }
 
   if (role === 'student') {
@@ -418,15 +431,18 @@ function TicketForm({ data, reload }) {
 ───────────────────────────────────────────────────────── */
 function TeacherOverviewPanel({ data }) {
   return (
-    <Panel title="Smart Classroom Matrix" tag="Comparable Sort">
-      <Table
-        headers={['Room', 'Floor', 'Capacity', 'Power', 'Status']}
-        rows={(data.classrooms || []).map((room) => [
-          room.roomNumber, room.floor, room.capacity, `${room.powerKW} kW`,
-          room.occupied ? 'Occupied' : 'Available'
-        ])}
-      />
-    </Panel>
+    <div className="teacher-overview-stack">
+      <TeacherOverviewToday nextClass={data.nextClass} />
+      <Panel title="Smart Classroom Matrix" tag="Comparable Sort">
+        <Table
+          headers={['Room', 'Floor', 'Capacity', 'Power', 'Status']}
+          rows={(data.classrooms || []).map((room) => [
+            room.roomNumber, room.floor, room.capacity, `${room.powerKW} kW`,
+            room.occupied ? 'Occupied' : 'Available'
+          ])}
+        />
+      </Panel>
+    </div>
   );
 }
 
