@@ -1,20 +1,55 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Eye, EyeOff, Loader2, LockKeyhole, UserRound } from 'lucide-react';
+import {
+  Building2,
+  Bus,
+  ChevronDown,
+  Crown,
+  DoorOpen,
+  Eye,
+  EyeOff,
+  GraduationCap,
+  IdCard,
+  Landmark,
+  Loader2,
+  LockKeyhole,
+  Mail,
+  Presentation,
+  ShieldCheck,
+  UserRound,
+} from 'lucide-react';
 import campusVisual from '../assets/smart-campus-visual.png';
 import { api } from '../utils/api';
 import { demoAccounts } from '../utils/helpers';
 import '../styles/auth.css';
 
+const campusMetrics = [
+  { value: '42', label: 'Connected Rooms', icon: Building2 },
+  { value: '6', label: 'Live Shuttles', icon: Bus },
+  { value: '12', label: 'Active Gates', icon: DoorOpen },
+];
+
+const demoMeta = {
+  admin: { label: 'Admin', icon: Crown },
+  teacher: { label: 'Teacher', icon: Presentation },
+  student: { label: 'Student', icon: GraduationCap },
+  security: { label: 'Security', icon: ShieldCheck },
+};
+
 export function AuthPage() {
-  const query = new URLSearchParams(window.location.search);
+  const query = useMemo(() => new URLSearchParams(window.location.search), []);
   const [activeTab, setActiveTab] = useState('login');
   const [roles, setRoles] = useState([]);
   const [registerForm, setRegisterForm] = useState({
-    fullName: '', email: '', password: '', studentOrEmpId: '',
-    department: 'Computer Science & Engineering', role: 'ROLE_STUDENT'
+    fullName: '',
+    email: '',
+    password: '',
+    studentOrEmpId: '',
+    department: 'Computer Science & Engineering',
+    role: 'ROLE_STUDENT',
   });
   const [registerMessage, setRegisterMessage] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [showRegisterPassword, setShowRegisterPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -45,90 +80,100 @@ export function AuthPage() {
     api('/api/auth/register', { method: 'POST', body: JSON.stringify(registerForm) })
       .then((res) => {
         setIsSubmitting(false);
-        if (!res.success) { setRegisterMessage({ type: 'error', text: res.message }); return; }
+        if (!res.success) {
+          setRegisterMessage({ type: 'error', text: res.message });
+          return;
+        }
         setActiveTab('login');
         setRegisterMessage({ type: 'success', text: res.message });
       })
-      .catch((error) => { setIsSubmitting(false); setRegisterMessage({ type: 'error', text: error.message }); });
+      .catch((error) => {
+        setIsSubmitting(false);
+        setRegisterMessage({ type: 'error', text: error.message });
+      });
   }
 
   return (
-    <div className="auth-page-wrapper">
-      <main className="auth-container">
-        
-        {/* LEFT PANEL */}
-        <section className="auth-brand-panel">
-          <div className="auth-brand-content">
-            <div className="brand-header">
-              <div className="brand-icon">SC</div>
-              <div className="brand-text-group">
-                <span className="brand-text-small">United International University</span>
-                <span className="brand-text-large">Smart Campus</span>
-              </div>
+    <div className="auth-page">
+      <main className="auth-shell" aria-label="Smart Campus authentication">
+        <section className="auth-brand-panel" aria-label="Smart Campus overview">
+          <div className="brand-header">
+            <div className="brand-icon" aria-hidden="true">SC</div>
+            <div className="brand-text-group">
+              <span className="brand-text-small">United International University</span>
+              <span className="brand-text-large">Smart Campus</span>
             </div>
-            
-            <div className="auth-hero">
-              <div className="auth-status-badge">
-                <div className="auth-status-dot"></div>
-                <span>Campus systems online</span>
-              </div>
-              <h1>One campus.<br/>One <span className="highlight">intelligent</span> system.</h1>
-              <p>Classrooms, shuttle GPS, gate access and campus operations — connected through one secure platform.</p>
-            </div>
-            
-            <div className="auth-campus-visual">
-              <img
-                src={campusVisual}
-                alt="UIU Smart Campus connected campus system"
-                className="auth-campus-image"
-              />
+          </div>
+
+          <div className="auth-hero">
+            <div className="auth-status-badge">
+              <span className="auth-status-dot" aria-hidden="true"></span>
+              <span>Campus systems online</span>
             </div>
 
-            <div className="auth-metrics">
-              <div className="metric-item">
-                <div className="metric-icon">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 10v11a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V10"/><path d="M2 14h20"/><path d="M12 14v7"/><path d="m2 10 10-7 10 7"/></svg>
-                </div>
-                <div className="metric-text">
-                  <span className="metric-value">42</span>
-                  <span className="metric-label">Connected Rooms</span>
+            <h1>
+              One campus.
+              <br />
+              One <span>intelligent</span> system.
+            </h1>
+
+            <p>
+              Classrooms, shuttle GPS, gate access and campus operations - connected
+              through one secure platform.
+            </p>
+          </div>
+
+          <div className="auth-campus-visual">
+            <img
+              src={campusVisual}
+              alt="UIU Smart Campus connected campus system"
+              className="auth-campus-image"
+            />
+          </div>
+
+          <div className="auth-metrics" aria-label="Smart Campus live metrics">
+            {campusMetrics.map(({ value, label, icon: Icon }) => (
+              <div className="metric-item" key={label}>
+                <Icon size={22} strokeWidth={1.9} aria-hidden="true" />
+                <div>
+                  <span className="metric-value">{value}</span>
+                  <span className="metric-label">{label}</span>
                 </div>
               </div>
-              <div className="metric-separator"></div>
-              <div className="metric-item">
-                <div className="metric-icon">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 12 10s-6.7.6-8.5 1.1C2.7 11.3 2 12.1 2 13v3c0 .6.4 1 1 1h2"/><path d="M14 17H5"/><path d="M19 17v4"/><path d="M5 17v4"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="16.5" cy="17.5" r="2.5"/></svg>
-                </div>
-                <div className="metric-text">
-                  <span className="metric-value">6</span>
-                  <span className="metric-label">Live Shuttles</span>
-                </div>
-              </div>
-              <div className="metric-separator"></div>
-              <div className="metric-item">
-                <div className="metric-icon">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
-                </div>
-                <div className="metric-text">
-                  <span className="metric-value">12</span>
-                  <span className="metric-label">Active Gates</span>
-                </div>
-              </div>
-            </div>
+            ))}
           </div>
         </section>
 
-        {/* RIGHT PANEL */}
-        <section className="auth-form-panel">
+        <section className={`auth-form-panel ${activeTab === 'register' ? 'register-mode' : ''}`}>
           <div className="auth-form-content">
-            <div className="form-header">
+            <header className="form-header">
               <h2>{activeTab === 'login' ? 'Welcome back' : 'Create an account'}</h2>
-              <p>{activeTab === 'login' ? 'Sign in with your university credentials to continue.' : 'Join Smart Campus to access your role-specific dashboard.'}</p>
-            </div>
+              <p>
+                {activeTab === 'login'
+                  ? 'Sign in with your university credentials to continue.'
+                  : 'Join Smart Campus to access your role-specific dashboard.'}
+              </p>
+            </header>
 
-            <div className="segment-control">
-              <button type="button" className={`segment-btn ${activeTab === 'login' ? 'active' : ''}`} onClick={() => setActiveTab('login')}>Sign In</button>
-              <button type="button" className={`segment-btn ${activeTab === 'register' ? 'active' : ''}`} onClick={() => setActiveTab('register')}>Register</button>
+            <div className="segment-control" role="tablist" aria-label="Authentication mode">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeTab === 'login'}
+                className={`segment-btn ${activeTab === 'login' ? 'active' : ''}`}
+                onClick={() => setActiveTab('login')}
+              >
+                Sign In
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeTab === 'register'}
+                className={`segment-btn ${activeTab === 'register' ? 'active' : ''}`}
+                onClick={() => setActiveTab('register')}
+              >
+                Register
+              </button>
             </div>
 
             {status && <div className={`auth-alert ${status.type}`} role="alert">{status.text}</div>}
@@ -138,91 +183,191 @@ export function AuthPage() {
                 <div className="field-wrap">
                   <label htmlFor="loginEmail">University Email or ID</label>
                   <div className="input-container">
-                    <UserRound size={18} className="input-icon-left" />
-                    <input id="loginEmail" name="email" className="input-field" autoComplete="username" defaultValue="admin-demo" placeholder="your-id@uiu.ac.bd" required />
+                    <UserRound size={18} className="input-icon-left" aria-hidden="true" />
+                    <input
+                      id="loginEmail"
+                      name="email"
+                      className="input-field"
+                      autoComplete="username"
+                      defaultValue="admin-demo"
+                      placeholder="your-id@uiu.ac.bd"
+                      required
+                    />
                   </div>
                 </div>
+
                 <div className="field-wrap">
-                  <div className="label-between">
-                    <label htmlFor="loginPassword">Password</label>
-                  </div>
+                  <label htmlFor="loginPassword">Password</label>
                   <div className="input-container">
-                    <LockKeyhole size={18} className="input-icon-left" />
-                    <input id="loginPassword" name="password" className="input-field" type={showPassword ? 'text' : 'password'} autoComplete="current-password" defaultValue="demo-admin-pass" placeholder="••••••••" required />
-                    <button type="button" className="pw-toggle" onClick={() => setShowPassword((v) => !v)} aria-label={showPassword ? "Hide password" : "Show password"}>
+                    <LockKeyhole size={18} className="input-icon-left" aria-hidden="true" />
+                    <input
+                      id="loginPassword"
+                      name="password"
+                      className="input-field input-with-action"
+                      type={showPassword ? 'text' : 'password'}
+                      autoComplete="current-password"
+                      defaultValue="demo-admin-pass"
+                      placeholder="Password"
+                      required
+                    />
+                    <button
+                      type="button"
+                      className="pw-toggle"
+                      onClick={() => setShowPassword((value) => !value)}
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    >
                       {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
                   </div>
                 </div>
-                
+
                 <button className="btn-primary" type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? <><Loader2 size={18} className="spin-icon" /> Signing in…</> : 'Sign In'}
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 size={18} className="spin-icon" aria-hidden="true" />
+                      Signing in
+                    </>
+                  ) : 'Sign In'}
                 </button>
 
                 <div className="form-subtext">
-                  New to Smart Campus? <button type="button" className="text-btn" onClick={() => setActiveTab('register')}>Create an account</button>
+                  New to Smart Campus?{' '}
+                  <button type="button" className="text-btn" onClick={() => setActiveTab('register')}>
+                    Create an account
+                  </button>
                 </div>
               </form>
             ) : (
-              <form className="login-form" onSubmit={submitRegister}>
+              <form className="login-form register-form" onSubmit={submitRegister}>
                 <div className="field-wrap">
-                  <label>Full Name</label>
+                  <label htmlFor="registerFullName">Full Name</label>
                   <div className="input-container">
-                    <UserRound size={18} className="input-icon-left" />
-                    <input className="input-field" required placeholder="Your full name" value={registerForm.fullName} onChange={(e) => setRegisterForm({ ...registerForm, fullName: e.target.value })} />
+                    <UserRound size={18} className="input-icon-left" aria-hidden="true" />
+                    <input
+                      id="registerFullName"
+                      className="input-field"
+                      required
+                      placeholder="Your full name"
+                      value={registerForm.fullName}
+                      onChange={(e) => setRegisterForm({ ...registerForm, fullName: e.target.value })}
+                    />
                   </div>
                 </div>
+
                 <div className="login-form-row">
                   <div className="field-wrap">
-                    <label>UIU Email</label>
+                    <label htmlFor="registerEmail">UIU Email</label>
                     <div className="input-container">
-                      <input className="input-field" required type="email" placeholder="you@uiu.ac.bd" value={registerForm.email} onChange={(e) => setRegisterForm({ ...registerForm, email: e.target.value })} style={{paddingLeft: '1rem'}} />
+                      <Mail size={18} className="input-icon-left" aria-hidden="true" />
+                      <input
+                        id="registerEmail"
+                        className="input-field"
+                        required
+                        type="email"
+                        autoComplete="email"
+                        placeholder="you@uiu.ac.bd"
+                        value={registerForm.email}
+                        onChange={(e) => setRegisterForm({ ...registerForm, email: e.target.value })}
+                      />
                     </div>
                   </div>
+
                   <div className="field-wrap">
-                    <label>Student / Employee ID</label>
+                    <label htmlFor="registerId">Student / Employee ID</label>
                     <div className="input-container">
-                      <input className="input-field" required placeholder="011XXXXXX" value={registerForm.studentOrEmpId} onChange={(e) => setRegisterForm({ ...registerForm, studentOrEmpId: e.target.value })} style={{paddingLeft: '1rem'}} />
+                      <IdCard size={18} className="input-icon-left" aria-hidden="true" />
+                      <input
+                        id="registerId"
+                        className="input-field"
+                        required
+                        placeholder="011XXXXXX"
+                        value={registerForm.studentOrEmpId}
+                        onChange={(e) => setRegisterForm({ ...registerForm, studentOrEmpId: e.target.value })}
+                      />
                     </div>
                   </div>
                 </div>
+
                 <div className="login-form-row">
                   <div className="field-wrap">
-                    <label>Department</label>
-                    <div className="input-container">
-                      <select className="input-field" value={registerForm.department} onChange={(e) => setRegisterForm({ ...registerForm, department: e.target.value })} style={{paddingLeft: '1rem'}}>
+                    <label htmlFor="registerDepartment">Department</label>
+                    <div className="input-container select-container">
+                      <Landmark size={18} className="input-icon-left" aria-hidden="true" />
+                      <select
+                        id="registerDepartment"
+                        className="input-field select-field"
+                        value={registerForm.department}
+                        onChange={(e) => setRegisterForm({ ...registerForm, department: e.target.value })}
+                      >
                         <option>Computer Science &amp; Engineering</option>
                         <option>Electrical &amp; Electronic Engineering</option>
                         <option>School of Business &amp; Economics</option>
                         <option>Civil Engineering</option>
                         <option>Campus Administration &amp; Operations</option>
                       </select>
+                      <ChevronDown size={16} className="select-icon" aria-hidden="true" />
                     </div>
                   </div>
+
                   <div className="field-wrap">
-                    <label>Role</label>
-                    <div className="input-container">
-                      <select className="input-field" value={registerForm.role} onChange={(e) => setRegisterForm({ ...registerForm, role: e.target.value })} style={{paddingLeft: '1rem'}}>
+                    <label htmlFor="registerRole">Role</label>
+                    <div className="input-container select-container">
+                      <ShieldCheck size={18} className="input-icon-left" aria-hidden="true" />
+                      <select
+                        id="registerRole"
+                        className="input-field select-field"
+                        value={registerForm.role}
+                        onChange={(e) => setRegisterForm({ ...registerForm, role: e.target.value })}
+                      >
                         {(roles.length ? roles : [{ value: 'ROLE_STUDENT', label: 'Student / Learner' }]).map((role) => (
                           <option key={role.value} value={role.value}>{role.label}</option>
                         ))}
                       </select>
+                      <ChevronDown size={16} className="select-icon" aria-hidden="true" />
                     </div>
                   </div>
                 </div>
+
                 <div className="field-wrap">
-                  <label>Password</label>
+                  <label htmlFor="registerPassword">Password</label>
                   <div className="input-container">
-                    <LockKeyhole size={18} className="input-icon-left" />
-                    <input className="input-field" required type="password" minLength={6} placeholder="Min. 6 characters" value={registerForm.password} onChange={(e) => setRegisterForm({ ...registerForm, password: e.target.value })} />
+                    <LockKeyhole size={18} className="input-icon-left" aria-hidden="true" />
+                    <input
+                      id="registerPassword"
+                      className="input-field input-with-action"
+                      required
+                      type={showRegisterPassword ? 'text' : 'password'}
+                      minLength={6}
+                      autoComplete="new-password"
+                      placeholder="Min. 6 characters"
+                      value={registerForm.password}
+                      onChange={(e) => setRegisterForm({ ...registerForm, password: e.target.value })}
+                    />
+                    <button
+                      type="button"
+                      className="pw-toggle"
+                      onClick={() => setShowRegisterPassword((value) => !value)}
+                      aria-label={showRegisterPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showRegisterPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
                   </div>
                 </div>
+
                 <button className="btn-primary" type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? <><Loader2 size={18} className="spin-icon" /> Creating account…</> : 'Create Account'}
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 size={18} className="spin-icon" aria-hidden="true" />
+                      Creating account
+                    </>
+                  ) : 'Create Account'}
                 </button>
-                
+
                 <div className="form-subtext">
-                  Already have an account? <button type="button" className="text-btn" onClick={() => setActiveTab('login')}>Sign in</button>
+                  Already have an account?{' '}
+                  <button type="button" className="text-btn" onClick={() => setActiveTab('login')}>
+                    Sign in
+                  </button>
                 </div>
               </form>
             )}
@@ -231,12 +376,23 @@ export function AuthPage() {
               <div className="demo-area">
                 <div className="demo-divider"><span>Demo access</span></div>
                 <div className="demo-grid">
-                  {Object.keys(demoAccounts).map((role) => (
-                    <button type="button" key={role} className="demo-btn-small"
-                      onClick={() => { setActiveTab('login'); fillDemo(role); }}>
-                      {role.charAt(0).toUpperCase() + role.slice(1)}
-                    </button>
-                  ))}
+                  {Object.keys(demoAccounts).map((role) => {
+                    const DemoIcon = demoMeta[role]?.icon || UserRound;
+                    return (
+                      <button
+                        type="button"
+                        key={role}
+                        className="demo-btn"
+                        onClick={() => {
+                          setActiveTab('login');
+                          fillDemo(role);
+                        }}
+                      >
+                        <DemoIcon size={15} strokeWidth={2} aria-hidden="true" />
+                        {demoMeta[role]?.label || role}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
