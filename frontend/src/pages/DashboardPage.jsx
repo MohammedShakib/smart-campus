@@ -81,6 +81,11 @@ export function DashboardPage() {
   if (error) return <ErrorState error={error} />;
   if (!data || !telemetry) return <LoadingState />;
 
+  const userName = data.user?.fullName || 'Smart Campus User';
+  const displayName = userName.replace(/\s*\((Admin|Teacher|Student|Security)\)\s*$/i, '');
+  const userRole = prettyRole(data.user?.role);
+  const roleLabel = userRole === 'Admin' ? 'Administrator' : userRole;
+
   return (
     <main className="dashboard-shell">
       <aside className="sidebar">
@@ -99,7 +104,7 @@ export function DashboardPage() {
               className={`nav-item${activeSection === key ? ' active' : ''}`}
               onClick={() => setActiveSection(key)}
             >
-              <Icon size={16} />
+              <Icon size={18} />
               {label}
               {activeSection === key && <ChevronRight size={14} className="nav-chevron" />}
             </button>
@@ -107,10 +112,10 @@ export function DashboardPage() {
         </nav>
 
         <div className="user-card">
-          <div className="avatar">{initials(data.user?.fullName)}</div>
+          <div className="avatar">{initials(displayName)}</div>
           <div>
-            <strong>{data.user?.fullName || 'Smart Campus User'}</strong>
-            <span>{prettyRole(data.user?.role)}</span>
+            <strong>{displayName}</strong>
+            <span>{roleLabel}</span>
           </div>
         </div>
       </aside>
@@ -127,7 +132,7 @@ export function DashboardPage() {
           </div>
           <div className="topbar-actions">
             <span className="health"><Activity size={15} /> {telemetry.systemStatus}</span>
-            <button type="button" className="icon-btn" onClick={loadDashboard} title="Refresh"><RefreshCw size={15} /></button>
+            <button type="button" className="icon-btn" onClick={loadDashboard} title="Refresh" aria-label="Refresh dashboard"><RefreshCw size={15} /></button>
             <a className="logout" href="/logout"><LogOut size={16} /> Logout</a>
           </div>
         </header>

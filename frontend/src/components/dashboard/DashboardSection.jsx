@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Activity, Building2, Bus, ClipboardCheck, Database, DoorOpen, Layers, RadioTower, RefreshCw, Server, ShieldCheck, UsersRound, Wrench } from 'lucide-react';
+import { Building2, BusFront, ClipboardCheck, Database, DoorOpen, Layers, RadioTower, RefreshCw, Server, ShieldCheck, UsersRound, Wrench, Zap } from 'lucide-react';
 import { api, postAction } from '../../utils/api';
 import { sampleClassrooms, roleSummary } from '../../utils/helpers';
 import { SectionHeader, NoticeList, BusLocations, StatRow, Panel, Table, ActionButton } from '../shared/SharedComponents';
@@ -14,8 +14,15 @@ export function DashboardSection({ role, section, data, telemetry, auditLogs, re
         <WelcomeBanner data={data} telemetry={telemetry} role={role} />
         <MetricGrid telemetry={telemetry} data={data} role={role} />
         <div className="workspace-grid">
-          <OverviewPrimaryPanel role={role} data={data} reload={reload} />
-          <SideColumn data={data} />
+          <div className="primary-stack">
+            <OverviewPrimaryPanel role={role} data={data} reload={reload} />
+            {role === 'admin' && data.busLocations && (
+              <Panel title="Bus Telemetry" tag="Live Socket">
+                <BusLocations locations={data.busLocations} />
+              </Panel>
+            )}
+          </div>
+          <SideColumn data={data} showBusTelemetry={role !== 'admin'} />
         </div>
       </>
     );
@@ -68,22 +75,56 @@ function WelcomeBanner({ data, telemetry, role }) {
 }
 
 function MetricGrid({ telemetry, data, role }) {
+  const occupiedRooms = Number(telemetry.occupiedRooms || 0);
+  const totalRooms = Number(telemetry.totalRooms || 0);
+  const roomUtilization = totalRooms > 0 ? Math.round((occupiedRooms / totalRooms) * 100) : null;
   const cards = [
-    { label: 'Rooms Active', value: `${telemetry.occupiedRooms} / ${telemetry.totalRooms}`, icon: Building2 },
-    { label: 'Campus Buses', value: `${telemetry.activeBuses} running`, icon: Bus },
-    { label: 'Power Load',   value: `${telemetry.powerConsumptionKW} kW`, icon: Activity }
+    {
+      label: 'Rooms Active',
+      value: `${telemetry.occupiedRooms} / ${telemetry.totalRooms}`,
+      icon: Building2,
+      tone: 'rooms',
+      detail: roomUtilization !== null ? `${roomUtilization}% utilized` : 'Classroom signal',
+      progress: roomUtilization
+    },
+    {
+      label: 'Campus Buses',
+      value: `${telemetry.activeBuses} running`,
+      icon: BusFront,
+      tone: 'buses',
+      detail: 'Live fleet'
+    },
+    {
+      label: 'Power Load',
+      value: `${telemetry.powerConsumptionKW} kW`,
+      icon: Zap,
+      tone: 'power',
+      detail: 'Metered load'
+    }
   ];
-  if (role === 'admin')    cards.push({ label: 'Total Accounts', value: data.totalUsers, icon: UsersRound });
-  if (role === 'security') cards.push({ label: 'Unique Gate Passes', value: data.uniqueGatePassCount, icon: DoorOpen });
-  if (role === 'student')  cards.push({ label: 'My Tickets', value: data.myComplaints?.length || 0, icon: Wrench });
-  if (role === 'teacher')  cards.push({ label: 'Faculty on Campus', value: telemetry.facultyOnCampus, icon: UsersRound });
+  if (role === 'admin')    cards.push({ label: 'Total Accounts', value: data.totalUsers, icon: UsersRound, tone: 'accounts', detail: 'Directory' });
+  if (role === 'security') cards.push({ label: 'Unique Gate Passes', value: data.uniqueGatePassCount, icon: DoorOpen, tone: 'accounts', detail: 'Set collection' });
+  if (role === 'student')  cards.push({ label: 'My Tickets', value: data.myComplaints?.length || 0, icon: Wrench, tone: 'power', detail: 'Maintenance' });
+  if (role === 'teacher')  cards.push({ label: 'Faculty on Campus', value: telemetry.facultyOnCampus, icon: UsersRound, tone: 'accounts', detail: 'Presence' });
 
   return (
     <div className="metric-grid">
-      {cards.map(({ label, value, icon: Icon }) => (
-        <div className="metric-card" key={label}>
-          <div><span>{label}</span><Icon size={20} /></div>
+      {cards.map(({ label, value, icon: Icon, tone, detail, progress }) => (
+        <div className={`metric-card metric-card--${tone}`} key={label}>
+          <div className="metric-card-head">
+            <span>{label}</span>
+            <span className="metric-icon"><Icon size={21} /></span>
+          </div>
           <strong>{value}</strong>
+          <div className="metric-card-foot">
+            {label === 'Campus Buses' && <span className="live-dot" aria-hidden="true" />}
+            <span>{detail}</span>
+          </div>
+          {typeof progress === 'number' && (
+            <div className="metric-progress" aria-label={`Room utilization ${progress}%`}>
+              <span style={{ width: `${Math.min(Math.max(progress, 0), 100)}%` }} />
+            </div>
+          )}
         </div>
       ))}
     </div>
@@ -97,13 +138,13 @@ function OverviewPrimaryPanel({ role, data, reload }) {
   return <StudentOverviewPanel data={data} reload={reload} />;
 }
 
-function SideColumn({ data }) {
+function SideColumn({ data, showBusTelemetry = true }) {
   return (
     <div className="side-stack">
       <Panel title="Campus Notices" tag="Live">
         <NoticeList notices={(data.notices || []).slice(0, 4)} />
       </Panel>
-      {data.busLocations && (
+      {showBusTelemetry && data.busLocations && (
         <Panel title="Bus Telemetry" tag="Socket">
           <BusLocations locations={data.busLocations} />
         </Panel>

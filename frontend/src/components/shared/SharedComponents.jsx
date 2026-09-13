@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bus, Loader2 } from 'lucide-react';
+import { BusFront, Loader2 } from 'lucide-react';
 
 export function SectionHeader({ title, subtitle }) {
   return (
@@ -31,7 +31,17 @@ export function BusLocations({ locations }) {
   return (
     <div className="bus-list">
       {entries.map(([bus, location]) => (
-        <div key={bus}><Bus size={16} /><strong>{bus}</strong><span>{location}</span></div>
+        <div className="bus-item" key={bus}>
+          <span className="bus-icon"><BusFront size={16} /></span>
+          <div className="bus-copy">
+            <div className="bus-meta">
+              <strong>{bus}</strong>
+              <span className="bus-live"><i aria-hidden="true" /> live</span>
+            </div>
+            <span className="bus-location">{location}</span>
+            <div className="bus-route-line" aria-hidden="true"><span /></div>
+          </div>
+        </div>
       ))}
     </div>
   );
@@ -51,11 +61,39 @@ export function Panel({ title, tag, children }) {
     <section className="panel">
       <div className="panel-head">
         <h3>{title}</h3>
-        {tag && <span>{tag}</span>}
+        {tag && <span className={`panel-tag ${statusClass(tag)}`}>{tag}</span>}
       </div>
       {children}
     </section>
   );
+}
+
+function statusClass(value) {
+  const normalized = String(value || '').toLowerCase();
+  if (/(healthy|optimal|online|live|available|occupied)/.test(normalized)) return 'status--success';
+  if (/(socket|fifo|stack|feed|set|comparable|maintenance|users)/.test(normalized)) return 'status--info';
+  if (/(pending|medium|warning)/.test(normalized)) return 'status--warning';
+  if (/(critical|high|error|danger)/.test(normalized)) return 'status--danger';
+  return 'status--neutral';
+}
+
+function chipClass(value) {
+  const normalized = String(value || '').toLowerCase().trim();
+  if (!normalized) return '';
+  if (normalized === 'high') return 'cell-chip chip-priority-high';
+  if (normalized === 'medium') return 'cell-chip chip-priority-medium';
+  if (normalized === 'low') return 'cell-chip chip-priority-low';
+  if (/(resolved|available|occupied|completed|online|live|optimal|healthy)/.test(normalized)) return 'cell-chip chip-status-success';
+  if (/(pending|queued|waiting)/.test(normalized)) return 'cell-chip chip-status-pending';
+  if (/(progress|processing|maintenance)/.test(normalized)) return 'cell-chip chip-status-progress';
+  if (/(critical|error|failed)/.test(normalized)) return 'cell-chip chip-status-critical';
+  return '';
+}
+
+function renderCell(cell) {
+  const text = String(cell ?? '-');
+  const className = chipClass(text);
+  return className ? <span className={className}>{text}</span> : text;
 }
 
 export function Table({ headers, rows, empty }) {
@@ -65,7 +103,7 @@ export function Table({ headers, rows, empty }) {
         <thead><tr>{headers.map((h) => <th key={h}>{h}</th>)}</tr></thead>
         <tbody>
           {rows?.length ? rows.map((row, index) => (
-            <tr key={index}>{row.map((cell, i) => <td key={`${index}-${i}`}>{String(cell ?? '—')}</td>)}</tr>
+            <tr key={index}>{row.map((cell, i) => <td key={`${index}-${i}`}>{renderCell(cell)}</td>)}</tr>
           )) : (
             <tr><td colSpan={headers.length}>{empty || 'No records available.'}</td></tr>
           )}
