@@ -1,7 +1,6 @@
 package bd.ac.uiu.smartcampus.service;
 
-import bd.ac.uiu.smartcampus.dto.AttendanceRecordRequest;
-import bd.ac.uiu.smartcampus.dto.RoomReservationRequest;
+import bd.ac.uiu.smartcampus.dto.*;
 import bd.ac.uiu.smartcampus.model.*;
 import bd.ac.uiu.smartcampus.repository.*;
 import bd.ac.uiu.smartcampus.security.CustomUserDetails;
@@ -12,6 +11,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class TeacherDashboardService {
@@ -22,28 +22,37 @@ public class TeacherDashboardService {
     private final RoomReservationRepository reservationRepository;
     private final ClassSessionRepository classSessionRepository;
     private final ClassroomRepository classroomRepository;
+    private final ClassEnrollmentRepository enrollmentRepository;
+    private final UserRepository userRepository;
 
     public TeacherDashboardService(TeachingScheduleRepository scheduleRepository,
                                    AttendanceSessionRepository sessionRepository,
                                    AttendanceRecordRepository recordRepository,
                                    RoomReservationRepository reservationRepository,
                                    ClassSessionRepository classSessionRepository,
-                                   ClassroomRepository classroomRepository) {
+                                   ClassroomRepository classroomRepository,
+                                   ClassEnrollmentRepository enrollmentRepository,
+                                   UserRepository userRepository) {
         this.scheduleRepository = scheduleRepository;
         this.sessionRepository = sessionRepository;
         this.recordRepository = recordRepository;
         this.reservationRepository = reservationRepository;
         this.classSessionRepository = classSessionRepository;
         this.classroomRepository = classroomRepository;
+        this.enrollmentRepository = enrollmentRepository;
+        this.userRepository = userRepository;
     }
+
+    // ─────────────────────────────────────────────────────────
+    // SCHEDULE & CLASSES
+    // ─────────────────────────────────────────────────────────
 
     public List<TeachingSchedule> getSchedule(String teacherEmail) {
         return scheduleRepository.findByTeacherEmailOrderByDayOfWeekAscStartTimeAsc(teacherEmail);
     }
 
     public Optional<TeachingSchedule> getNextClass(String teacherEmail) {
-        return getSchedule(teacherEmail).stream()
-                .findFirst();
+        return getSchedule(teacherEmail).stream().findFirst();
     }
 
     public List<Map<String, Object>> getTeacherClasses(String teacherEmail) {
@@ -103,27 +112,175 @@ public class TeacherDashboardService {
         return classSessionRepository.save(classSession);
     }
 
+    // ─────────────────────────────────────────────────────────
+    // ROSTER — Class list & enrolled students
+    // ─────────────────────────────────────────────────────────
+
+    /**
+     * Returns distinct course/section pairs for the teacher's roster.
+     * Uses TeachingSchedule for courseTitle since that's where it's stored.
+     */
+    public List<TeacherClassSummaryDto> getRosterClasses(String teacherEmail) {
+        List<Object[]> raw = enrollmentRepository.findDistinctCoursesByTeacherEmail(teacherEmail);
+        List<TeacherClassSummaryDto> result = new ArrayList<>();
+        for (Object[] row : raw) {
+            String courseCode = (String) row[0];
+            String sectionName = (String) row[1];
+            // Resolve courseTitle from schedule
+            String courseTitle = scheduleRepository
+                    .findByTeacherEmailOrderByDayOfWeekAscStartTimeAsc(teacherEmail)
+                    .stream()
+                    .filter(s -> s.getCourseCode().equals(courseCode) && s.getSectionName().equals(sectionName))
+                    .map(TeachingSchedule::getCourseTitle)
+                    .findFirst()
+                    .orElse(courseCode);
+            result.add(new TeacherClassSummaryDto(courseCode, courseTitle, sectionName));
+        }
+        return result;
+    }
+
+    /**
+     * Returns enrolled students with per-student attendance stats.
+     * Attendance % = (PRESENT + LATE) / completed sessions * 100.
+     * Returns null for percentage if no completed sessions exist.
+     */
+    public List<RosterStudentDto> getRosterStudents(String teacherEmail, String courseCode, String sectionName) {
+        // Verify the teacher owns this course/section via their schedule
+        boolean ownsClass = scheduleRepository
+                .findByTeacherEmailOrderByDayOfWeekAscStartTimeAsc(teacherEmail)
+                .stream()
+                .anyMatch(s -> s.getCourseCode().equals(courseCode) && s.getSectionName().equals(sectionName));
+        if (!ownsClass) {
+            throw new IllegalArgumentException("You do not have a class matching that course and section.");
+        }
+
+        List<ClassEnrollment> enrollments = enrollmentRepository
+                .findByTeacherEmailAndCourseCodeAndSectionNameAndActiveTrue(teacherEmail, courseCode, sectionName);
+
+        // Get completed sessions for this class — denominator for percentage
+        List<AttendanceSession> completedSessions = sessionRepository
+                .findCompletedSessionsByTeacherAndCourse(teacherEmail, courseCode, sectionName);
+        long totalCompletedSessions = completedSessions.size();
+
+        List<RosterStudentDto> result = new ArrayList<>();
+        for (ClassEnrollment enrollment : enrollments) {
+            User student = enrollment.getStudent();
+            String studentId = student.getStudentOrEmpId();
+
+            long presentCount = 0;
+            long lateCount = 0;
+            long absentCount = 0;
+
+            if (!completedSessions.isEmpty()) {
+                presentCount = recordRepository.countByAttendanceSessionInAndStudentIdAndStatus(
+                        completedSessions, studentId, AttendanceStatus.PRESENT);
+                lateCount = recordRepository.countByAttendanceSessionInAndStudentIdAndStatus(
+                        completedSessions, studentId, AttendanceStatus.LATE);
+                absentCount = recordRepository.countByAttendanceSessionInAndStudentIdAndStatus(
+                        completedSessions, studentId, AttendanceStatus.ABSENT);
+            }
+
+            Double percentage = null;
+            if (totalCompletedSessions > 0) {
+                percentage = Math.round(((presentCount + lateCount) * 10000.0 / totalCompletedSessions)) / 100.0;
+            }
+
+            result.add(new RosterStudentDto(
+                    studentId,
+                    student.getFullName(),
+                    student.getEmail(),
+                    presentCount,
+                    lateCount,
+                    absentCount,
+                    totalCompletedSessions,
+                    percentage
+            ));
+        }
+
+        // Sort by studentId ascending
+        result.sort(Comparator.comparing(RosterStudentDto::getStudentId));
+        return result;
+    }
+
+    /**
+     * Returns enrolled students (minimal info) for a specific session's course/section.
+     * Used to populate the manual attendance dropdown.
+     */
+    public List<Map<String, String>> getEnrolledStudentsForSession(Long sessionId, String teacherEmail) {
+        AttendanceSession session = ownedSession(sessionId, teacherEmail);
+        TeachingSchedule schedule = session.getTeachingSchedule();
+        List<ClassEnrollment> enrollments = enrollmentRepository
+                .findByTeacherEmailAndCourseCodeAndSectionNameAndActiveTrue(
+                        teacherEmail, schedule.getCourseCode(), schedule.getSectionName());
+        List<Map<String, String>> result = new ArrayList<>();
+        for (ClassEnrollment e : enrollments) {
+            Map<String, String> item = new LinkedHashMap<>();
+            item.put("studentId", e.getStudent().getStudentOrEmpId());
+            item.put("name", e.getStudent().getFullName());
+            result.add(item);
+        }
+        result.sort(Comparator.comparing(m -> m.get("studentId")));
+        return result;
+    }
+
+    // ─────────────────────────────────────────────────────────
+    // ATTENDANCE — session management
+    // ─────────────────────────────────────────────────────────
+
     @Transactional
     public AttendanceSession startAttendance(Long scheduleId, String teacherEmail) {
         TeachingSchedule schedule = ownedSchedule(scheduleId, teacherEmail);
-        Optional<AttendanceSession> existing = sessionRepository.findByTeachingScheduleAndTeacherEmailAndActiveTrue(schedule, teacherEmail);
+        Optional<AttendanceSession> existing = sessionRepository
+                .findByTeachingScheduleAndTeacherEmailAndActiveTrue(schedule, teacherEmail);
         if (existing.isPresent()) {
             return existing.get();
         }
         ClassSession classSession = todayClassSession(schedule);
-        AttendanceSession session = new AttendanceSession(schedule, teacherEmail, UUID.randomUUID().toString().replace("-", ""));
+        AttendanceSession session = new AttendanceSession(
+                schedule, teacherEmail, UUID.randomUUID().toString().replace("-", ""));
         session.setClassSession(classSession);
         return sessionRepository.save(session);
     }
 
+    /**
+     * End the attendance session and auto-generate ABSENT records for
+     * enrolled students who have not checked in.
+     */
     @Transactional
     public AttendanceSession endAttendance(Long sessionId, String teacherEmail) {
         AttendanceSession session = ownedSession(sessionId, teacherEmail);
         session.setActive(false);
         session.setEndedAt(LocalDateTime.now());
-        return sessionRepository.save(session);
+        sessionRepository.save(session);
+
+        // Auto-generate ABSENT for enrolled students without a record
+        TeachingSchedule schedule = session.getTeachingSchedule();
+        List<ClassEnrollment> enrollments = enrollmentRepository
+                .findByTeacherEmailAndCourseCodeAndSectionNameAndActiveTrue(
+                        teacherEmail, schedule.getCourseCode(), schedule.getSectionName());
+
+        for (ClassEnrollment enrollment : enrollments) {
+            String studentId = enrollment.getStudent().getStudentOrEmpId();
+            boolean hasRecord = recordRepository
+                    .findByAttendanceSessionAndStudentId(session, studentId).isPresent();
+            if (!hasRecord) {
+                AttendanceRecord absentRecord = new AttendanceRecord(
+                        session,
+                        studentId,
+                        enrollment.getStudent().getFullName(),
+                        AttendanceStatus.ABSENT,
+                        null  // null checkedInAt for auto-absent
+                );
+                recordRepository.save(absentRecord);
+            }
+        }
+
+        return session;
     }
 
+    /**
+     * Teacher manually marks a student — validates enrollment.
+     */
     @Transactional
     public AttendanceRecord markAttendance(Long sessionId, String teacherEmail, AttendanceRecordRequest request) {
         AttendanceSession session = ownedSession(sessionId, teacherEmail);
@@ -132,18 +289,42 @@ public class TeacherDashboardService {
         }
         String studentId = required(request.getStudentId(), "Student ID is required.");
         AttendanceStatus status = parseAttendanceStatus(request.getStatus());
-        AttendanceRecord record = recordRepository.findByAttendanceSessionAndStudentId(session, studentId)
-                .orElseGet(() -> new AttendanceRecord(session, studentId, request.getStudentName(), status));
-        record.setStudentName(request.getStudentName());
+
+        // Validate enrollment
+        TeachingSchedule schedule = session.getTeachingSchedule();
+        if (!enrollmentRepository.existsByTeacherEmailAndStudentIdAndCourseCodeAndSectionName(
+                teacherEmail, studentId, schedule.getCourseCode(), schedule.getSectionName())) {
+            throw new IllegalArgumentException("Student " + studentId + " is not enrolled in this class.");
+        }
+
+        // Resolve student name from user if not provided
+        String studentName = request.getStudentName();
+        if (studentName == null || studentName.isBlank()) {
+            studentName = userRepository.findByStudentOrEmpId(studentId)
+                    .map(User::getFullName)
+                    .orElse(studentId);
+        }
+        final String resolvedName = studentName;
+
+        AttendanceRecord record = recordRepository
+                .findByAttendanceSessionAndStudentId(session, studentId)
+                .orElseGet(() -> new AttendanceRecord(session, studentId, resolvedName, status));
+        record.setStudentName(resolvedName);
         record.setStatus(status);
-        record.setCheckedInAt(LocalDateTime.now());
+        if (status != AttendanceStatus.ABSENT) {
+            record.setCheckedInAt(LocalDateTime.now());
+        }
         return recordRepository.save(record);
     }
 
+    /**
+     * Student QR check-in — validates ROLE_STUDENT, enrollment, and no duplicate.
+     */
     @Transactional
     public AttendanceRecord checkInWithToken(String token, CustomUserDetails studentDetails) {
         String cleanToken = required(token, "Invalid token.");
-        if (studentDetails == null || studentDetails.getAuthorities().stream().noneMatch(authority -> "ROLE_STUDENT".equals(authority.getAuthority()))) {
+        if (studentDetails == null || studentDetails.getAuthorities().stream()
+                .noneMatch(a -> "ROLE_STUDENT".equals(a.getAuthority()))) {
             throw new IllegalArgumentException("Student login required.");
         }
         AttendanceSession session = sessionRepository.findByToken(cleanToken)
@@ -154,14 +335,23 @@ public class TeacherDashboardService {
         if (session.getTeachingSchedule() == null) {
             throw new IllegalArgumentException("Invalid token.");
         }
+
         String studentId = required(studentDetails.getStudentOrEmpId(), "Student ID is required.");
+
+        // Validate enrollment
+        TeachingSchedule schedule = session.getTeachingSchedule();
+        if (!enrollmentRepository.existsByTeacherEmailAndStudentIdAndCourseCodeAndSectionName(
+                session.getTeacherEmail(), studentId, schedule.getCourseCode(), schedule.getSectionName())) {
+            throw new IllegalArgumentException("You are not enrolled in this class.");
+        }
+
+        // Prevent duplicate check-in
         if (recordRepository.findByAttendanceSessionAndStudentId(session, studentId).isPresent()) {
             throw new IllegalArgumentException("Already checked in.");
         }
-        AttendanceRecord record = recordRepository.findByAttendanceSessionAndStudentId(session, studentId)
-                .orElseGet(() -> new AttendanceRecord(session, studentId, studentDetails.getFullName(), AttendanceStatus.PRESENT));
-        record.setStudentName(studentDetails.getFullName());
-        record.setStatus(AttendanceStatus.PRESENT);
+
+        AttendanceRecord record = new AttendanceRecord(
+                session, studentId, studentDetails.getFullName(), AttendanceStatus.PRESENT);
         record.setCheckedInAt(LocalDateTime.now());
         return recordRepository.save(record);
     }
@@ -186,6 +376,85 @@ public class TeacherDashboardService {
         payload.put("absentCount", recordRepository.countByAttendanceSessionAndStatus(session, AttendanceStatus.ABSENT));
         return payload;
     }
+
+    // ─────────────────────────────────────────────────────────
+    // ATTENDANCE HISTORY
+    // ─────────────────────────────────────────────────────────
+
+    public List<AttendanceHistoryDto> getAttendanceHistory(String teacherEmail,
+                                                           String courseCode,
+                                                           String sectionName) {
+        List<AttendanceSession> sessions;
+        if (courseCode != null && !courseCode.isBlank() && sectionName != null && !sectionName.isBlank()) {
+            sessions = sessionRepository.findCompletedSessionsByTeacherAndCourse(
+                    teacherEmail, courseCode, sectionName);
+        } else {
+            sessions = sessionRepository.findAllCompletedByTeacher(teacherEmail);
+        }
+
+        List<AttendanceHistoryDto> result = new ArrayList<>();
+        for (AttendanceSession s : sessions) {
+            TeachingSchedule schedule = s.getTeachingSchedule();
+            long present = recordRepository.countByAttendanceSessionAndStatus(s, AttendanceStatus.PRESENT);
+            long late = recordRepository.countByAttendanceSessionAndStatus(s, AttendanceStatus.LATE);
+            long absent = recordRepository.countByAttendanceSessionAndStatus(s, AttendanceStatus.ABSENT);
+            long total = present + late + absent;
+
+            Double rate = null;
+            if (total > 0) {
+                rate = Math.round(((present + late) * 10000.0 / total)) / 100.0;
+            }
+
+            result.add(new AttendanceHistoryDto(
+                    s.getId(),
+                    schedule.getCourseCode(),
+                    schedule.getCourseTitle(),
+                    schedule.getSectionName(),
+                    s.getSessionDate(),
+                    s.getStartedAt(),
+                    s.getEndedAt(),
+                    present,
+                    late,
+                    absent,
+                    total,
+                    rate
+            ));
+        }
+        return result;
+    }
+
+    public AttendanceSessionDetailDto getAttendanceHistoryDetail(Long sessionId, String teacherEmail) {
+        AttendanceSession session = ownedSession(sessionId, teacherEmail);
+        TeachingSchedule schedule = session.getTeachingSchedule();
+
+        List<AttendanceRecord> records = recordRepository
+                .findByAttendanceSessionOrderByStudentIdAsc(session);
+
+        List<AttendanceSessionDetailDto.RecordEntry> entries = records.stream()
+                .map(r -> new AttendanceSessionDetailDto.RecordEntry(
+                        r.getStudentId(),
+                        r.getStudentName(),
+                        r.getStatus().name(),
+                        r.getCheckedInAt()
+                ))
+                .collect(Collectors.toList());
+
+        return new AttendanceSessionDetailDto(
+                session.getId(),
+                schedule.getCourseCode(),
+                schedule.getCourseTitle(),
+                schedule.getSectionName(),
+                session.getSessionDate(),
+                session.getStartedAt(),
+                session.getEndedAt(),
+                session.isActive(),
+                entries
+        );
+    }
+
+    // ─────────────────────────────────────────────────────────
+    // ROOM RESERVATIONS
+    // ─────────────────────────────────────────────────────────
 
     public List<RoomReservation> getReservations(String teacherEmail) {
         return reservationRepository.findByTeacherEmailOrderByReservationDateDescStartTimeDesc(teacherEmail);
@@ -222,6 +491,10 @@ public class TeacherDashboardService {
         }
         return available;
     }
+
+    // ─────────────────────────────────────────────────────────
+    // PRIVATE HELPERS
+    // ─────────────────────────────────────────────────────────
 
     private TeachingSchedule ownedSchedule(Long scheduleId, String teacherEmail) {
         TeachingSchedule schedule = scheduleRepository.findById(scheduleId)

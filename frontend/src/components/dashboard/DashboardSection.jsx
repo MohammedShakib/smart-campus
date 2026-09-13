@@ -12,6 +12,7 @@ import {
   TeacherReservationSection,
   TeacherScheduleSection
 } from './TeacherSections';
+import { TeacherStudentsSection } from './teacher/TeacherStudentsSection';
 
 /* ─────────────────────────────────────────────────────────
    SECTION ROUTER
@@ -47,6 +48,7 @@ export function DashboardSection({ role, section, data, telemetry, auditLogs, re
   if (role === 'teacher') {
     if (section === 'schedule') return <TeacherScheduleSection data={data} />;
     if (section === 'classes') return <TeacherClassesSection data={data} reload={reload} />;
+    if (section === 'students') return <TeacherStudentsSection />;
     if (section === 'attendance') return <TeacherAttendanceSection data={data} reload={reload} />;
     if (section === 'reservations') return <TeacherReservationSection data={data} reload={reload} />;
     if (section === 'notices') return <TeacherNoticesSection notices={data.notices || []} reload={reload} />;

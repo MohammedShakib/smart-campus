@@ -30,18 +30,35 @@ public class AttendanceRecord {
     @Column(nullable = false, length = 30)
     private AttendanceStatus status = AttendanceStatus.PRESENT;
 
-    @Column(nullable = false)
-    private LocalDateTime checkedInAt = LocalDateTime.now();
+    /**
+     * Nullable: ABSENT records auto-generated on session close have null checkedInAt.
+     */
+    @Column
+    private LocalDateTime checkedInAt;
 
     public AttendanceRecord() {
     }
 
-    public AttendanceRecord(AttendanceSession attendanceSession, String studentId, String studentName, AttendanceStatus status) {
+    public AttendanceRecord(AttendanceSession attendanceSession, String studentId,
+                            String studentName, AttendanceStatus status) {
         this.attendanceSession = attendanceSession;
         this.studentId = studentId;
         this.studentName = studentName;
         this.status = status;
-        this.checkedInAt = LocalDateTime.now();
+        // For PRESENT/LATE records set check-in time; ABSENT records leave null
+        if (status != AttendanceStatus.ABSENT) {
+            this.checkedInAt = LocalDateTime.now();
+        }
+    }
+
+    /** Constructor with explicit checkedInAt (null allowed for ABSENT). */
+    public AttendanceRecord(AttendanceSession attendanceSession, String studentId,
+                            String studentName, AttendanceStatus status, LocalDateTime checkedInAt) {
+        this.attendanceSession = attendanceSession;
+        this.studentId = studentId;
+        this.studentName = studentName;
+        this.status = status;
+        this.checkedInAt = checkedInAt;
     }
 
     public Long getId() {
