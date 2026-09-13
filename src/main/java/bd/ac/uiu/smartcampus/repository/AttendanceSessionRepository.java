@@ -24,6 +24,14 @@ public interface AttendanceSessionRepository extends JpaRepository<AttendanceSes
 
     List<AttendanceSession> findByTeacherEmailOrderByStartedAtDesc(String teacherEmail);
 
+    @Query("SELECT s FROM AttendanceSession s " +
+           "WHERE s.teachingSchedule.courseCode = :courseCode " +
+           "AND s.teachingSchedule.sectionName = :sectionName " +
+           "ORDER BY s.startedAt DESC")
+    List<AttendanceSession> findSessionsByCourseAndSection(
+            @Param("courseCode") String courseCode,
+            @Param("sectionName") String sectionName);
+
     /**
      * Completed (closed) sessions for a teacher in a specific course/section,
      * ordered most-recent first. Used for attendance history and percentage calculation.

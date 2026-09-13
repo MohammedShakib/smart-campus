@@ -5,6 +5,8 @@ import bd.ac.uiu.smartcampus.dto.CampusTelemetryDto;
 import bd.ac.uiu.smartcampus.model.AdminActionLog;
 import bd.ac.uiu.smartcampus.model.CampusState;
 import bd.ac.uiu.smartcampus.model.MaintenanceComplaint;
+import bd.ac.uiu.smartcampus.model.EquipmentBooking;
+import bd.ac.uiu.smartcampus.service.StudentPortalService;
 import bd.ac.uiu.smartcampus.security.CustomUserDetails;
 import bd.ac.uiu.smartcampus.syllabus.collections.AdminActionStackService;
 import bd.ac.uiu.smartcampus.syllabus.collections.ComplaintQueueService;
@@ -32,6 +34,7 @@ public class CampusApiController {
     private final CampusStateBackupService backupService;
     private final BusServerSocketManager busServerManager;
     private final BusClientSimulator busClientSimulator;
+    private final StudentPortalService studentPortalService;
 
     public CampusApiController(CampusSimulationWorker simulationWorker,
                                AdminActionStackService actionStackService,
@@ -40,7 +43,8 @@ public class CampusApiController {
                                CampusLogFileWriter logFileWriter,
                                CampusStateBackupService backupService,
                                BusServerSocketManager busServerManager,
-                               BusClientSimulator busClientSimulator) {
+                               BusClientSimulator busClientSimulator,
+                               StudentPortalService studentPortalService) {
         this.simulationWorker = simulationWorker;
         this.actionStackService = actionStackService;
         this.complaintQueueService = complaintQueueService;
@@ -49,6 +53,7 @@ public class CampusApiController {
         this.backupService = backupService;
         this.busServerManager = busServerManager;
         this.busClientSimulator = busClientSimulator;
+        this.studentPortalService = studentPortalService;
     }
 
     /**
@@ -188,6 +193,33 @@ public class CampusApiController {
     @GetMapping("/bus/locations")
     public ApiResponse<Map<String, String>> getBusLocations() {
         return ApiResponse.ok("Active bus routes", busServerManager.getLatestBusLocations());
+    }
+
+    /**
+     * Admin Equipment & Lab Checkout Management
+     */
+    @GetMapping("/admin/equipment/bookings")
+    public ApiResponse<List<EquipmentBooking>> getAllEquipmentBookings() {
+        return ApiResponse.ok("All student equipment bookings", studentPortalService.getAllBookings());
+    }
+
+    @PostMapping("/admin/equipment/bookings/{id}/status")
+    public ApiResponse<EquipmentBooking> updateEquipmentBookingStatus(
+            @PathVariable Long id,
+            @RequestParam String status,
+            @RequestParam(required = false, defaultValue = "") String remarks,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        String adminEmail = userDetails != null ? userDetails.getUsername() : "admin-demo";
+        EquipmentBooking.BookingStatus bookingStatus = EquipmentBooking.BookingStatus.valueOf(status.toUpperCase());
+        EquipmentBooking updated = studentPortalService.updateBookingStatus(id, bookingStatus, remarks);
+
+        // Record action to AOOP Admin Action Stack
+        actionStackService.recordAction(adminEmail, "EQUIPMENT_BOOKING_" + bookingStatus.name(),
+                "Updated booking #" + id + " for " + updated.getStudentName() + " to " + bookingStatus.name());
+        logFileWriter.appendAuditLog("EQUIPMENT_BOOKING_REVIEW",
+                "Booking #" + id + " updated to " + bookingStatus.name() + " by " + adminEmail);
+
+        return ApiResponse.ok("Equipment booking status updated to " + bookingStatus.name(), updated);
     }
 
     private void applyReporterIdentity(MaintenanceComplaint complaint, CustomUserDetails userDetails) {

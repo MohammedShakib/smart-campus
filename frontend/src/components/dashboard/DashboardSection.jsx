@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { Building2, BusFront, ClipboardCheck, Database, DoorOpen, Layers, RadioTower, RefreshCw, Server, ShieldCheck, UsersRound, Wrench, Zap } from 'lucide-react';
 import { api, postAction } from '../../utils/api';
 import { sampleClassrooms, roleSummary } from '../../utils/helpers';
@@ -6,13 +6,20 @@ import { SectionHeader, NoticeList, BusLocations, StatRow, Panel, Table, ActionB
 import {
   TeacherAttendanceSection,
   TeacherClassesSection,
+  TeacherExcusesSection,
   TeacherNoticesSection,
+  TeacherOfficeHoursSection,
   TeacherOverviewToday,
   TeacherReportIssueSection,
   TeacherReservationSection,
   TeacherScheduleSection
 } from './TeacherSections';
 import { TeacherStudentsSection } from './teacher/TeacherStudentsSection';
+import { StudentAttendanceSection } from './student/StudentAttendanceSection';
+import { StudentLostFoundSection } from './student/StudentLostFoundSection';
+import { StudentLabEquipmentSection } from './student/StudentLabEquipmentSection';
+import { StudentOfficeHoursSection } from './student/StudentOfficeHoursSection';
+import { AdminEquipmentSection } from './admin/AdminEquipmentSection';
 
 /* ─────────────────────────────────────────────────────────
    SECTION ROUTER
@@ -39,6 +46,7 @@ export function DashboardSection({ role, section, data, telemetry, auditLogs, re
   }
 
   if (role === 'admin') {
+    if (section === 'equipment') return <AdminEquipmentSection />;
     if (section === 'classrooms') return <ClassroomsSection classrooms={sampleClassrooms()} />;
     if (section === 'transport') return <TransportSection data={data} />;
     if (section === 'maintenance') return <MaintenanceSection data={data} reload={reload} />;
@@ -50,12 +58,18 @@ export function DashboardSection({ role, section, data, telemetry, auditLogs, re
     if (section === 'classes') return <TeacherClassesSection data={data} reload={reload} />;
     if (section === 'students') return <TeacherStudentsSection />;
     if (section === 'attendance') return <TeacherAttendanceSection data={data} reload={reload} />;
+    if (section === 'excuses') return <TeacherExcusesSection />;
+    if (section === 'officehours') return <TeacherOfficeHoursSection />;
     if (section === 'reservations') return <TeacherReservationSection data={data} reload={reload} />;
     if (section === 'notices') return <TeacherNoticesSection notices={data.notices || []} reload={reload} />;
     if (section === 'reportIssue') return <TeacherReportIssueSection data={data} reload={reload} />;
   }
 
   if (role === 'student') {
+    if (section === 'attendance') return <StudentAttendanceSection />;
+    if (section === 'lostfound') return <StudentLostFoundSection />;
+    if (section === 'labequipment') return <StudentLabEquipmentSection />;
+    if (section === 'officehours') return <StudentOfficeHoursSection />;
     if (section === 'schedule') return <StudentScheduleSection data={data} />;
     if (section === 'shuttle') return <ShuttleSection busLocations={data.busLocations || {}} />;
     if (section === 'tickets') return <TicketsSection data={data} reload={reload} />;

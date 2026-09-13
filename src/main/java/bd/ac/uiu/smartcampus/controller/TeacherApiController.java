@@ -4,7 +4,11 @@ import bd.ac.uiu.smartcampus.dto.*;
 import bd.ac.uiu.smartcampus.model.*;
 import bd.ac.uiu.smartcampus.repository.CampusNoticeRepository;
 import bd.ac.uiu.smartcampus.security.CustomUserDetails;
+import bd.ac.uiu.smartcampus.service.FacultyOfficeHourService;
+import bd.ac.uiu.smartcampus.service.StudentPortalService;
 import bd.ac.uiu.smartcampus.service.TeacherDashboardService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,11 +23,17 @@ public class TeacherApiController {
 
     private final TeacherDashboardService teacherService;
     private final CampusNoticeRepository noticeRepository;
+    private final StudentPortalService studentPortalService;
+    private final FacultyOfficeHourService officeHourService;
 
     public TeacherApiController(TeacherDashboardService teacherService,
-                                CampusNoticeRepository noticeRepository) {
+                                CampusNoticeRepository noticeRepository,
+                                StudentPortalService studentPortalService,
+                                FacultyOfficeHourService officeHourService) {
         this.teacherService = teacherService;
         this.noticeRepository = noticeRepository;
+        this.studentPortalService = studentPortalService;
+        this.officeHourService = officeHourService;
     }
 
     // ─────────────────────────────────────────────────────────
@@ -155,6 +165,52 @@ public class TeacherApiController {
     }
 
     // ─────────────────────────────────────────────────────────
+    // ABSENCE EXCUSE REVIEWS
+    // ─────────────────────────────────────────────────────────
+
+    @GetMapping("/excuses")
+    public ApiResponse<List<AbsenceExcuse>> getExcuses(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        String teacherEmail = userDetails != null ? userDetails.getUsername() : "teacher-demo";
+        return ApiResponse.ok("Student absence excuses", studentPortalService.getTeacherExcuses(teacherEmail));
+    }
+
+    @PostMapping("/excuses/{id}/review")
+    public ApiResponse<AbsenceExcuse> reviewExcuse(@PathVariable Long id,
+                                                   @RequestParam String status,
+                                                   @RequestParam(required = false, defaultValue = "") String remarks,
+                                                   @AuthenticationPrincipal CustomUserDetails userDetails) {
+        String teacherEmail = userDetails != null ? userDetails.getUsername() : "teacher-demo";
+        return ApiResponse.ok("Excuse reviewed", studentPortalService.reviewExcuse(id, teacherEmail, status, remarks));
+    }
+
+    // ─────────────────────────────────────────────────────────
+    // FACULTY OFFICE HOURS & PRE-SUBMITTED QUERIES
+    // ─────────────────────────────────────────────────────────
+
+    @GetMapping("/office-hours/slots")
+    public ApiResponse<List<FacultyOfficeHourSlot>> getOfficeHourSlots(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        String teacherEmail = userDetails != null ? userDetails.getUsername() : "teacher-demo";
+        return ApiResponse.ok("Faculty office hour slots", officeHourService.getTeacherSlots(teacherEmail));
+    }
+
+    @PostMapping("/office-hours/slots")
+    public ApiResponse<FacultyOfficeHourSlot> createOfficeHourSlot(@RequestBody OfficeHourSlotCreateRequest request,
+                                                                   @AuthenticationPrincipal CustomUserDetails userDetails) {
+        String teacherEmail = userDetails != null ? userDetails.getUsername() : "teacher-demo";
+        return ApiResponse.ok("Office hour slot created", officeHourService.createSlot(teacherEmail, request));
+    }
+
+    @PostMapping("/office-hours/slots/{id}/status")
+    public ApiResponse<FacultyOfficeHourSlot> updateOfficeHourSlotStatus(@PathVariable Long id,
+                                                                         @RequestParam String status,
+                                                                         @RequestParam(required = false) String feedback,
+                                                                         @AuthenticationPrincipal CustomUserDetails userDetails) {
+        String teacherEmail = userDetails != null ? userDetails.getUsername() : "teacher-demo";
+        FacultyOfficeHourSlot.SlotStatus slotStatus = FacultyOfficeHourSlot.SlotStatus.valueOf(status.toUpperCase());
+        return ApiResponse.ok("Slot status updated", officeHourService.updateSlotStatus(id, teacherEmail, slotStatus, feedback));
+    }
+
+    // ─────────────────────────────────────────────────────────
     // ROOM RESERVATIONS
     // ─────────────────────────────────────────────────────────
 
@@ -206,7 +262,7 @@ public class TeacherApiController {
     // ─────────────────────────────────────────────────────────
 
     @ExceptionHandler(IllegalArgumentException.class)
-    public ApiResponse<Void> handleBadRequest(IllegalArgumentException exception) {
-        return ApiResponse.error(exception.getMessage());
+    public ResponseEntity<ApiResponse<Void>> handleBadRequest(IllegalArgumentException exception) {
+        return ResponseEntity.badRequest().body(ApiResponse.error(exception.getMessage()));
     }
 }
