@@ -5,7 +5,6 @@ import bd.ac.uiu.smartcampus.model.*;
 import bd.ac.uiu.smartcampus.repository.CampusNoticeRepository;
 import bd.ac.uiu.smartcampus.security.CustomUserDetails;
 import bd.ac.uiu.smartcampus.service.TeacherDashboardService;
-import bd.ac.uiu.smartcampus.syllabus.collections.ClassroomModel;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -33,18 +32,18 @@ public class TeacherApiController {
 
     @GetMapping("/classes")
     public ApiResponse<List<java.util.Map<String, Object>>> classes(@AuthenticationPrincipal CustomUserDetails userDetails) {
-        return ApiResponse.ok("Teacher classes", teacherService.getTeacherClasses(userDetails.getUsername(), DashboardApiController.sampleClassrooms()));
+        return ApiResponse.ok("Teacher classes", teacherService.getTeacherClasses(userDetails.getUsername()));
     }
 
     @PostMapping("/classes/{id}/start")
-    public ApiResponse<TeachingSchedule> startClass(@PathVariable Long id,
-                                                    @AuthenticationPrincipal CustomUserDetails userDetails) {
+    public ApiResponse<ClassSession> startClass(@PathVariable Long id,
+                                                @AuthenticationPrincipal CustomUserDetails userDetails) {
         return ApiResponse.ok("Class started", teacherService.startClass(id, userDetails.getUsername()));
     }
 
     @PostMapping("/classes/{id}/end")
-    public ApiResponse<TeachingSchedule> endClass(@PathVariable Long id,
-                                                  @AuthenticationPrincipal CustomUserDetails userDetails) {
+    public ApiResponse<ClassSession> endClass(@PathVariable Long id,
+                                              @AuthenticationPrincipal CustomUserDetails userDetails) {
         return ApiResponse.ok("Class ended", teacherService.endClass(id, userDetails.getUsername()));
     }
 
@@ -86,12 +85,12 @@ public class TeacherApiController {
     }
 
     @GetMapping("/rooms/available")
-    public ApiResponse<List<ClassroomModel>> availableRooms(@RequestParam String date,
-                                                            @RequestParam String startTime,
-                                                            @RequestParam String endTime) {
+    public ApiResponse<List<Classroom>> availableRooms(@RequestParam String date,
+                                                       @RequestParam String startTime,
+                                                       @RequestParam String endTime) {
         return ApiResponse.ok(
                 "Available classrooms",
-                teacherService.availableRooms(DashboardApiController.sampleClassrooms(), LocalDate.parse(date), LocalTime.parse(startTime), LocalTime.parse(endTime))
+                teacherService.availableRooms(LocalDate.parse(date), LocalTime.parse(startTime), LocalTime.parse(endTime))
         );
     }
 

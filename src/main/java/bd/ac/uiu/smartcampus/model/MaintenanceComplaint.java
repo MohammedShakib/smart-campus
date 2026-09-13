@@ -17,6 +17,15 @@ public class MaintenanceComplaint {
     @Column(nullable = false, length = 30)
     private String studentId;
 
+    @Column(length = 50)
+    private String reporterId;
+
+    @Column(length = 100)
+    private String reporterName;
+
+    @Column(length = 30)
+    private String reporterRole;
+
     @Column(nullable = false, length = 50)
     private String location; // e.g., Room 522, Lab 4, Cafeteria
 
@@ -41,6 +50,9 @@ public class MaintenanceComplaint {
     public MaintenanceComplaint(String studentName, String studentId, String location, String issueTitle, String description, String priority) {
         this.studentName = studentName;
         this.studentId = studentId;
+        this.reporterName = studentName;
+        this.reporterId = studentId;
+        this.reporterRole = "ROLE_STUDENT";
         this.location = location;
         this.issueTitle = issueTitle;
         this.description = description;
@@ -71,6 +83,30 @@ public class MaintenanceComplaint {
 
     public void setStudentId(String studentId) {
         this.studentId = studentId;
+    }
+
+    public String getReporterId() {
+        return reporterId;
+    }
+
+    public void setReporterId(String reporterId) {
+        this.reporterId = reporterId;
+    }
+
+    public String getReporterName() {
+        return reporterName;
+    }
+
+    public void setReporterName(String reporterName) {
+        this.reporterName = reporterName;
+    }
+
+    public String getReporterRole() {
+        return reporterRole;
+    }
+
+    public void setReporterRole(String reporterRole) {
+        this.reporterRole = reporterRole;
     }
 
     public String getLocation() {

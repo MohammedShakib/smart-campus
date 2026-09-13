@@ -3,6 +3,7 @@ package bd.ac.uiu.smartcampus.config;
 import bd.ac.uiu.smartcampus.model.*;
 import bd.ac.uiu.smartcampus.repository.AdminActionLogRepository;
 import bd.ac.uiu.smartcampus.repository.CampusNoticeRepository;
+import bd.ac.uiu.smartcampus.repository.ClassroomRepository;
 import bd.ac.uiu.smartcampus.repository.MaintenanceComplaintRepository;
 import bd.ac.uiu.smartcampus.repository.TeachingScheduleRepository;
 import bd.ac.uiu.smartcampus.repository.UserRepository;
@@ -25,6 +26,7 @@ public class DataInitializer implements CommandLineRunner {
     private final MaintenanceComplaintRepository complaintRepository;
     private final AdminActionLogRepository actionLogRepository;
     private final TeachingScheduleRepository teachingScheduleRepository;
+    private final ClassroomRepository classroomRepository;
     private final PasswordEncoder passwordEncoder;
 
     public DataInitializer(UserRepository userRepository,
@@ -32,12 +34,14 @@ public class DataInitializer implements CommandLineRunner {
                            MaintenanceComplaintRepository complaintRepository,
                            AdminActionLogRepository actionLogRepository,
                            TeachingScheduleRepository teachingScheduleRepository,
+                           ClassroomRepository classroomRepository,
                            PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.noticeRepository = noticeRepository;
         this.complaintRepository = complaintRepository;
         this.actionLogRepository = actionLogRepository;
         this.teachingScheduleRepository = teachingScheduleRepository;
+        this.classroomRepository = classroomRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -54,6 +58,11 @@ public class DataInitializer implements CommandLineRunner {
         seedTeacherSchedule("teacher-demo", "CSE 2211", "Advanced Object Oriented Programming", "Section A", "Room 524", "Tuesday", "10:30", "12:00");
         seedTeacherSchedule("teacher-demo", "CSE 3312", "Database Systems", "Section B", "Room 412", "Monday", "14:00", "15:30");
         seedTeacherSchedule("teacher-demo", "CSE 3312", "Database Systems", "Section B", "Room 412", "Wednesday", "14:00", "15:30");
+        seedClassroom("Room 524 (CSE Lab 4)", 60, 5, true, 3.8, "UIU Main Campus", "CSE Lab");
+        seedClassroom("Room 522 (Theory)", 55, 5, false, 0.4, "UIU Main Campus", "Theory");
+        seedClassroom("Room 412 (Multimedia)", 70, 4, true, 4.2, "UIU Main Campus", "Multimedia");
+        seedClassroom("Room 301 (Auditorium)", 250, 3, true, 18.5, "UIU Main Campus", "Auditorium");
+        seedClassroom("Room 608 (Seminar)", 45, 6, false, 0.2, "UIU Main Campus", "Seminar");
 
         // 2. Seed Initial Campus Notices (if empty)
         if (noticeRepository.count() == 0) {
@@ -153,6 +162,23 @@ public class DataInitializer implements CommandLineRunner {
             );
             teachingScheduleRepository.save(schedule);
             logger.info("Created teacher schedule: {} {} {}", teacherEmail, courseCode, dayOfWeek);
+        } else {
+            teachingScheduleRepository.findByTeacherEmailAndCourseCodeAndSectionNameAndDayOfWeek(teacherEmail, courseCode, sectionName, dayOfWeek)
+                    .ifPresent(schedule -> {
+                        if (schedule.getStatus() != ClassStatus.SCHEDULED || schedule.getStartedAt() != null || schedule.getEndedAt() != null) {
+                            schedule.setStatus(ClassStatus.SCHEDULED);
+                            schedule.setStartedAt(null);
+                            schedule.setEndedAt(null);
+                            teachingScheduleRepository.save(schedule);
+                        }
+                    });
+        }
+    }
+
+    private void seedClassroom(String roomNumber, int capacity, int floor, boolean occupied, double powerKW, String building, String roomType) {
+        if (!classroomRepository.existsByRoomNumber(roomNumber)) {
+            classroomRepository.save(new Classroom(roomNumber, capacity, floor, occupied, powerKW, building, roomType));
+            logger.info("Created classroom: {}", roomNumber);
         }
     }
 }

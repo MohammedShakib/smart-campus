@@ -2,6 +2,7 @@ package bd.ac.uiu.smartcampus.controller;
 
 import bd.ac.uiu.smartcampus.dto.RegisterRequest;
 import bd.ac.uiu.smartcampus.service.AuthService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -33,10 +34,19 @@ public class AuthController {
     public String showLoginPage(@RequestParam(value = "error", required = false) String error,
                                 @RequestParam(value = "logout", required = false) String logout,
                                 @RequestParam(value = "registered", required = false) String registered,
+                                @RequestParam(value = "returnTo", required = false) String returnTo,
                                 Model model,
+                                HttpServletRequest request,
                                 Authentication authentication) {
+        if (returnTo != null && returnTo.startsWith("/attendance/checkin")) {
+            request.getSession().setAttribute("RETURN_TO", returnTo);
+        }
+
         // If already logged in, redirect to appropriate role dashboard
         if (authentication != null && authentication.isAuthenticated() && !authentication.getPrincipal().equals("anonymousUser")) {
+            if (returnTo != null && returnTo.startsWith("/attendance/checkin")) {
+                return "redirect:" + returnTo;
+            }
             return "redirect:/dashboard/student";
         }
 
@@ -50,6 +60,11 @@ public class AuthController {
             model.addAttribute("successMessage", "Account created successfully! You can now log in.");
         }
 
+        return "forward:/app/index.html";
+    }
+
+    @GetMapping("/attendance/checkin")
+    public String showAttendanceCheckInPage() {
         return "forward:/app/index.html";
     }
 

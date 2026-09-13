@@ -861,6 +861,71 @@
 .center-state p { font-size: 0.95rem; }
 .center-state .primary-btn { width: auto; }
 
+.checkin-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 1.25rem;
+  background: var(--bg-base);
+}
+
+.checkin-card {
+  width: min(440px, 100%);
+  display: grid;
+  justify-items: center;
+  gap: 1rem;
+  text-align: center;
+}
+
+.checkin-logo {
+  width: 152px;
+  height: auto;
+}
+
+.checkin-icon {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  border-radius: 18px;
+  color: var(--rose);
+  background: var(--rose-soft);
+  border: 1px solid var(--rose-border);
+}
+
+.checkin-icon.success {
+  color: var(--emerald);
+  background: var(--emerald-soft);
+  border-color: var(--emerald-border);
+}
+
+.checkin-icon.loading {
+  color: var(--accent-dark);
+  background: var(--accent-soft);
+  border-color: var(--accent-border);
+}
+
+.checkin-copy h1 {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--tx-primary);
+  margin-bottom: 0.35rem;
+}
+
+.checkin-copy p {
+  color: var(--tx-secondary);
+  font-size: 0.86rem;
+  line-height: 1.55;
+}
+
+.spin-icon {
+  animation: dashboard-spin 0.8s linear infinite;
+}
+
+@keyframes dashboard-spin {
+  to { transform: rotate(360deg); }
+}
+
 /* ============================================================
    RESPONSIVE
    ============================================================ */

@@ -26,6 +26,10 @@ function classRows(schedule = []) {
   ]);
 }
 
+function classStatus(item) {
+  return item?.status || item?.session?.status || item?.schedule?.status || 'SCHEDULED';
+}
+
 function Feedback({ result }) {
   if (!result) return null;
   return <div className={`notice ${result.type}`}>{result.text}</div>;
@@ -84,11 +88,14 @@ export function TeacherClassesSection({ data, reload }) {
       <SectionHeader title="My Classes" subtitle="Your assigned classes with matching smart classroom telemetry." />
       <Feedback result={result} />
       <div className="classroom-grid">
-        {classes.map(({ schedule, room }) => (
-          <div key={schedule.id} className={`room-card ${schedule.status === 'ACTIVE' ? 'room-card--active' : ''}`}>
+        {classes.map((item) => {
+          const { schedule, room } = item;
+          const status = classStatus(item);
+          return (
+          <div key={schedule.id} className={`room-card ${status === 'ACTIVE' ? 'room-card--active' : ''}`}>
             <div className="room-card-header">
               <BookOpen size={16} />
-              <span className={`room-badge ${schedule.status === 'ACTIVE' ? 'badge--occupied' : 'badge--free'}`}>{schedule.status}</span>
+              <span className={`room-badge ${status === 'ACTIVE' ? 'badge--occupied' : 'badge--free'}`}>{status}</span>
             </div>
             <strong className="room-name">{schedule.courseCode} - {schedule.sectionName}</strong>
             <p className="teacher-card-copy">{schedule.courseTitle}</p>
@@ -98,15 +105,16 @@ export function TeacherClassesSection({ data, reload }) {
               <div className="room-stat"><span>Power</span><strong>{room?.powerKW ?? '-'} kW</strong></div>
             </div>
             <div className="teacher-card-actions">
-              <button className="ghost-btn" type="button" disabled={schedule.status === 'ACTIVE' || busyId === `start-${schedule.id}`} onClick={() => updateClass(schedule.id, 'start')}>
+              <button className="ghost-btn" type="button" disabled={status === 'ACTIVE' || status === 'COMPLETED' || busyId === `start-${schedule.id}`} onClick={() => updateClass(schedule.id, 'start')}>
                 Start Class
               </button>
-              <button className="ghost-btn" type="button" disabled={schedule.status === 'COMPLETED' || busyId === `end-${schedule.id}`} onClick={() => updateClass(schedule.id, 'end')}>
+              <button className="ghost-btn" type="button" disabled={status !== 'ACTIVE' || busyId === `end-${schedule.id}`} onClick={() => updateClass(schedule.id, 'end')}>
                 End Class
               </button>
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
       {!classes.length && <p className="muted">No assigned classes found.</p>}
     </div>
@@ -358,12 +366,7 @@ export function TeacherReportIssueSection({ data, reload }) {
     event.preventDefault();
     setBusy(true);
     setResult(null);
-    const payload = {
-      ...ticket,
-      studentName: data.user?.fullName || 'Teacher',
-      studentId: data.user?.studentOrEmpId || data.user?.email || 'teacher'
-    };
-    api('/api/campus/complaint/submit', { method: 'POST', body: JSON.stringify(payload) })
+    api('/api/campus/complaint/submit', { method: 'POST', body: JSON.stringify(ticket) })
       .then((res) => {
         setResult({ type: 'success', text: res.message });
         setTicket({ location: '', issueTitle: '', priority: 'MEDIUM', description: '' });

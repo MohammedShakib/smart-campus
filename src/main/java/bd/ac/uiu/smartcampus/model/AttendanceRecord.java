@@ -5,7 +5,10 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "attendance_records")
+@Table(
+        name = "attendance_records",
+        uniqueConstraints = @UniqueConstraint(columnNames = {"attendance_session_id", "student_id"})
+)
 public class AttendanceRecord {
 
     @Id
@@ -17,7 +20,7 @@ public class AttendanceRecord {
     @JsonIgnore
     private AttendanceSession attendanceSession;
 
-    @Column(nullable = false, length = 30)
+    @Column(name = "student_id", nullable = false, length = 30)
     private String studentId;
 
     @Column(length = 100)

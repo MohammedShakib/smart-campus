@@ -51,7 +51,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // Static Assets & Public pages
                 .requestMatchers("/app/**", "/css/**", "/js/**", "/images/**", "/webjars/**", "/favicon.ico").permitAll()
-                .requestMatchers("/", "/login", "/register", "/api/auth/register", "/api/auth/me", "/h2-console/**").permitAll()
+                .requestMatchers("/", "/login", "/register", "/attendance/checkin", "/api/auth/register", "/api/auth/me", "/h2-console/**").permitAll()
 
                 // Teacher-specific APIs and protected campus actions
                 .requestMatchers("/api/teacher/**").hasRole("TEACHER")

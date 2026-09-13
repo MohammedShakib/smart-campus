@@ -16,6 +16,10 @@ public class AttendanceSession {
     @JoinColumn(name = "teaching_schedule_id", nullable = false)
     private TeachingSchedule teachingSchedule;
 
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "class_session_id")
+    private ClassSession classSession;
+
     @Column(nullable = false, length = 100)
     private String teacherEmail;
 
@@ -60,6 +64,14 @@ public class AttendanceSession {
 
     public void setTeachingSchedule(TeachingSchedule teachingSchedule) {
         this.teachingSchedule = teachingSchedule;
+    }
+
+    public ClassSession getClassSession() {
+        return classSession;
+    }
+
+    public void setClassSession(ClassSession classSession) {
+        this.classSession = classSession;
     }
 
     public String getTeacherEmail() {

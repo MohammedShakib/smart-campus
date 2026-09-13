@@ -21,6 +21,12 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
         Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
 
         String targetUrl = "/dashboard/student";
+        Object returnTo = request.getSession().getAttribute("RETURN_TO");
+        if (returnTo instanceof String returnUrl && returnUrl.startsWith("/attendance/checkin")) {
+            request.getSession().removeAttribute("RETURN_TO");
+            response.sendRedirect(returnUrl);
+            return;
+        }
 
         for (GrantedAuthority authority : authorities) {
             String role = authority.getAuthority();

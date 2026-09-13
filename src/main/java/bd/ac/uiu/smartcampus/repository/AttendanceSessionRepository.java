@@ -11,6 +11,7 @@ import java.util.Optional;
 @Repository
 public interface AttendanceSessionRepository extends JpaRepository<AttendanceSession, Long> {
     Optional<AttendanceSession> findByIdAndTeacherEmail(Long id, String teacherEmail);
+    Optional<AttendanceSession> findByToken(String token);
     Optional<AttendanceSession> findByTokenAndActiveTrue(String token);
     Optional<AttendanceSession> findByTeachingScheduleAndTeacherEmailAndActiveTrue(TeachingSchedule teachingSchedule, String teacherEmail);
     List<AttendanceSession> findByTeacherEmailOrderByStartedAtDesc(String teacherEmail);

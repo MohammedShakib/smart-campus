@@ -5,7 +5,6 @@ import bd.ac.uiu.smartcampus.dto.RoomReservationRequest;
 import bd.ac.uiu.smartcampus.model.*;
 import bd.ac.uiu.smartcampus.repository.*;
 import bd.ac.uiu.smartcampus.security.CustomUserDetails;
-import bd.ac.uiu.smartcampus.syllabus.collections.ClassroomModel;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,15 +20,21 @@ public class TeacherDashboardService {
     private final AttendanceSessionRepository sessionRepository;
     private final AttendanceRecordRepository recordRepository;
     private final RoomReservationRepository reservationRepository;
+    private final ClassSessionRepository classSessionRepository;
+    private final ClassroomRepository classroomRepository;
 
     public TeacherDashboardService(TeachingScheduleRepository scheduleRepository,
                                    AttendanceSessionRepository sessionRepository,
                                    AttendanceRecordRepository recordRepository,
-                                   RoomReservationRepository reservationRepository) {
+                                   RoomReservationRepository reservationRepository,
+                                   ClassSessionRepository classSessionRepository,
+                                   ClassroomRepository classroomRepository) {
         this.scheduleRepository = scheduleRepository;
         this.sessionRepository = sessionRepository;
         this.recordRepository = recordRepository;
         this.reservationRepository = reservationRepository;
+        this.classSessionRepository = classSessionRepository;
+        this.classroomRepository = classroomRepository;
     }
 
     public List<TeachingSchedule> getSchedule(String teacherEmail) {
@@ -38,21 +43,24 @@ public class TeacherDashboardService {
 
     public Optional<TeachingSchedule> getNextClass(String teacherEmail) {
         return getSchedule(teacherEmail).stream()
-                .filter(schedule -> schedule.getStatus() != ClassStatus.COMPLETED)
                 .findFirst();
     }
 
-    public List<Map<String, Object>> getTeacherClasses(String teacherEmail, List<ClassroomModel> classrooms) {
-        Map<String, ClassroomModel> roomMap = new LinkedHashMap<>();
-        for (ClassroomModel room : classrooms) {
+    public List<Map<String, Object>> getTeacherClasses(String teacherEmail) {
+        Map<String, Classroom> roomMap = new LinkedHashMap<>();
+        for (Classroom room : getClassrooms()) {
             roomMap.put(normalizeRoom(room.getRoomNumber()), room);
         }
 
         List<Map<String, Object>> classes = new ArrayList<>();
+        LocalDate today = LocalDate.now();
         for (TeachingSchedule schedule : getSchedule(teacherEmail)) {
-            ClassroomModel room = roomMap.getOrDefault(normalizeRoom(schedule.getRoomNumber()), null);
+            Classroom room = roomMap.getOrDefault(normalizeRoom(schedule.getRoomNumber()), null);
+            Optional<ClassSession> session = classSessionRepository.findByTeachingScheduleAndSessionDate(schedule, today);
             Map<String, Object> item = new LinkedHashMap<>();
             item.put("schedule", schedule);
+            item.put("status", session.map(ClassSession::getStatus).orElse(ClassStatus.SCHEDULED));
+            session.ifPresent(value -> item.put("session", value));
             if (room != null) {
                 item.put("room", room);
             }
@@ -62,26 +70,37 @@ public class TeacherDashboardService {
     }
 
     @Transactional
-    public TeachingSchedule startClass(Long scheduleId, String teacherEmail) {
+    public ClassSession startClass(Long scheduleId, String teacherEmail) {
         TeachingSchedule schedule = ownedSchedule(scheduleId, teacherEmail);
-        schedule.setStatus(ClassStatus.ACTIVE);
-        schedule.setStartedAt(LocalDateTime.now());
-        schedule.setEndedAt(null);
-        return scheduleRepository.save(schedule);
+        ClassSession session = todayClassSession(schedule);
+        if (session.getStatus() == ClassStatus.COMPLETED) {
+            throw new IllegalArgumentException("Completed class sessions cannot be restarted.");
+        }
+        session.setStatus(ClassStatus.ACTIVE);
+        session.setStartedAt(LocalDateTime.now());
+        session.setEndedAt(null);
+        session.setStartedByTeacherId(teacherEmail);
+        return classSessionRepository.save(session);
     }
 
     @Transactional
-    public TeachingSchedule endClass(Long scheduleId, String teacherEmail) {
+    public ClassSession endClass(Long scheduleId, String teacherEmail) {
         TeachingSchedule schedule = ownedSchedule(scheduleId, teacherEmail);
-        schedule.setStatus(ClassStatus.COMPLETED);
-        schedule.setEndedAt(LocalDateTime.now());
+        ClassSession classSession = classSessionRepository.findByTeachingScheduleAndSessionDate(schedule, LocalDate.now())
+                .orElseThrow(() -> new IllegalArgumentException("Today's class session has not been started."));
+        if (classSession.getStatus() != ClassStatus.ACTIVE) {
+            throw new IllegalArgumentException("Only an active class session can be ended.");
+        }
+        LocalDateTime endedAt = LocalDateTime.now();
+        classSession.setStatus(ClassStatus.COMPLETED);
+        classSession.setEndedAt(endedAt);
         sessionRepository.findByTeachingScheduleAndTeacherEmailAndActiveTrue(schedule, teacherEmail)
                 .ifPresent(session -> {
                     session.setActive(false);
-                    session.setEndedAt(LocalDateTime.now());
+                    session.setEndedAt(endedAt);
                     sessionRepository.save(session);
                 });
-        return scheduleRepository.save(schedule);
+        return classSessionRepository.save(classSession);
     }
 
     @Transactional
@@ -91,7 +110,9 @@ public class TeacherDashboardService {
         if (existing.isPresent()) {
             return existing.get();
         }
+        ClassSession classSession = todayClassSession(schedule);
         AttendanceSession session = new AttendanceSession(schedule, teacherEmail, UUID.randomUUID().toString().replace("-", ""));
+        session.setClassSession(classSession);
         return sessionRepository.save(session);
     }
 
@@ -121,9 +142,22 @@ public class TeacherDashboardService {
 
     @Transactional
     public AttendanceRecord checkInWithToken(String token, CustomUserDetails studentDetails) {
-        AttendanceSession session = sessionRepository.findByTokenAndActiveTrue(required(token, "Attendance token is required."))
-                .orElseThrow(() -> new IllegalArgumentException("Attendance session is not active."));
+        String cleanToken = required(token, "Invalid token.");
+        if (studentDetails == null || studentDetails.getAuthorities().stream().noneMatch(authority -> "ROLE_STUDENT".equals(authority.getAuthority()))) {
+            throw new IllegalArgumentException("Student login required.");
+        }
+        AttendanceSession session = sessionRepository.findByToken(cleanToken)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid token."));
+        if (!session.isActive()) {
+            throw new IllegalArgumentException("Session closed.");
+        }
+        if (session.getTeachingSchedule() == null) {
+            throw new IllegalArgumentException("Invalid token.");
+        }
         String studentId = required(studentDetails.getStudentOrEmpId(), "Student ID is required.");
+        if (recordRepository.findByAttendanceSessionAndStudentId(session, studentId).isPresent()) {
+            throw new IllegalArgumentException("Already checked in.");
+        }
         AttendanceRecord record = recordRepository.findByAttendanceSessionAndStudentId(session, studentId)
                 .orElseGet(() -> new AttendanceRecord(session, studentId, studentDetails.getFullName(), AttendanceStatus.PRESENT));
         record.setStudentName(studentDetails.getFullName());
@@ -144,6 +178,7 @@ public class TeacherDashboardService {
         Map<String, Object> payload = new LinkedHashMap<>();
         List<AttendanceRecord> records = recordRepository.findByAttendanceSessionOrderByCheckedInAtAsc(session);
         payload.put("session", session);
+        payload.put("classSession", session.getClassSession());
         payload.put("schedule", session.getTeachingSchedule());
         payload.put("records", records);
         payload.put("presentCount", recordRepository.countByAttendanceSessionAndStatus(session, AttendanceStatus.PRESENT));
@@ -160,6 +195,8 @@ public class TeacherDashboardService {
     public RoomReservation reserveRoom(String teacherEmail, RoomReservationRequest request) {
         String roomNumber = required(request.getRoomNumber(), "Room is required.");
         String purpose = required(request.getPurpose(), "Purpose is required.");
+        classroomRepository.findByRoomNumber(roomNumber)
+                .orElseThrow(() -> new IllegalArgumentException("Classroom not found."));
         LocalDate date = LocalDate.parse(required(request.getReservationDate(), "Date is required."));
         LocalTime start = LocalTime.parse(required(request.getStartTime(), "Start time is required."));
         LocalTime end = LocalTime.parse(required(request.getEndTime(), "End time is required."));
@@ -172,9 +209,13 @@ public class TeacherDashboardService {
         return reservationRepository.save(new RoomReservation(teacherEmail, roomNumber, date, start, end, purpose));
     }
 
-    public List<ClassroomModel> availableRooms(List<ClassroomModel> classrooms, LocalDate date, LocalTime start, LocalTime end) {
-        List<ClassroomModel> available = new ArrayList<>();
-        for (ClassroomModel room : classrooms) {
+    public List<Classroom> getClassrooms() {
+        return classroomRepository.findAllByOrderByFloorAscRoomNumberAsc();
+    }
+
+    public List<Classroom> availableRooms(LocalDate date, LocalTime start, LocalTime end) {
+        List<Classroom> available = new ArrayList<>();
+        for (Classroom room : getClassrooms()) {
             if (reservationRepository.findConflicts(room.getRoomNumber(), date, start, end).isEmpty()) {
                 available.add(room);
             }
@@ -194,6 +235,12 @@ public class TeacherDashboardService {
     private AttendanceSession ownedSession(Long sessionId, String teacherEmail) {
         return sessionRepository.findByIdAndTeacherEmail(sessionId, teacherEmail)
                 .orElseThrow(() -> new IllegalArgumentException("Attendance session not found."));
+    }
+
+    private ClassSession todayClassSession(TeachingSchedule schedule) {
+        LocalDate today = LocalDate.now();
+        return classSessionRepository.findByTeachingScheduleAndSessionDate(schedule, today)
+                .orElseGet(() -> classSessionRepository.save(new ClassSession(schedule, today)));
     }
 
     private AttendanceStatus parseAttendanceStatus(String value) {

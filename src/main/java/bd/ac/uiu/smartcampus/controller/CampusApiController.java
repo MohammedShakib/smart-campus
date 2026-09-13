@@ -5,6 +5,7 @@ import bd.ac.uiu.smartcampus.dto.CampusTelemetryDto;
 import bd.ac.uiu.smartcampus.model.AdminActionLog;
 import bd.ac.uiu.smartcampus.model.CampusState;
 import bd.ac.uiu.smartcampus.model.MaintenanceComplaint;
+import bd.ac.uiu.smartcampus.security.CustomUserDetails;
 import bd.ac.uiu.smartcampus.syllabus.collections.AdminActionStackService;
 import bd.ac.uiu.smartcampus.syllabus.collections.ComplaintQueueService;
 import bd.ac.uiu.smartcampus.syllabus.collections.UniqueAttendeeSetService;
@@ -13,6 +14,7 @@ import bd.ac.uiu.smartcampus.syllabus.fileio.CampusLogFileWriter;
 import bd.ac.uiu.smartcampus.syllabus.fileio.CampusStateBackupService;
 import bd.ac.uiu.smartcampus.syllabus.networking.BusClientSimulator;
 import bd.ac.uiu.smartcampus.syllabus.networking.BusServerSocketManager;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -86,7 +88,15 @@ public class CampusApiController {
      * AOOP Queue: Enqueue new maintenance complaint (FIFO Offer)
      */
     @PostMapping("/complaint/submit")
-    public ApiResponse<MaintenanceComplaint> submitComplaint(@RequestBody MaintenanceComplaint complaint) {
+    public ApiResponse<MaintenanceComplaint> submitComplaint(@RequestBody MaintenanceComplaint complaint,
+                                                             @AuthenticationPrincipal CustomUserDetails userDetails) {
+        if (complaint.getIssueTitle() == null || complaint.getIssueTitle().isBlank()) {
+            return ApiResponse.error("Issue title is required.");
+        }
+        if (complaint.getLocation() == null || complaint.getLocation().isBlank()) {
+            return ApiResponse.error("Location is required.");
+        }
+        applyReporterIdentity(complaint, userDetails);
         MaintenanceComplaint queued = complaintQueueService.submitComplaint(complaint);
         logFileWriter.appendAuditLog("QUEUE_ENQUEUE", "Complaint queued: " + complaint.getIssueTitle());
         return ApiResponse.ok("Complaint enqueued in FIFO Processing Queue", queued);
@@ -178,5 +188,21 @@ public class CampusApiController {
     @GetMapping("/bus/locations")
     public ApiResponse<Map<String, String>> getBusLocations() {
         return ApiResponse.ok("Active bus routes", busServerManager.getLatestBusLocations());
+    }
+
+    private void applyReporterIdentity(MaintenanceComplaint complaint, CustomUserDetails userDetails) {
+        String reporterName = userDetails != null ? userDetails.getFullName() : "Authenticated User";
+        String reporterId = userDetails != null && userDetails.getStudentOrEmpId() != null && !userDetails.getStudentOrEmpId().isBlank()
+                ? userDetails.getStudentOrEmpId()
+                : userDetails != null ? userDetails.getUsername() : "unknown";
+        String reporterRole = userDetails != null ? userDetails.getRoleName() : "UNKNOWN";
+
+        complaint.setReporterName(reporterName);
+        complaint.setReporterId(reporterId);
+        complaint.setReporterRole(reporterRole);
+
+        // Legacy fields remain populated so existing Student/Admin screens and repository queries keep working.
+        complaint.setStudentName(reporterName);
+        complaint.setStudentId(reporterId);
     }
 }

@@ -3,11 +3,11 @@ package bd.ac.uiu.smartcampus.controller;
 import bd.ac.uiu.smartcampus.dto.CampusTelemetryDto;
 import bd.ac.uiu.smartcampus.model.Role;
 import bd.ac.uiu.smartcampus.repository.CampusNoticeRepository;
+import bd.ac.uiu.smartcampus.repository.ClassroomRepository;
 import bd.ac.uiu.smartcampus.repository.MaintenanceComplaintRepository;
 import bd.ac.uiu.smartcampus.repository.UserRepository;
 import bd.ac.uiu.smartcampus.security.CustomUserDetails;
 import bd.ac.uiu.smartcampus.syllabus.collections.AdminActionStackService;
-import bd.ac.uiu.smartcampus.syllabus.collections.ClassroomModel;
 import bd.ac.uiu.smartcampus.syllabus.collections.ComplaintQueueService;
 import bd.ac.uiu.smartcampus.syllabus.collections.UniqueAttendeeSetService;
 import bd.ac.uiu.smartcampus.syllabus.concurrency.CampusSimulationWorker;
@@ -17,10 +17,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 @Controller
 @RequestMapping("/dashboard")
@@ -34,6 +30,7 @@ public class DashboardController {
     private final UniqueAttendeeSetService attendeeSetService;
     private final CampusSimulationWorker simulationWorker;
     private final BusServerSocketManager busServerManager;
+    private final ClassroomRepository classroomRepository;
 
     public DashboardController(UserRepository userRepository,
                                CampusNoticeRepository noticeRepository,
@@ -42,7 +39,8 @@ public class DashboardController {
                                ComplaintQueueService complaintQueueService,
                                UniqueAttendeeSetService attendeeSetService,
                                CampusSimulationWorker simulationWorker,
-                               BusServerSocketManager busServerManager) {
+                               BusServerSocketManager busServerManager,
+                               ClassroomRepository classroomRepository) {
         this.userRepository = userRepository;
         this.noticeRepository = noticeRepository;
         this.complaintRepository = complaintRepository;
@@ -51,6 +49,7 @@ public class DashboardController {
         this.attendeeSetService = attendeeSetService;
         this.simulationWorker = simulationWorker;
         this.busServerManager = busServerManager;
+        this.classroomRepository = classroomRepository;
     }
 
     @GetMapping("/admin")
@@ -84,10 +83,7 @@ public class DashboardController {
         model.addAttribute("telemetry", telemetry);
         model.addAttribute("notices", noticeRepository.findTop10ByOrderByPostedAtDesc());
 
-        // Sample Classrooms demonstrating Comparable / Comparator
-        List<ClassroomModel> classrooms = getSampleClassrooms();
-        Collections.sort(classrooms); // Uses Comparable natural order
-        model.addAttribute("classrooms", classrooms);
+        model.addAttribute("classrooms", classroomRepository.findAllByOrderByFloorAscRoomNumberAsc());
 
         return "forward:/app/index.html";
     }
@@ -130,13 +126,4 @@ public class DashboardController {
         }
     }
 
-    private List<ClassroomModel> getSampleClassrooms() {
-        List<ClassroomModel> list = new ArrayList<>();
-        list.add(new ClassroomModel("Room 524 (CSE Lab 4)", 60, 5, true, 3.8));
-        list.add(new ClassroomModel("Room 522 (Theory)", 55, 5, false, 0.4));
-        list.add(new ClassroomModel("Room 412 (Multimedia)", 70, 4, true, 4.2));
-        list.add(new ClassroomModel("Room 301 (Auditorium)", 250, 3, true, 18.5));
-        list.add(new ClassroomModel("Room 608 (Seminar)", 45, 6, false, 0.2));
-        return list;
-    }
 }
