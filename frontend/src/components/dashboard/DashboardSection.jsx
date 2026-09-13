@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Building2, BusFront, ClipboardCheck, Database, DoorOpen, Layers, RadioTower, RefreshCw, Server, ShieldCheck, UsersRound, Wrench, Zap } from 'lucide-react';
 import { api, postAction } from '../../utils/api';
 import { sampleClassrooms, roleSummary } from '../../utils/helpers';
@@ -202,7 +202,7 @@ function MaintenanceSection({ data, reload }) {
             headers={['Issue', 'Location', 'Priority', 'Status', 'Reported']}
             rows={(data.queuedComplaints || []).map((item) => [
               item.issueTitle, item.location, item.priority, item.status,
-              item.reportedAt ? new Date(item.reportedAt).toLocaleDateString() : '—'
+              item.reportedAt ? new Date(item.reportedAt).toLocaleDateString() : '-'
             ])}
             empty="Maintenance queue is empty."
           />
@@ -225,7 +225,7 @@ function MaintenanceSection({ data, reload }) {
 function AuditSection({ auditLogs, data, reload }) {
   return (
     <div>
-      <SectionHeader title="Audit Stack" subtitle="LIFO action log — file-backed audit trail of all admin operations." />
+      <SectionHeader title="Audit Stack" subtitle="LIFO action log - file-backed audit trail of all admin operations." />
       <div className="section-grid">
         <Panel title="Audit Log Entries" tag={`${auditLogs.length} entries`}>
           <div className="action-row" style={{ marginBottom: '1rem' }}>
@@ -253,7 +253,7 @@ function AuditSection({ auditLogs, data, reload }) {
             rows={(data.actionStackHistory || []).map((item) => [
               item.actionType,
               item.adminEmail,
-              item.timestamp ? new Date(item.timestamp).toLocaleString() : '—'
+              item.timestamp ? new Date(item.timestamp).toLocaleString() : '-'
             ])}
             empty="No admin actions recorded yet."
           />
@@ -516,9 +516,10 @@ function VisitorLogSection({ data }) {
           <StatRow label="Unique Check-ins (Set size)" value={data.uniqueGatePassCount} color="emerald" />
         </div>
         <p className="muted" style={{ marginTop: '1rem', fontSize: '0.83rem' }}>
-          The gate system uses a Java HashSet to guarantee uniqueness — no student ID can be recorded twice in a session.
+          The gate system uses a Java HashSet to guarantee uniqueness - no student ID can be recorded twice in a session.
         </p>
       </Panel>
     </div>
   );
 }
+

@@ -17,11 +17,11 @@ public class ClassEnrollment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(optional = false, fetch = FetchType.EAGER)
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "teacher_id", nullable = false)
     private User teacher;
 
-    @ManyToOne(optional = false, fetch = FetchType.EAGER)
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "student_id", nullable = false)
     private User student;
 
@@ -41,6 +41,12 @@ public class ClassEnrollment {
     }
 
     public ClassEnrollment(User teacher, User student, String courseCode, String sectionName) {
+        if (teacher.getRole() != Role.ROLE_TEACHER) {
+            throw new IllegalArgumentException("Enrollment teacher must have ROLE_TEACHER.");
+        }
+        if (student.getRole() != Role.ROLE_STUDENT) {
+            throw new IllegalArgumentException("Enrollment student must have ROLE_STUDENT.");
+        }
         this.teacher = teacher;
         this.student = student;
         this.courseCode = courseCode;

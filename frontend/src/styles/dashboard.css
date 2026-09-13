@@ -1,4 +1,4 @@
-/* ============================================================
+﻿/* ============================================================
    DASHBOARD SHELL
    ============================================================ */
 .dashboard-shell {
@@ -957,7 +957,7 @@
 }
 
 /* ============================================================
-   SIDEBAR NAV — button-based section switcher
+   SIDEBAR NAV - button-based section switcher
    ============================================================ */
 .nav-item {
   display: flex;
@@ -1289,17 +1289,45 @@
   overflow-wrap: anywhere;
 }
 
-.attendance-stats {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-.teacher-attendance-form {
-  grid-template-columns: minmax(260px, 1fr) auto;
-  align-items: start;
-}
-
 .teacher-attendance-form .primary-btn {
   width: 100%;
+}
+
+.attendance-mode-switcher {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+.attendance-mode-switcher .primary-btn,
+.attendance-mode-switcher .ghost-btn {
+  font-size: 0.83rem;
+}
+
+.attendance-stats {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-bottom: 1rem;
+}
+
+.history-detail-row {
+  background: var(--surface-2);
+  padding: 1rem;
+}
+
+.history-detail-meta {
+  margin-bottom: 0.75rem;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--tx-muted);
+}
+
+.history-detail-table {
+  width: 100%;
+  font-size: 0.83rem;
+}
+
+.history-action-btn {
+  font-size: 0.78rem;
+  padding: 0.25rem 0.6rem;
 }
 
 .teacher-room-list {
@@ -1466,3 +1494,4 @@
     min-height: 34px;
   }
 }
+

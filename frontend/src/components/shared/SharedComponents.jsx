@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { BusFront, Loader2 } from 'lucide-react';
 
 export function SectionHeader({ title, subtitle }) {
@@ -51,7 +51,7 @@ export function StatRow({ label, value, color = 'accent' }) {
   return (
     <div className={`stat-row-item stat-row-item--${color}`}>
       <span>{label}</span>
-      <strong>{value ?? '—'}</strong>
+      <strong>{value ?? '-'}</strong>
     </div>
   );
 }
@@ -134,3 +134,4 @@ export function ErrorState({ error }) {
     </div>
   );
 }
+

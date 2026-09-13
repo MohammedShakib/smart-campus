@@ -34,6 +34,7 @@ public interface AttendanceSessionRepository extends JpaRepository<AttendanceSes
            "AND s.teachingSchedule.sectionName = :sectionName " +
            "AND s.active = false " +
            "AND s.endedAt IS NOT NULL " +
+           "AND s.startedAt <= CURRENT_TIMESTAMP " +
            "ORDER BY s.startedAt DESC")
     List<AttendanceSession> findCompletedSessionsByTeacherAndCourse(
             @Param("teacherEmail") String teacherEmail,
@@ -42,11 +43,13 @@ public interface AttendanceSessionRepository extends JpaRepository<AttendanceSes
 
     /**
      * All completed sessions for a teacher regardless of course — for full history view.
+     * P2-9: startedAt <= now() excludes defensive future-dated sessions.
      */
     @Query("SELECT s FROM AttendanceSession s " +
            "WHERE s.teacherEmail = :teacherEmail " +
            "AND s.active = false " +
            "AND s.endedAt IS NOT NULL " +
+           "AND s.startedAt <= CURRENT_TIMESTAMP " +
            "ORDER BY s.startedAt DESC")
     List<AttendanceSession> findAllCompletedByTeacher(@Param("teacherEmail") String teacherEmail);
 }

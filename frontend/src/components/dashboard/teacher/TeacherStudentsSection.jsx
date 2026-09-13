@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+﻿import React, { useEffect, useState, useMemo } from 'react';
 import { GraduationCap, Search } from 'lucide-react';
 import { api } from '../../../utils/api';
 import { SectionHeader, Panel, Table } from '../../shared/SharedComponents';
@@ -9,7 +9,7 @@ function Feedback({ result }) {
 }
 
 function formatPct(value) {
-  if (value === null || value === undefined) return '—';
+  if (value === null || value === undefined) return '-';
   return `${value.toFixed(1)}%`;
 }
 
@@ -55,7 +55,7 @@ export function TeacherStudentsSection() {
       .finally(() => setLoadingRoster(false));
   }, [selectedClass]);
 
-  // Frontend search filter — no extra API calls
+  // Frontend search filter - no extra API calls
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return roster;
@@ -77,7 +77,7 @@ export function TeacherStudentsSection() {
   ]);
 
   const subtitle = selectedClass
-    ? `${selectedClass.courseCode} — ${selectedClass.sectionName} · ${roster.length} student${roster.length !== 1 ? 's' : ''} enrolled`
+    ? `${selectedClass.courseCode} - ${selectedClass.sectionName} · ${roster.length} student${roster.length !== 1 ? 's' : ''} enrolled`
     : 'View students enrolled in your assigned course sections and their attendance.';
 
   return (
@@ -108,7 +108,7 @@ export function TeacherStudentsSection() {
                     className={`teacher-room-option${key === selKey ? ' is-selected' : ''}`}
                     onClick={() => { setSelectedClass(cls); setSearch(''); }}
                   >
-                    <strong>{cls.courseCode} — {cls.sectionName}</strong>
+                    <strong>{cls.courseCode} - {cls.sectionName}</strong>
                     <span>{cls.courseTitle}</span>
                   </button>
                 );
@@ -151,7 +151,7 @@ export function TeacherStudentsSection() {
 
       {/* Roster table */}
       <Panel
-        title={selectedClass ? `${selectedClass.courseCode} — ${selectedClass.sectionName}` : 'Class Roster'}
+        title={selectedClass ? `${selectedClass.courseCode} - ${selectedClass.sectionName}` : 'Class Roster'}
         tag={selectedClass ? `${filtered.length} student${filtered.length !== 1 ? 's' : ''}` : 'Select a class'}
       >
         {!selectedClass ? (
@@ -174,3 +174,4 @@ export function TeacherStudentsSection() {
     </div>
   );
 }
+

@@ -1,5 +1,5 @@
-/* ============================================================
-   UIU SMART CAMPUS — Premium Dark Design System
+﻿/* ============================================================
+   UIU SMART CAMPUS - Premium Dark Design System
    Fonts loaded non-blocking via <link> in index.html
    ============================================================ */
 
@@ -75,4 +75,5 @@ a { color: inherit; text-decoration: none; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(15,23,42,0.10); border-radius: 99px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(15,23,42,0.18); }
+
 

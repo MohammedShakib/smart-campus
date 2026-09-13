@@ -105,9 +105,7 @@ public class TeacherDashboardService {
         classSession.setEndedAt(endedAt);
         sessionRepository.findByTeachingScheduleAndTeacherEmailAndActiveTrue(schedule, teacherEmail)
                 .ifPresent(session -> {
-                    session.setActive(false);
-                    session.setEndedAt(endedAt);
-                    sessionRepository.save(session);
+                    endAttendance(session.getId(), teacherEmail);
                 });
         return classSessionRepository.save(classSession);
     }
@@ -162,6 +160,17 @@ public class TeacherDashboardService {
                 .findCompletedSessionsByTeacherAndCourse(teacherEmail, courseCode, sectionName);
         long totalCompletedSessions = completedSessions.size();
 
+        Map<String, Map<AttendanceStatus, Long>> studentStats = new HashMap<>();
+        if (!completedSessions.isEmpty()) {
+            List<Object[]> stats = recordRepository.countGroupedByStudentAndStatus(completedSessions);
+            for (Object[] row : stats) {
+                String sId = (String) row[0];
+                AttendanceStatus stat = (AttendanceStatus) row[1];
+                Long count = (Long) row[2];
+                studentStats.computeIfAbsent(sId, k -> new EnumMap<>(AttendanceStatus.class)).put(stat, count);
+            }
+        }
+
         List<RosterStudentDto> result = new ArrayList<>();
         for (ClassEnrollment enrollment : enrollments) {
             User student = enrollment.getStudent();
@@ -171,13 +180,11 @@ public class TeacherDashboardService {
             long lateCount = 0;
             long absentCount = 0;
 
-            if (!completedSessions.isEmpty()) {
-                presentCount = recordRepository.countByAttendanceSessionInAndStudentIdAndStatus(
-                        completedSessions, studentId, AttendanceStatus.PRESENT);
-                lateCount = recordRepository.countByAttendanceSessionInAndStudentIdAndStatus(
-                        completedSessions, studentId, AttendanceStatus.LATE);
-                absentCount = recordRepository.countByAttendanceSessionInAndStudentIdAndStatus(
-                        completedSessions, studentId, AttendanceStatus.ABSENT);
+            if (studentStats.containsKey(studentId)) {
+                Map<AttendanceStatus, Long> counts = studentStats.get(studentId);
+                presentCount = counts.getOrDefault(AttendanceStatus.PRESENT, 0L);
+                lateCount = counts.getOrDefault(AttendanceStatus.LATE, 0L);
+                absentCount = counts.getOrDefault(AttendanceStatus.ABSENT, 0L);
             }
 
             Double percentage = null;
@@ -392,12 +399,24 @@ public class TeacherDashboardService {
             sessions = sessionRepository.findAllCompletedByTeacher(teacherEmail);
         }
 
+        Map<Long, Map<AttendanceStatus, Long>> sessionStats = new HashMap<>();
+        if (!sessions.isEmpty()) {
+            List<Object[]> stats = recordRepository.countGroupedBySessionAndStatus(sessions);
+            for (Object[] row : stats) {
+                Long sId = (Long) row[0];
+                AttendanceStatus stat = (AttendanceStatus) row[1];
+                Long count = (Long) row[2];
+                sessionStats.computeIfAbsent(sId, k -> new EnumMap<>(AttendanceStatus.class)).put(stat, count);
+            }
+        }
+
         List<AttendanceHistoryDto> result = new ArrayList<>();
         for (AttendanceSession s : sessions) {
             TeachingSchedule schedule = s.getTeachingSchedule();
-            long present = recordRepository.countByAttendanceSessionAndStatus(s, AttendanceStatus.PRESENT);
-            long late = recordRepository.countByAttendanceSessionAndStatus(s, AttendanceStatus.LATE);
-            long absent = recordRepository.countByAttendanceSessionAndStatus(s, AttendanceStatus.ABSENT);
+            Map<AttendanceStatus, Long> counts = sessionStats.getOrDefault(s.getId(), Collections.emptyMap());
+            long present = counts.getOrDefault(AttendanceStatus.PRESENT, 0L);
+            long late = counts.getOrDefault(AttendanceStatus.LATE, 0L);
+            long absent = counts.getOrDefault(AttendanceStatus.ABSENT, 0L);
             long total = present + late + absent;
 
             Double rate = null;

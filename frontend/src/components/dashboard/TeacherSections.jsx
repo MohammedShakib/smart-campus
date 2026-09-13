@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { BookOpen, CalendarCheck, ClipboardCheck, History, RadioTower, Wrench } from 'lucide-react';
 import { api } from '../../utils/api';
@@ -15,7 +15,7 @@ function formatDate(value) {
 }
 
 function formatDateTime(value) {
-  if (!value) return '—';
+  if (!value) return '-';
   return new Date(value).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
@@ -41,7 +41,7 @@ function Feedback({ result }) {
 }
 
 function pctDisplay(val) {
-  if (val === null || val === undefined) return '—';
+  if (val === null || val === undefined) return '-';
   return `${Number(val).toFixed(1)}%`;
 }
 
@@ -185,9 +185,9 @@ function TeacherAttendanceHistory() {
   return (
     <div>
       {/* Summary stats */}
-      <div className="stat-list attendance-stats" style={{ marginBottom: '1rem' }}>
+      <div className="stat-list attendance-stats">
         <StatRow label="Completed Sessions" value={completedCount} color="accent" />
-        <StatRow label="Average Attendance" value={avgRate !== null ? `${avgRate}%` : '—'} color="emerald" />
+        <StatRow label="Average Attendance" value={avgRate !== null ? `${avgRate}%` : '-'} color="emerald" />
       </div>
 
       {/* History table */}
@@ -209,7 +209,7 @@ function TeacherAttendanceHistory() {
             {history.map((h) => (
               <React.Fragment key={h.sessionId}>
                 <tr>
-                  <td>{h.date ? new Date(h.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}</td>
+                  <td>{h.date ? new Date(h.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '-'}</td>
                   <td>{h.courseCode}</td>
                   <td>{h.sectionName}</td>
                   <td><span className="cell-chip chip-status-success">{h.presentCount}</span></td>
@@ -219,8 +219,7 @@ function TeacherAttendanceHistory() {
                   <td>
                     <button
                       type="button"
-                      className="ghost-btn"
-                      style={{ fontSize: '0.78rem', padding: '0.25rem 0.6rem' }}
+                      className="ghost-btn history-action-btn"
                       onClick={() => viewDetail(h.sessionId)}
                     >
                       {expandedId === h.sessionId ? 'Close' : 'View'}
@@ -229,15 +228,15 @@ function TeacherAttendanceHistory() {
                 </tr>
                 {expandedId === h.sessionId && (
                   <tr>
-                    <td colSpan={8} style={{ background: 'var(--surface-2)', padding: '1rem' }}>
+                    <td colSpan={8} className="history-detail-row">
                       {detailLoading ? (
                         <p className="muted">Loading session detail…</p>
                       ) : detail ? (
                         <div>
-                          <div style={{ marginBottom: '0.75rem', fontWeight: 600, fontSize: '0.85rem', color: 'var(--tx-muted)' }}>
-                            {detail.courseCode} — {detail.sectionName} &nbsp;|&nbsp; {detail.date} &nbsp;|&nbsp; {detail.startedAt ? new Date(detail.startedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'} – {detail.endedAt ? new Date(detail.endedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}
+                          <div className="history-detail-meta">
+                            {detail.courseCode} - {detail.sectionName} &nbsp;|&nbsp; {detail.date} &nbsp;|&nbsp; {detail.startedAt ? new Date(detail.startedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'} – {detail.endedAt ? new Date(detail.endedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}
                           </div>
-                          <table style={{ width: '100%', fontSize: '0.83rem' }}>
+                          <table className="history-detail-table">
                             <thead>
                               <tr>
                                 <th>Student ID</th>
@@ -250,7 +249,7 @@ function TeacherAttendanceHistory() {
                               {(detail.records || []).map((r, i) => (
                                 <tr key={i}>
                                   <td>{r.studentId}</td>
-                                  <td>{r.studentName || '—'}</td>
+                                  <td>{r.studentName || '-'}</td>
                                   <td>
                                     <span className={
                                       r.status === 'PRESENT' ? 'cell-chip chip-status-success'
@@ -260,7 +259,7 @@ function TeacherAttendanceHistory() {
                                       {r.status}
                                     </span>
                                   </td>
-                                  <td>{r.checkedInAt ? new Date(r.checkedInAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}</td>
+                                  <td>{r.checkedInAt ? new Date(r.checkedInAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}</td>
                                 </tr>
                               ))}
                             </tbody>
@@ -297,7 +296,7 @@ export function TeacherAttendanceSection({ data, reload }) {
     setSessions(data.attendanceSessions || []);
   }, [data.attendanceSessions]);
 
-  const activeSession = sessions.find((item) => item.session?.active) || sessions[0];
+  const activeSession = sessions.find((item) => item.session?.active);
   const checkInUrl = activeSession?.session?.token
     ? `${window.location.origin}/attendance/checkin?token=${activeSession.session.token}`
     : '';
@@ -375,11 +374,10 @@ export function TeacherAttendanceSection({ data, reload }) {
       <SectionHeader title="Attendance" subtitle="Start a secure QR attendance session and manage records." />
 
       {/* Mode switcher */}
-      <div className="attendance-mode-switcher" style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+      <div className="attendance-mode-switcher">
         <button
           type="button"
           className={mode === 'session' ? 'primary-btn' : 'ghost-btn'}
-          style={{ fontSize: '0.83rem' }}
           onClick={() => setMode('session')}
         >
           <ClipboardCheck size={15} /> Current Session
@@ -387,7 +385,6 @@ export function TeacherAttendanceSection({ data, reload }) {
         <button
           type="button"
           className={mode === 'history' ? 'primary-btn' : 'ghost-btn'}
-          style={{ fontSize: '0.83rem' }}
           onClick={() => setMode('history')}
         >
           <History size={15} /> History
@@ -447,30 +444,24 @@ export function TeacherAttendanceSection({ data, reload }) {
             {/* Manual attendance panel */}
             <Panel title="Manual Attendance" tag="Teacher">
               <form className="ticket-form teacher-report-form" onSubmit={markRecord}>
-                {enrolledStudents.length > 0 ? (
-                  <select
-                    value={record.studentId}
-                    onChange={(e) => {
-                      const student = enrolledStudents.find((s) => s.studentId === e.target.value);
-                      setRecord({ ...record, studentId: e.target.value, studentName: student?.name || '' });
-                    }}
-                    required
-                  >
-                    <option value="">— Select Student —</option>
-                    {enrolledStudents.map((s) => (
-                      <option key={s.studentId} value={s.studentId}>
-                        {s.studentId} — {s.name}
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  <input
-                    placeholder="Student ID"
-                    value={record.studentId}
-                    onChange={(e) => setRecord({ ...record, studentId: e.target.value })}
-                    required
-                  />
-                )}
+                <select
+                  value={record.studentId}
+                  onChange={(e) => {
+                    const student = enrolledStudents.find((s) => s.studentId === e.target.value);
+                    setRecord({ ...record, studentId: e.target.value, studentName: student?.name || '' });
+                  }}
+                  disabled={!activeSession?.session?.active || enrolledStudents.length === 0}
+                  required
+                >
+                  <option value="">
+                    {enrolledStudents.length > 0 ? '- Select Student -' : '- No Active Session -'}
+                  </option>
+                  {enrolledStudents.map((s) => (
+                    <option key={s.studentId} value={s.studentId}>
+                      {s.studentId} - {s.name}
+                    </option>
+                  ))}
+                </select>
                 <select value={record.status} onChange={(e) => setRecord({ ...record, status: e.target.value })}>
                   <option>PRESENT</option><option>LATE</option><option>ABSENT</option>
                 </select>
@@ -482,9 +473,9 @@ export function TeacherAttendanceSection({ data, reload }) {
                 headers={['Student ID', 'Name', 'Status', 'Check-in']}
                 rows={(activeSession?.records || []).map((item) => [
                   item.studentId,
-                  item.studentName || '—',
+                  item.studentName || '-',
                   item.status,
-                  item.checkedInAt ? new Date(item.checkedInAt).toLocaleTimeString() : '—'
+                  item.checkedInAt ? new Date(item.checkedInAt).toLocaleTimeString() : '-'
                 ])}
                 empty="No attendance records yet."
               />
@@ -677,3 +668,4 @@ export function TeacherOverviewToday({ nextClass }) {
     </div>
   );
 }
+
