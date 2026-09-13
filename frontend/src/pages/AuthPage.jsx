@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Loader2, LockKeyhole, UserRound } from 'lucide-react';
-import { CampusGraph } from '../components/auth/CampusGraph';
+import { Eye, EyeOff, Loader2, LockKeyhole, UserRound } from 'lucide-react';
+import campusVisual from '../assets/smart-campus-visual.png';
 import { api } from '../utils/api';
 import { demoAccounts } from '../utils/helpers';
 import '../styles/auth.css';
@@ -58,39 +58,62 @@ export function AuthPage() {
         
         {/* LEFT PANEL */}
         <section className="auth-brand-panel">
-          <div className="brand-header">
-            <div className="brand-icon">SC</div>
-            <div className="brand-text-group">
-              <span className="brand-text-small">United International University</span>
-              <span className="brand-text-large">Smart Campus</span>
+          <div className="auth-brand-content">
+            <div className="brand-header">
+              <div className="brand-icon">SC</div>
+              <div className="brand-text-group">
+                <span className="brand-text-small">United International University</span>
+                <span className="brand-text-large">Smart Campus</span>
+              </div>
             </div>
-          </div>
-          
-          <div className="auth-hero">
-            <div className="auth-status-badge">
-              <div className="auth-status-dot"></div>
-              <span>Campus systems online</span>
+            
+            <div className="auth-hero">
+              <div className="auth-status-badge">
+                <div className="auth-status-dot"></div>
+                <span>Campus systems online</span>
+              </div>
+              <h1>One campus.<br/>One <span className="highlight">intelligent</span> system.</h1>
+              <p>Classrooms, shuttle GPS, gate access and campus operations — connected through one secure platform.</p>
             </div>
-            <h1>One campus.<br/>One intelligent system.</h1>
-            <p>Classrooms, shuttle GPS, gate access and campus operations — connected through one secure platform.</p>
-          </div>
-          
-          <div className="auth-viz-container">
-            <CampusGraph />
-          </div>
+            
+            <div className="auth-campus-visual">
+              <img
+                src={campusVisual}
+                alt="UIU Smart Campus connected campus system"
+                className="auth-campus-image"
+              />
+            </div>
 
-          <div className="auth-metrics">
-            <div className="metric-item">
-              <span className="metric-value">42</span>
-              <span className="metric-label">Connected Rooms</span>
-            </div>
-            <div className="metric-item">
-              <span className="metric-value">6</span>
-              <span className="metric-label">Live Shuttles</span>
-            </div>
-            <div className="metric-item">
-              <span className="metric-value">12</span>
-              <span className="metric-label">Active Gates</span>
+            <div className="auth-metrics">
+              <div className="metric-item">
+                <div className="metric-icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 10v11a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V10"/><path d="M2 14h20"/><path d="M12 14v7"/><path d="m2 10 10-7 10 7"/></svg>
+                </div>
+                <div className="metric-text">
+                  <span className="metric-value">42</span>
+                  <span className="metric-label">Connected Rooms</span>
+                </div>
+              </div>
+              <div className="metric-separator"></div>
+              <div className="metric-item">
+                <div className="metric-icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 12 10s-6.7.6-8.5 1.1C2.7 11.3 2 12.1 2 13v3c0 .6.4 1 1 1h2"/><path d="M14 17H5"/><path d="M19 17v4"/><path d="M5 17v4"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="16.5" cy="17.5" r="2.5"/></svg>
+                </div>
+                <div className="metric-text">
+                  <span className="metric-value">6</span>
+                  <span className="metric-label">Live Shuttles</span>
+                </div>
+              </div>
+              <div className="metric-separator"></div>
+              <div className="metric-item">
+                <div className="metric-icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+                </div>
+                <div className="metric-text">
+                  <span className="metric-value">12</span>
+                  <span className="metric-label">Active Gates</span>
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -127,7 +150,7 @@ export function AuthPage() {
                     <LockKeyhole size={18} className="input-icon-left" />
                     <input id="loginPassword" name="password" className="input-field" type={showPassword ? 'text' : 'password'} autoComplete="current-password" defaultValue="demo-admin-pass" placeholder="••••••••" required />
                     <button type="button" className="pw-toggle" onClick={() => setShowPassword((v) => !v)} aria-label={showPassword ? "Hide password" : "Show password"}>
-                      {showPassword ? 'Hide' : 'Show'}
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
                   </div>
                 </div>
