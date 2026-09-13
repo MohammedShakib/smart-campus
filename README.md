@@ -1,7 +1,11 @@
 <div align="center">
-  <img src="frontend/src/assets/smart-campus-visual.png" alt="Smart Campus Visualization" width="600" />
+  <img src="frontend/src/assets/smart-campus-logo.png" alt="Smart Campus Logo" width="250" />
+  <br />
+  <br />
+  <img src="frontend/src/assets/smart-campus-visual.png" alt="Smart Campus Visualization" width="700" />
 
-  # 🎓 Smart Campus
+  <br />
+  <br />
 
   **A modern, real-time web application for centralized campus operations and management.**
 
