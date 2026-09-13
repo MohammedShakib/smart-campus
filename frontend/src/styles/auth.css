@@ -62,9 +62,17 @@
 
 .brand-header {
   display: flex;
-  align-items: center;
-  gap: 13px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
   flex: 0 0 auto;
+}
+
+.auth-brand-logo {
+  display: block;
+  width: 190px;
+  max-width: 100%;
+  height: auto;
 }
 
 .brand-icon {
@@ -704,6 +712,10 @@
     width: 36px;
     height: 36px;
     border-radius: 9px;
+  }
+
+  .auth-brand-logo {
+    width: 174px;
   }
 
   .brand-text-small {

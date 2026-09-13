@@ -18,6 +18,7 @@ import {
   UserRound,
 } from 'lucide-react';
 import campusVisual from '../assets/smart-campus-visual.png';
+import smartCampusLogo from '../assets/smart-campus-logo.png';
 import { api } from '../utils/api';
 import { demoAccounts } from '../utils/helpers';
 import '../styles/auth.css';
@@ -98,11 +99,8 @@ export function AuthPage() {
       <main className="auth-shell" aria-label="Smart Campus authentication">
         <section className="auth-brand-panel" aria-label="Smart Campus overview">
           <div className="brand-header">
-            <div className="brand-icon" aria-hidden="true">SC</div>
-            <div className="brand-text-group">
-              <span className="brand-text-small">United International University</span>
-              <span className="brand-text-large">Smart Campus</span>
-            </div>
+            <img src={smartCampusLogo} alt="Smart Campus" className="auth-brand-logo" />
+            <span className="brand-text-small">United International University</span>
           </div>
 
           <div className="auth-hero">

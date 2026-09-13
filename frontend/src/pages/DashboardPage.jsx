@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Activity, Bus, Building2, ChevronRight, ClipboardCheck, DoorOpen, FileText, LogOut, RadioTower, RefreshCw, UsersRound, Wrench } from 'lucide-react';
 import { api } from '../utils/api';
-import { projectName, initials, prettyRole } from '../utils/helpers';
+import { initials, prettyRole } from '../utils/helpers';
 import { ErrorState, LoadingState } from '../components/shared/SharedComponents';
 import { DashboardSection } from '../components/dashboard/DashboardSection';
+import smartCampusLogo from '../assets/smart-campus-logo.png';
 import '../styles/dashboard.css';
 
 const dashboardConfig = {
@@ -84,9 +85,8 @@ export function DashboardPage() {
     <main className="dashboard-shell">
       <aside className="sidebar">
         <div className="sidebar-brand">
-          <div className="brand-mark small">SC</div>
+          <img src={smartCampusLogo} alt="Smart Campus" className="dashboard-brand-logo" />
           <div>
-            <strong>{projectName}</strong>
             <span>{config.label}</span>
           </div>
         </div>
