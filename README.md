@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="frontend/src/assets/smart-campus-logo.png" alt="Smart Campus Logo" width="250" />
+  <img src="frontend/src/assets/smart-campus-logo-full.png" alt="Smart Campus Logo" width="300" />
   
   <br />
   <br />
