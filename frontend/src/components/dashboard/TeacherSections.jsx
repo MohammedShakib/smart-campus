@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { BookOpen, CalendarCheck, ClipboardCheck, History, RadioTower, Wrench } from 'lucide-react';
 import { api } from '../../utils/api';
@@ -665,6 +665,332 @@ export function TeacherOverviewToday({ nextClass }) {
       <span>Next Class</span>
       <strong>{nextClass.courseCode}</strong>
       <p>{formatTime(nextClass.startTime)} to {formatTime(nextClass.endTime)} - {nextClass.roomNumber}</p>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────
+// ABSENCE EXCUSE REVIEWS
+// ─────────────────────────────────────────────────────────
+export function TeacherExcusesSection() {
+  const [excuses, setExcuses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedExcuse, setSelectedExcuse] = useState(null);
+  const [remarks, setRemarks] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  const loadExcuses = () => {
+    setLoading(true);
+    api('/api/teacher/excuses')
+      .then((res) => {
+        setExcuses(res.data || []);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadExcuses();
+  }, []);
+
+  const handleReview = (excuseId, status) => {
+    setBusy(true);
+    api(`/api/teacher/excuses/${excuseId}/review?status=${status}&remarks=${encodeURIComponent(remarks)}`, { method: 'POST' })
+      .then(() => {
+        setBusy(false);
+        setSelectedExcuse(null);
+        setRemarks('');
+        loadExcuses();
+      })
+      .catch((err) => {
+        setBusy(false);
+        alert(err.message);
+      });
+  };
+
+  return (
+    <div>
+      <SectionHeader
+        title="Absence & Medical Leave Reviews"
+        subtitle="Review student absence excuse submissions, doctor prescriptions, and official leave applications for your courses."
+      />
+
+      <Panel title="Submitted Excuses" tag={`${excuses.length} records`}>
+        {loading ? (
+          <p className="muted" style={{ padding: '1.5rem 0' }}>Loading student excuses...</p>
+        ) : excuses.length === 0 ? (
+          <p className="muted" style={{ padding: '1.5rem 0' }}>No absence excuse requests currently submitted.</p>
+        ) : (
+          <div className="table-wrapper">
+            <table className="custom-data-table">
+              <thead>
+                <tr>
+                  <th>Student</th>
+                  <th>Course</th>
+                  <th>Absence Date</th>
+                  <th>Reason Category</th>
+                  <th>Explanation & Slip</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {excuses.map((exc) => (
+                  <tr key={exc.id}>
+                    <td>
+                      <strong>{exc.studentName}</strong>
+                      <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--tx-muted)' }}>ID: {exc.studentId}</span>
+                    </td>
+                    <td><strong>{exc.courseCode}</strong> ({exc.sectionName})</td>
+                    <td>{exc.absenceDate}</td>
+                    <td><span className="badge badge--neutral">{exc.reasonCategory}</span></td>
+                    <td style={{ maxWidth: '280px' }}>
+                      <p style={{ margin: 0, fontSize: '0.82rem' }}>{exc.explanation}</p>
+                      {exc.documentUrl && <span className="doc-link-tag">📎 {exc.documentUrl}</span>}
+                    </td>
+                    <td>
+                      <span className={`badge badge--${exc.status === 'APPROVED' ? 'emerald' : exc.status === 'REJECTED' ? 'rose' : 'amber'}`}>
+                        {exc.status}
+                      </span>
+                    </td>
+                    <td>
+                      {exc.status === 'PENDING' ? (
+                        <div style={{ display: 'flex', gap: '0.4rem', flexDirection: 'column' }}>
+                          <button
+                            type="button"
+                            className="inline-action-btn"
+                            style={{ background: 'rgba(16,185,129,0.15)', color: 'var(--emerald)' }}
+                            onClick={() => {
+                              const r = prompt('Enter optional approval remarks for student:', 'Medical certificate accepted.');
+                              if (r !== null) {
+                                setRemarks(r);
+                                handleReview(exc.id, 'APPROVED');
+                              }
+                            }}
+                          >
+                            ✓ Approve
+                          </button>
+                          <button
+                            type="button"
+                            className="inline-action-btn"
+                            style={{ background: 'rgba(244,63,94,0.15)', color: 'var(--rose)' }}
+                            onClick={() => {
+                              const r = prompt('Enter rejection reason for student:', 'Insufficient medical documentation.');
+                              if (r !== null) {
+                                setRemarks(r);
+                                handleReview(exc.id, 'REJECTED');
+                              }
+                            }}
+                          >
+                            ✗ Reject
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="muted" style={{ fontSize: '0.8rem' }}>Reviewed: {exc.teacherRemarks || 'Done'}</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Panel>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────
+// FACULTY OFFICE HOURS & QUERY PRE-SUBMISSIONS
+// ─────────────────────────────────────────────────────────
+export function TeacherOfficeHoursSection() {
+  const [slots, setSlots] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [newSlot, setNewSlot] = useState({
+    slotDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
+    startTime: '14:00',
+    endTime: '14:30',
+    roomNumber: 'Room 524 (Faculty Desk)',
+    dayOfWeek: 'Monday'
+  });
+  const [busy, setBusy] = useState(false);
+
+  const loadSlots = () => {
+    setLoading(true);
+    api('/api/teacher/office-hours/slots')
+      .then((res) => {
+        setSlots(res.data || []);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadSlots();
+  }, []);
+
+  const handleCreateSlot = (e) => {
+    e.preventDefault();
+    setBusy(true);
+    api('/api/teacher/office-hours/slots', {
+      method: 'POST',
+      body: JSON.stringify(newSlot)
+    })
+      .then(() => {
+        setBusy(false);
+        setModalOpen(false);
+        loadSlots();
+      })
+      .catch((err) => {
+        setBusy(false);
+        alert(err.message);
+      });
+  };
+
+  const handleComplete = (slotId) => {
+    const feedback = prompt('Enter consultation notes/follow-up for student (optional):', 'Discussed problem solution.');
+    if (feedback !== null) {
+      api(`/api/teacher/office-hours/slots/${slotId}/status?status=COMPLETED&feedback=${encodeURIComponent(feedback)}`, { method: 'POST' })
+        .then(() => loadSlots())
+        .catch((err) => alert(err.message));
+    }
+  };
+
+  return (
+    <div>
+      <SectionHeader
+        title="Faculty Office Hours & Consultation Manager"
+        subtitle="Publish consultation slots, review pre-submitted student query topics in advance, and conduct safe one-on-one sessions."
+      />
+
+      <div className="section-grid">
+        <Panel title="My Consultation Slots" tag={`${slots.length} total`}>
+          <div style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'flex-end' }}>
+            <button type="button" className="primary-btn" onClick={() => setModalOpen(true)}>
+              + Add Office Hour Slot
+            </button>
+          </div>
+
+          {loading ? (
+            <p className="muted">Loading slots...</p>
+          ) : slots.length === 0 ? (
+            <p className="muted">No office hour slots published yet. Click above to create one.</p>
+          ) : (
+            <div className="teacher-slots-list">
+              {slots.map((s) => (
+                <div key={s.id} className="teacher-slot-item" style={{
+                  padding: '1rem',
+                  border: '1px solid var(--border)',
+                  borderRadius: '10px',
+                  marginBottom: '1rem',
+                  background: s.status === 'BOOKED' ? 'rgba(99, 102, 241, 0.05)' : 'var(--bg-card)'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <strong>{s.dayOfWeek}, {s.slotDate}</strong> • <span>{s.startTime} - {s.endTime}</span> ({s.roomNumber})
+                    </div>
+                    <span className={`badge badge--${s.status === 'AVAILABLE' ? 'emerald' : s.status === 'BOOKED' ? 'accent' : 'neutral'}`}>
+                      {s.status}
+                    </span>
+                  </div>
+
+                  {s.status === 'BOOKED' && (
+                    <div style={{ marginTop: '0.8rem', padding: '0.8rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={{ fontWeight: 600, color: 'var(--accent-glow)' }}>
+                          Student: {s.bookedStudentName} (ID: {s.bookedStudentId})
+                        </span>
+                        <button
+                          type="button"
+                          className="inline-action-btn"
+                          onClick={() => handleComplete(s.id)}
+                        >
+                          Mark Completed
+                        </button>
+                      </div>
+                      <div style={{ marginTop: '0.5rem' }}>
+                        <span className="badge badge--sky" style={{ marginRight: '0.5rem' }}>{s.queryCategory}</span>
+                        <strong>Topic: {s.queryTopic}</strong>
+                        <p style={{ margin: '0.4rem 0 0', fontSize: '0.83rem', color: 'var(--tx-muted)' }}>
+                          <strong>Pre-submitted Query:</strong> {s.queryDetails}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </Panel>
+
+        <Panel title="Engine Specifications" tag="AOOP Safe">
+          <div className="teacher-focus">
+            <span>Concurrency-Safe Protocol</span>
+            <strong>Thread & Isolation Locks</strong>
+            <p>
+              Students booking these slots go through `ReentrantLock` and Serializable Isolation to guarantee no double-booking race conditions.
+            </p>
+          </div>
+        </Panel>
+      </div>
+
+      {modalOpen && (
+        <div className="modal-overlay" onClick={() => setModalOpen(false)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Create Office Hour Consultation Slot</h3>
+              <button type="button" className="close-btn" onClick={() => setModalOpen(false)}>×</button>
+            </div>
+            <form onSubmit={handleCreateSlot} className="modal-form">
+              <div className="form-group">
+                <label>Date *</label>
+                <input
+                  type="date"
+                  required
+                  value={newSlot.slotDate}
+                  onChange={(e) => setNewSlot({ ...newSlot, slotDate: e.target.value })}
+                />
+              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Start Time (HH:mm) *</label>
+                  <input
+                    type="time"
+                    required
+                    value={newSlot.startTime}
+                    onChange={(e) => setNewSlot({ ...newSlot, startTime: e.target.value })}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>End Time (HH:mm) *</label>
+                  <input
+                    type="time"
+                    required
+                    value={newSlot.endTime}
+                    onChange={(e) => setNewSlot({ ...newSlot, endTime: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className="form-group">
+                <label>Room / Location *</label>
+                <input
+                  type="text"
+                  required
+                  value={newSlot.roomNumber}
+                  onChange={(e) => setNewSlot({ ...newSlot, roomNumber: e.target.value })}
+                />
+              </div>
+              <div className="modal-actions">
+                <button type="button" className="ghost-btn" onClick={() => setModalOpen(false)}>Cancel</button>
+                <button type="submit" className="primary-btn" disabled={busy}>
+                  {busy ? 'Creating...' : 'Publish Slot'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

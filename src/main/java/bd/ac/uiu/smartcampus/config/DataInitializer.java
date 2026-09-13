@@ -8,8 +8,10 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.UUID;
 
 @Component
 public class DataInitializer implements CommandLineRunner {
@@ -23,6 +25,12 @@ public class DataInitializer implements CommandLineRunner {
     private final TeachingScheduleRepository teachingScheduleRepository;
     private final ClassroomRepository classroomRepository;
     private final ClassEnrollmentRepository enrollmentRepository;
+    private final AttendanceSessionRepository attendanceSessionRepository;
+    private final AttendanceRecordRepository attendanceRecordRepository;
+    private final AbsenceExcuseRepository absenceExcuseRepository;
+    private final LostFoundItemRepository lostFoundItemRepository;
+    private final LabEquipmentRepository labEquipmentRepository;
+    private final FacultyOfficeHourSlotRepository officeHourSlotRepository;
     private final PasswordEncoder passwordEncoder;
 
     public DataInitializer(UserRepository userRepository,
@@ -32,6 +40,12 @@ public class DataInitializer implements CommandLineRunner {
                            TeachingScheduleRepository teachingScheduleRepository,
                            ClassroomRepository classroomRepository,
                            ClassEnrollmentRepository enrollmentRepository,
+                           AttendanceSessionRepository attendanceSessionRepository,
+                           AttendanceRecordRepository attendanceRecordRepository,
+                           AbsenceExcuseRepository absenceExcuseRepository,
+                           LostFoundItemRepository lostFoundItemRepository,
+                           LabEquipmentRepository labEquipmentRepository,
+                           FacultyOfficeHourSlotRepository officeHourSlotRepository,
                            PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.noticeRepository = noticeRepository;
@@ -40,6 +54,12 @@ public class DataInitializer implements CommandLineRunner {
         this.teachingScheduleRepository = teachingScheduleRepository;
         this.classroomRepository = classroomRepository;
         this.enrollmentRepository = enrollmentRepository;
+        this.attendanceSessionRepository = attendanceSessionRepository;
+        this.attendanceRecordRepository = attendanceRecordRepository;
+        this.absenceExcuseRepository = absenceExcuseRepository;
+        this.lostFoundItemRepository = lostFoundItemRepository;
+        this.labEquipmentRepository = labEquipmentRepository;
+        this.officeHourSlotRepository = officeHourSlotRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -78,7 +98,22 @@ public class DataInitializer implements CommandLineRunner {
         // 5. Seed demo class enrollments
         seedEnrollments();
 
-        // 6. Seed campus notices
+        // 6. Seed past attendance sessions & records
+        seedAttendanceData();
+
+        // 7. Seed sample absence excuses
+        seedAbsenceExcuses();
+
+        // 8. Seed Digital Lost & Found items
+        seedLostAndFound();
+
+        // 9. Seed Lab & Hardware Equipment
+        seedLabEquipment();
+
+        // 10. Seed Faculty Office Hour slots
+        seedOfficeHourSlots();
+
+        // 11. Seed campus notices
         if (noticeRepository.count() == 0) {
             noticeRepository.save(new CampusNotice(
                     "Smart Campus System Live",
@@ -97,7 +132,7 @@ public class DataInitializer implements CommandLineRunner {
             ));
         }
 
-        // 7. Seed maintenance complaints
+        // 12. Seed maintenance complaints
         if (complaintRepository.count() == 0) {
             complaintRepository.save(new MaintenanceComplaint(
                     "Rahat Hossain", "011211001", "Room 524 - Multimedia Lab",
@@ -119,7 +154,7 @@ public class DataInitializer implements CommandLineRunner {
             ));
         }
 
-        // 8. Seed admin action history
+        // 13. Seed admin action history
         if (actionLogRepository.count() == 0) {
             actionLogRepository.save(new AdminActionLog("admin-demo", "SYSTEM_INIT", "Initial Smart Campus environment booted with XAMPP MySQL and Spring Security."));
             actionLogRepository.save(new AdminActionLog("admin-demo", "SECURITY_POLICY", "Enforced BCrypt 10-round salt password hashing for all user accounts."));
@@ -129,19 +164,10 @@ public class DataInitializer implements CommandLineRunner {
         logger.info("Seed data initialization completed successfully!");
     }
 
-    /**
-     * Seeds enrollment data for the roster demonstration.
-     * CSE 2211 Section A: 6 students
-     * CSE 3312 Section B: 5 students (overlap with CSE 2211 students is realistic)
-     */
     private void seedEnrollments() {
         User teacher = userRepository.findByEmail("teacher-demo").orElse(null);
-        if (teacher == null) {
-            logger.warn("teacher-demo not found, skipping enrollment seeding.");
-            return;
-        }
+        if (teacher == null) return;
 
-        // CSE 2211 Section A students
         String[] cse2211Students = {
                 "student-demo", "student-tanvir", "student-sadia",
                 "student-mehedi", "student-nusrat", "student-rafi"
@@ -150,9 +176,8 @@ public class DataInitializer implements CommandLineRunner {
             seedEnrollment(teacher, email, "CSE 2211", "Section A");
         }
 
-        // CSE 3312 Section B students (overlap on mehedi, nusrat, rafi, tanha, sabbir)
         String[] cse3312Students = {
-                "student-mehedi", "student-nusrat", "student-rafi",
+                "student-demo", "student-mehedi", "student-nusrat", "student-rafi",
                 "student-tanha", "student-sabbir"
         };
         for (String email : cse3312Students) {
@@ -162,16 +187,222 @@ public class DataInitializer implements CommandLineRunner {
 
     private void seedEnrollment(User teacher, String studentEmail, String courseCode, String sectionName) {
         userRepository.findByEmail(studentEmail).ifPresent(student -> {
-            if (!student.getRole().equals(Role.ROLE_STUDENT)) {
-                logger.warn("User {} is not a student, skipping enrollment.", studentEmail);
-                return;
-            }
+            if (!student.getRole().equals(Role.ROLE_STUDENT)) return;
             if (!enrollmentRepository.existsByTeacherAndStudentAndCourseCodeAndSectionName(
                     teacher, student, courseCode, sectionName)) {
                 enrollmentRepository.save(new ClassEnrollment(teacher, student, courseCode, sectionName));
-                logger.info("Enrolled {} in {} {}", studentEmail, courseCode, sectionName);
             }
         });
+    }
+
+    private void seedAttendanceData() {
+        if (attendanceSessionRepository.count() > 0) return;
+
+        teachingScheduleRepository.findAll().forEach(schedule -> {
+            if ("CSE 2211".equals(schedule.getCourseCode())) {
+                createPastSession(schedule, LocalDate.now().minusDays(14), true);  // Present
+                createPastSession(schedule, LocalDate.now().minusDays(10), true);  // Present
+                createPastSession(schedule, LocalDate.now().minusDays(7), false);  // Absent (for excuse demo)
+                createPastSession(schedule, LocalDate.now().minusDays(3), true);   // Present
+            } else if ("CSE 3312".equals(schedule.getCourseCode())) {
+                createPastSession(schedule, LocalDate.now().minusDays(12), true);  // Present
+                createPastSession(schedule, LocalDate.now().minusDays(8), true);   // Present
+                createPastSession(schedule, LocalDate.now().minusDays(5), false);  // Absent
+                createPastSession(schedule, LocalDate.now().minusDays(1), true);   // Present
+            }
+        });
+    }
+
+    private void createPastSession(TeachingSchedule schedule, LocalDate date, boolean studentDemoPresent) {
+        AttendanceSession session = new AttendanceSession(schedule, schedule.getTeacherEmail(), UUID.randomUUID().toString());
+        session.setSessionDate(date);
+        session.setStartedAt(date.atTime(schedule.getStartTime()));
+        session.setEndedAt(date.atTime(schedule.getEndTime()));
+        session.setActive(false);
+        session = attendanceSessionRepository.save(session);
+
+        // Student-demo record
+        if (studentDemoPresent) {
+            attendanceRecordRepository.save(new AttendanceRecord(
+                    session, "011211001", "Rahat Hossain", AttendanceStatus.PRESENT, date.atTime(schedule.getStartTime().plusMinutes(5))
+            ));
+        } else {
+            attendanceRecordRepository.save(new AttendanceRecord(
+                    session, "011211001", "Rahat Hossain", AttendanceStatus.ABSENT, null
+            ));
+        }
+
+        // Add records for other enrolled students
+        attendanceRecordRepository.save(new AttendanceRecord(session, "011221002", "Tanvir Ahmed", AttendanceStatus.PRESENT, date.atTime(schedule.getStartTime())));
+        attendanceRecordRepository.save(new AttendanceRecord(session, "011221003", "Sadia Rahman", AttendanceStatus.PRESENT, date.atTime(schedule.getStartTime().plusMinutes(2))));
+        attendanceRecordRepository.save(new AttendanceRecord(session, "011221004", "Mehedi Hasan", AttendanceStatus.LATE, date.atTime(schedule.getStartTime().plusMinutes(12))));
+    }
+
+    private void seedAbsenceExcuses() {
+        if (absenceExcuseRepository.count() > 0) return;
+
+        AbsenceExcuse excuse = new AbsenceExcuse(
+                "011211001", "Rahat Hossain", "student-demo",
+                "CSE 2211", "Advanced Object Oriented Programming", "Section A",
+                "teacher-demo", LocalDate.now().minusDays(7), "MEDICAL",
+                "Had high fever and consulted physician. Medical prescription attached for verification.",
+                "MED-PRESCRIPTION-UIU-9821.pdf"
+        );
+        excuse.setStatus(AbsenceExcuse.ExcuseStatus.PENDING);
+        absenceExcuseRepository.save(excuse);
+    }
+
+    private void seedLostAndFound() {
+        if (lostFoundItemRepository.count() > 0) return;
+
+        lostFoundItemRepository.save(new LostFoundItem(
+                "Casio fx-991EX ClassWiz Calculator",
+                "Found on desk 4 in Room 524 Lab after the morning AOOP session. Black body with blue keys.",
+                LostFoundItem.ItemCategory.ELECTRONICS,
+                LostFoundItem.ItemType.FOUND,
+                "Room 524 (CSE Lab 4)",
+                LocalDate.now().minusDays(1),
+                "https://images.unsplash.com/photo-1594980596870-8aa52a78d8cd?w=600&auto=format&fit=crop&q=60",
+                "EMP-CSE-104", "Prof. Tariqul Islam", "teacher-demo", "Drop by Faculty Room 524"
+        ));
+
+        lostFoundItemRepository.save(new LostFoundItem(
+                "UIU Student ID Card (ID: 011221003)",
+                "Student ID card belonging to Sadia Rahman found near the 2nd floor library reading area.",
+                LostFoundItem.ItemCategory.ID_CARDS,
+                LostFoundItem.ItemType.FOUND,
+                "Library 2nd Floor",
+                LocalDate.now().minusDays(2),
+                "https://images.unsplash.com/photo-1578632767115-351597cf2477?w=600&auto=format&fit=crop&q=60",
+                "SEC-GATE-02", "Officer Abul Kalam", "security-demo", "Deposited at Security Gate Post 1"
+        ));
+
+        lostFoundItemRepository.save(new LostFoundItem(
+                "Motorcycle Key with Leather Tag",
+                "Honda motorcycle smart key with a brown leather keychain found on a bench in the cafeteria.",
+                LostFoundItem.ItemCategory.KEYS,
+                LostFoundItem.ItemType.FOUND,
+                "Cafeteria Ground Floor Bench",
+                LocalDate.now().minusDays(3),
+                "https://images.unsplash.com/photo-1582139329536-e7284fece509?w=600&auto=format&fit=crop&q=60",
+                "011221002", "Tanvir Ahmed", "student-tanvir", "Contact via student portal"
+        ));
+
+        lostFoundItemRepository.save(new LostFoundItem(
+                "Hardcover Spiral Notebook - Advanced Java Notes",
+                "Lost my black spiral notebook containing handwritten AOOP notes and UML diagrams.",
+                LostFoundItem.ItemCategory.BOOKS_STATIONERY,
+                LostFoundItem.ItemType.LOST,
+                "Room 412 Multimedia Room",
+                LocalDate.now().minusDays(2),
+                "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600&auto=format&fit=crop&q=60",
+                "011211001", "Rahat Hossain", "student-demo", "Cell: 01700000000"
+        ));
+    }
+
+    private void seedLabEquipment() {
+        if (labEquipmentRepository.count() > 0) return;
+
+        labEquipmentRepository.save(new LabEquipment(
+                "Raspberry Pi 4 Model B (4GB RAM)",
+                LabEquipment.EquipmentCategory.DEV_BOARD,
+                "Lab 524 - IoT & Embedded Systems",
+                12, 9,
+                "Quad-core Cortex-A72, 4GB LPDDR4, dual micro-HDMI 4K, Gigabit Ethernet, Bluetooth 5.0.",
+                "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=600&auto=format&fit=crop&q=60"
+        ));
+
+        labEquipmentRepository.save(new LabEquipment(
+                "Arduino Mega 2560 R3 Kit",
+                LabEquipment.EquipmentCategory.DEV_BOARD,
+                "Lab 524 - IoT & Embedded Systems",
+                20, 16,
+                "ATmega2560 microcontroller, 54 digital I/O pins, 16 analog inputs, 4 UART serial ports.",
+                "https://images.unsplash.com/photo-1608564697071-ddf911d81370?w=600&auto=format&fit=crop&q=60"
+        ));
+
+        labEquipmentRepository.save(new LabEquipment(
+                "STM32 Nucleo-64 (STM32F401RE)",
+                LabEquipment.EquipmentCategory.DEV_BOARD,
+                "Lab 524 - Embedded Systems Lab",
+                10, 8,
+                "ARM Cortex-M4 84 MHz with FPU, 512 KB Flash, Arduino Uno V3 connectivity and ST morpho headers.",
+                "https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&auto=format&fit=crop&q=60"
+        ));
+
+        labEquipmentRepository.save(new LabEquipment(
+                "Rigol DS1054Z 50MHz 4-Channel Digital Oscilloscope",
+                LabEquipment.EquipmentCategory.MEASURING_INSTRUMENT,
+                "Lab 412 - Hardware & Measurement Lab",
+                6, 4,
+                "50 MHz bandwidth, 4 analog channels, 1 GSa/s real-time sample rate, 24 Mpts memory depth.",
+                "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=600&auto=format&fit=crop&q=60"
+        ));
+
+        labEquipmentRepository.save(new LabEquipment(
+                "Fluke 117 True-RMS Digital Multimeter",
+                LabEquipment.EquipmentCategory.MEASURING_INSTRUMENT,
+                "Lab 412 - Hardware & Measurement Lab",
+                15, 12,
+                "VoltAlert non-contact AC voltage detection, AutoVolt automatic AC/DC voltage selection, low input impedance.",
+                "https://images.unsplash.com/photo-1581092335397-9583fe92d232?w=600&auto=format&fit=crop&q=60"
+        ));
+
+        labEquipmentRepository.save(new LabEquipment(
+                "24MHz 8-Channel USB Logic Analyzer",
+                LabEquipment.EquipmentCategory.ACCESSORY,
+                "Lab 524 - Embedded Systems Lab",
+                15, 14,
+                "8 digital channels, 24 MHz sample rate, I2C, SPI, UART, PWM protocol decoding via PulseView.",
+                "https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&auto=format&fit=crop&q=60"
+        ));
+
+        labEquipmentRepository.save(new LabEquipment(
+                "RPLiDAR A1M8 360-Degree Laser Scanner",
+                LabEquipment.EquipmentCategory.SENSOR_ACTUATOR,
+                "Lab 524 - Robotics & IoT Lab",
+                5, 3,
+                "12m range radius, 360-degree omnidirectional laser scan, 5.5Hz rotational frequency, SLAM compatible.",
+                "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=600&auto=format&fit=crop&q=60"
+        ));
+    }
+
+    private void seedOfficeHourSlots() {
+        if (officeHourSlotRepository.count() > 0) return;
+
+        LocalDate tomorrow = LocalDate.now().plusDays(1);
+        LocalDate dayAfter = LocalDate.now().plusDays(2);
+        LocalDate dayThree = LocalDate.now().plusDays(3);
+
+        officeHourSlotRepository.save(new FacultyOfficeHourSlot(
+                "teacher-demo", "Prof. Tariqul Islam", "Computer Science & Engineering",
+                "Room 524 (Faculty Corner)", tomorrow.getDayOfWeek().name(),
+                tomorrow, LocalTime.of(11, 0), LocalTime.of(11, 30)
+        ));
+
+        officeHourSlotRepository.save(new FacultyOfficeHourSlot(
+                "teacher-demo", "Prof. Tariqul Islam", "Computer Science & Engineering",
+                "Room 524 (Faculty Corner)", tomorrow.getDayOfWeek().name(),
+                tomorrow, LocalTime.of(11, 30), LocalTime.of(12, 0)
+        ));
+
+        officeHourSlotRepository.save(new FacultyOfficeHourSlot(
+                "teacher-demo", "Prof. Tariqul Islam", "Computer Science & Engineering",
+                "Room 524 (Faculty Corner)", dayAfter.getDayOfWeek().name(),
+                dayAfter, LocalTime.of(14, 0), LocalTime.of(14, 30)
+        ));
+
+        officeHourSlotRepository.save(new FacultyOfficeHourSlot(
+                "teacher-demo", "Prof. Tariqul Islam", "Computer Science & Engineering",
+                "Room 524 (Faculty Corner)", dayAfter.getDayOfWeek().name(),
+                dayAfter, LocalTime.of(14, 30), LocalTime.of(15, 0)
+        ));
+
+        officeHourSlotRepository.save(new FacultyOfficeHourSlot(
+                "teacher-demo", "Prof. Tariqul Islam", "Computer Science & Engineering",
+                "Room 524 (Faculty Corner)", dayThree.getDayOfWeek().name(),
+                dayThree, LocalTime.of(10, 0), LocalTime.of(10, 30)
+        ));
     }
 
     private void seedUser(String email, String rawPassword, String fullName,
@@ -194,18 +425,6 @@ public class DataInitializer implements CommandLineRunner {
                     teacherEmail, courseCode, courseTitle, sectionName,
                     roomNumber, dayOfWeek, LocalTime.parse(startTime), LocalTime.parse(endTime));
             teachingScheduleRepository.save(schedule);
-            logger.info("Created teacher schedule: {} {} {}", teacherEmail, courseCode, dayOfWeek);
-        } else {
-            teachingScheduleRepository.findByTeacherEmailAndCourseCodeAndSectionNameAndDayOfWeek(
-                    teacherEmail, courseCode, sectionName, dayOfWeek).ifPresent(schedule -> {
-                if (schedule.getStatus() != ClassStatus.SCHEDULED
-                        || schedule.getStartedAt() != null || schedule.getEndedAt() != null) {
-                    schedule.setStatus(ClassStatus.SCHEDULED);
-                    schedule.setStartedAt(null);
-                    schedule.setEndedAt(null);
-                    teachingScheduleRepository.save(schedule);
-                }
-            });
         }
     }
 
@@ -213,7 +432,6 @@ public class DataInitializer implements CommandLineRunner {
                                double powerKW, String building, String roomType) {
         if (!classroomRepository.existsByRoomNumber(roomNumber)) {
             classroomRepository.save(new Classroom(roomNumber, capacity, floor, occupied, powerKW, building, roomType));
-            logger.info("Created classroom: {}", roomNumber);
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿/* ============================================================
+/* ============================================================
    UIU SMART CAMPUS - Premium Dark Design System
    Fonts loaded non-blocking via <link> in index.html
    ============================================================ */
@@ -29,11 +29,12 @@
   --rose-border:   rgba(244,63,94,0.25);
 
   /* Surface */
-  --bg-base:   #f8fafc;
-  --bg-raised: #ffffff;
-  --bg-card:   #ffffff;
-  --bg-hover:  #f1f5f9;
-  --bg-input:  #f8fafc;
+  --bg-base:    #f8fafc;
+  --bg-surface: #ffffff;
+  --bg-raised:  #ffffff;
+  --bg-card:    #ffffff;
+  --bg-hover:   #f1f5f9;
+  --bg-input:   #f8fafc;
 
   /* Text */
   --tx-primary:   #0f172a;

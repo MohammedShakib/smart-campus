@@ -1,5 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Activity, BookOpen, Bus, Building2, CalendarCheck, CalendarDays, ChevronRight, ClipboardCheck, DoorOpen, FileText, GraduationCap, LogOut, RadioTower, RefreshCw, UsersRound, Wrench } from 'lucide-react';
+import {
+  Activity, BookOpen, Bus, Building2, CalendarCheck, CalendarDays,
+  ChevronRight, ClipboardCheck, Cpu, DoorOpen, FileText, GraduationCap,
+  LogOut, MessageSquare, RadioTower, RefreshCw, Search, UsersRound, Wrench
+} from 'lucide-react';
 import { api } from '../utils/api';
 import { initials, prettyRole } from '../utils/helpers';
 import { ErrorState, LoadingState } from '../components/shared/SharedComponents';
@@ -12,35 +16,42 @@ const dashboardConfig = {
     label: 'Control Center',
     path: '/dashboard/admin',
     sections: [
-      { key: 'overview',    label: 'Overview',         icon: Activity },
-      { key: 'classrooms',  label: 'Smart Classrooms', icon: Building2 },
-      { key: 'transport',   label: 'Transport',        icon: Bus },
-      { key: 'maintenance', label: 'Maintenance',      icon: Wrench },
-      { key: 'audit',       label: 'Audit Stack',      icon: FileText },
+      { key: 'overview',    label: 'Overview',          icon: Activity },
+      { key: 'equipment',   label: 'Lab & Equipment',   icon: Cpu },
+      { key: 'classrooms',  label: 'Smart Classrooms',  icon: Building2 },
+      { key: 'transport',   label: 'Transport',         icon: Bus },
+      { key: 'maintenance', label: 'Maintenance',       icon: Wrench },
+      { key: 'audit',       label: 'Audit Stack',       icon: FileText },
     ]
   },
   teacher: {
     label: 'Faculty Desk',
     path: '/dashboard/teacher',
     sections: [
-      { key: 'overview',     label: 'Overview',       icon: Activity },
-      { key: 'schedule',     label: 'My Schedule',    icon: CalendarDays },
-      { key: 'classes',      label: 'My Classes',     icon: BookOpen },
-      { key: 'students',     label: 'Students',       icon: GraduationCap },
-      { key: 'attendance',   label: 'Attendance',     icon: ClipboardCheck },
-      { key: 'reservations', label: 'Reserve Room',   icon: CalendarCheck },
-      { key: 'notices',      label: 'Announcements',  icon: RadioTower },
-      { key: 'reportIssue',  label: 'Report Issue',   icon: Wrench },
+      { key: 'overview',     label: 'Overview',              icon: Activity },
+      { key: 'schedule',     label: 'My Schedule',           icon: CalendarDays },
+      { key: 'classes',      label: 'My Classes',            icon: BookOpen },
+      { key: 'students',     label: 'Students',              icon: GraduationCap },
+      { key: 'attendance',   label: 'Attendance',            icon: ClipboardCheck },
+      { key: 'excuses',      label: 'Absence Excuses',       icon: FileText },
+      { key: 'officehours',  label: 'Office Hours & Queries', icon: MessageSquare },
+      { key: 'reservations', label: 'Reserve Room',          icon: CalendarCheck },
+      { key: 'notices',      label: 'Announcements',         icon: RadioTower },
+      { key: 'reportIssue',  label: 'Report Issue',          icon: Wrench },
     ]
   },
   student: {
     label: 'Student Portal',
     path: '/dashboard/student',
     sections: [
-      { key: 'overview', label: 'Overview',        icon: Activity },
-      { key: 'schedule', label: 'Schedule',        icon: ClipboardCheck },
-      { key: 'shuttle',  label: 'Shuttle',         icon: Bus },
-      { key: 'tickets',  label: 'Support Tickets', icon: Wrench },
+      { key: 'overview',     label: 'Overview',             icon: Activity },
+      { key: 'attendance',   label: 'Attendance & Excuses', icon: CalendarCheck },
+      { key: 'lostfound',    label: 'Lost & Found Board',   icon: Search },
+      { key: 'labequipment', label: 'Hardware & Lab',       icon: Cpu },
+      { key: 'officehours',  label: 'Faculty Office Hours', icon: MessageSquare },
+      { key: 'schedule',     label: 'Class Schedule',       icon: ClipboardCheck },
+      { key: 'shuttle',      label: 'Shuttle Fleet',        icon: Bus },
+      { key: 'tickets',      label: 'Support Tickets',      icon: Wrench },
     ]
   },
   security: {

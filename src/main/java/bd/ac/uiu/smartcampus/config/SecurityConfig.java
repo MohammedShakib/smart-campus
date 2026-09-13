@@ -50,15 +50,17 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable()) // Disabled for simple REST & prototype form submissions
             .authorizeHttpRequests(auth -> auth
                 // Static Assets & Public pages
-                .requestMatchers("/app/**", "/css/**", "/js/**", "/images/**", "/webjars/**", "/favicon.ico").permitAll()
+                .requestMatchers("/app/**", "/css/**", "/js/**", "/images/**", "/uploads/**", "/webjars/**", "/favicon.ico").permitAll()
                 .requestMatchers("/", "/login", "/register", "/attendance/checkin", "/api/auth/register", "/api/auth/me", "/h2-console/**").permitAll()
 
                 // Teacher-specific APIs and protected campus actions
                 .requestMatchers("/api/teacher/**").hasRole("TEACHER")
+                // Student APIs
+                .requestMatchers("/api/student/**").hasAnyRole("STUDENT", "ADMIN")
                 .requestMatchers("/api/attendance/checkin").hasRole("STUDENT")
                 .requestMatchers("/api/campus/admin/**", "/api/campus/backup/**", "/api/campus/logs", "/api/campus/complaint/process-next", "/api/campus/bus/transmit").hasRole("ADMIN")
                 .requestMatchers("/api/campus/gate/checkin").hasAnyRole("SECURITY", "ADMIN")
-                .requestMatchers("/api/campus/complaint/submit").hasAnyRole("STUDENT", "TEACHER", "ADMIN")
+                .requestMatchers("/api/campus/complaint/submit", "/api/upload").hasAnyRole("STUDENT", "TEACHER", "ADMIN")
                 .requestMatchers("/api/campus/telemetry", "/api/campus/bus/locations").authenticated()
 
                 // React dashboard data endpoints

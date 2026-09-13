@@ -13,6 +13,11 @@ import java.util.List;
 public interface ClassEnrollmentRepository extends JpaRepository<ClassEnrollment, Long> {
 
     /**
+     * All active enrollments for a student.
+     */
+    List<ClassEnrollment> findByStudentAndActiveTrue(User student);
+
+    /**
      * All active enrollments for a teacher in a specific course/section.
      */
     List<ClassEnrollment> findByTeacherEmailAndCourseCodeAndSectionNameAndActiveTrue(
