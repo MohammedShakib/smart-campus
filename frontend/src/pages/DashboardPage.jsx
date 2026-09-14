@@ -19,6 +19,7 @@ const dashboardConfig = {
     path: '/dashboard/admin',
     sections: [
       { key: 'overview',    label: 'Overview',          icon: Activity },
+      { key: 'users',       label: 'Users',             icon: UsersRound },
       { key: 'equipment',   label: 'Lab & Equipment',   icon: Cpu },
       { key: 'classrooms',  label: 'Smart Classrooms',  icon: Building2 },
       { key: 'transport',   label: 'Transport',         icon: Bus },

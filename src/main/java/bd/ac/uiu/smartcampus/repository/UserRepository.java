@@ -25,4 +25,13 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findByRole(Role role);
     long countByRole(Role role);
     long countByActiveTrue();
+    
+    @Query("SELECT u FROM User u WHERE " +
+           "(:role IS NULL OR u.role = :role) AND " +
+           "(:status IS NULL OR u.active = :status) AND " +
+           "(:search IS NULL OR " +
+           "LOWER(u.fullName) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+           "LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+           "LOWER(u.studentOrEmpId) LIKE LOWER(CONCAT('%', :search, '%')))")
+    List<User> searchUsers(@Param("search") String search, @Param("role") Role role, @Param("status") Boolean status);
 }

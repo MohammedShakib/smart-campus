@@ -21,6 +21,7 @@ import { StudentLostFoundSection } from './student/StudentLostFoundSection';
 import { StudentLabEquipmentSection } from './student/StudentLabEquipmentSection';
 import { StudentOfficeHoursSection } from './student/StudentOfficeHoursSection';
 import { AdminEquipmentSection } from './admin/AdminEquipmentSection';
+import { AdminUsersSection } from './admin/AdminUsersSection';
 
 /* ─────────────────────────────────────────────────────────
    SECTION ROUTER
@@ -59,6 +60,7 @@ export function DashboardSection({
   }
 
   if (role === 'admin') {
+    if (section === 'users') return <AdminUsersSection />;
     if (section === 'equipment') return <AdminEquipmentSection />;
     if (section === 'classrooms') return <ClassroomsSection classrooms={sampleClassrooms()} />;
     if (section === 'transport') return <TransportSection data={data} />;
