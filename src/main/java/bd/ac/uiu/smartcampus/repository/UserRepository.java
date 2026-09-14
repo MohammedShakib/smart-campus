@@ -13,19 +13,21 @@ import java.util.Optional;
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByEmail(String email);
-    
+
     @Query("SELECT u FROM User u WHERE u.studentOrEmpId = :studentOrEmpId")
     Optional<User> findByStudentOrEmpId(@Param("studentOrEmpId") String studentOrEmpId);
-    
+
     boolean existsByEmail(String email);
-    
+    boolean existsByEmailIgnoreCase(String email);
+
     @Query("SELECT COUNT(u) > 0 FROM User u WHERE u.studentOrEmpId = :studentOrEmpId")
     boolean existsByStudentOrEmpId(@Param("studentOrEmpId") String studentOrEmpId);
-    
+
     List<User> findByRole(Role role);
     long countByRole(Role role);
     long countByActiveTrue();
-    
+    long countByRoleAndActiveTrue(Role role);
+
     @Query("SELECT u FROM User u WHERE " +
            "(:role IS NULL OR u.role = :role) AND " +
            "(:status IS NULL OR u.active = :status) AND " +

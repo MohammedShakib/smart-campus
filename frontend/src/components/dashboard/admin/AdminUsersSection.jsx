@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { ShieldCheck, GraduationCap, BookOpen, UsersRound, Search, Filter, Plus, Edit2, ShieldAlert, CheckCircle, XCircle, Save, X } from 'lucide-react';
+import { Search, Plus, Edit2, CheckCircle, XCircle, Save, X } from 'lucide-react';
 import { api } from '../../../utils/api';
 import { prettyRole } from '../../../utils/helpers';
-import { SectionHeader, Panel, Table, ActionButton, StatRow } from '../../shared/SharedComponents';
+import { SectionHeader, Panel, ActionButton, StatRow } from '../../shared/SharedComponents';
 
 export function AdminUsersSection() {
   const [users, setUsers] = useState([]);
@@ -54,9 +54,9 @@ export function AdminUsersSection() {
   return (
     <div>
       <SectionHeader title="User Management" subtitle="Manage campus accounts, roles, and access status." />
-      
+
       {message && <div className={`notice ${message.type}`} style={{ marginBottom: '1rem' }}>{message.text}</div>}
-      
+
       <div className="section-grid">
         <Panel title="Account Statistics" tag="Overview">
           <div className="stat-list">
@@ -69,8 +69,8 @@ export function AdminUsersSection() {
 
         <div style={{ gridColumn: '1 / -1' }}>
           {(isCreating || editingUser) && (
-            <UserForm 
-              user={editingUser} 
+            <UserForm
+              user={editingUser}
               onClose={() => { setIsCreating(false); setEditingUser(null); }}
               onSuccess={() => { setIsCreating(false); setEditingUser(null); fetchUsers(); setMessage({ type: 'success', text: 'User saved successfully.' }); }}
               onError={(err) => setMessage({ type: 'error', text: err })}
@@ -81,11 +81,11 @@ export function AdminUsersSection() {
             <div className="toolbar" style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
               <div style={{ flex: 1, minWidth: '200px', position: 'relative' }}>
                 <Search size={16} style={{ position: 'absolute', left: '10px', top: '10px', color: 'var(--tx-muted)' }} />
-                <input 
-                  type="text" 
-                  placeholder="Search by name, email, or ID..." 
-                  value={search} 
-                  onChange={(e) => setSearch(e.target.value)} 
+                <input
+                  type="text"
+                  placeholder="Search by name, login, or ID..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
                   style={{ paddingLeft: '35px', width: '100%' }}
                 />
               </div>
@@ -171,13 +171,13 @@ function UserForm({ user, onClose, onSuccess, onError }) {
     role: 'ROLE_STUDENT',
     password: ''
   });
-  
+
   const [saving, setSaving] = useState(false);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     setSaving(true);
-    
+
     const isEdit = !!user;
     const endpoint = isEdit ? `/api/admin/users/${user.id}` : '/api/admin/users';
     const method = isEdit ? 'PUT' : 'POST';
@@ -200,16 +200,16 @@ function UserForm({ user, onClose, onSuccess, onError }) {
             <input required value={formData.fullName} onChange={e => setFormData({...formData, fullName: e.target.value})} placeholder="e.g. John Doe" />
           </div>
           <div>
-            <label style={{ fontSize: '0.74rem', fontWeight: 700, color: 'var(--tx-muted)', textTransform: 'uppercase', marginBottom: '0.4rem', display: 'block' }}>Email / Username *</label>
-            <input type="email" required value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} placeholder="e.g. john@university.edu" />
+            <label style={{ fontSize: '0.74rem', fontWeight: 700, color: 'var(--tx-muted)', textTransform: 'uppercase', marginBottom: '0.4rem', display: 'block' }}>Login Identifier *</label>
+            <input type="text" required disabled={!!user} value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} placeholder="e.g. teacher-demo" />
           </div>
           <div>
             <label style={{ fontSize: '0.74rem', fontWeight: 700, color: 'var(--tx-muted)', textTransform: 'uppercase', marginBottom: '0.4rem', display: 'block' }}>University / Employee ID</label>
-            <input value={formData.studentOrEmpId} onChange={e => setFormData({...formData, studentOrEmpId: e.target.value})} placeholder="e.g. 011211001" />
+            <input disabled={!!user} value={formData.studentOrEmpId} onChange={e => setFormData({...formData, studentOrEmpId: e.target.value})} placeholder="e.g. 011211001" />
           </div>
           <div>
             <label style={{ fontSize: '0.74rem', fontWeight: 700, color: 'var(--tx-muted)', textTransform: 'uppercase', marginBottom: '0.4rem', display: 'block' }}>Role *</label>
-            <select required value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})}>
+            <select required disabled={!!user} value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})}>
               <option value="ROLE_STUDENT">Student</option>
               <option value="ROLE_TEACHER">Teacher</option>
               <option value="ROLE_ADMIN">Admin</option>
@@ -227,7 +227,7 @@ function UserForm({ user, onClose, onSuccess, onError }) {
             </div>
           )}
         </div>
-        
+
         <div style={{ gridColumn: '1/-1', display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '1rem' }}>
           <button type="button" className="ghost-btn" onClick={onClose} disabled={saving}><X size={16} /> Cancel</button>
           <button type="submit" className="primary-btn" disabled={saving}><Save size={16} /> {saving ? 'Saving...' : 'Save User'}</button>

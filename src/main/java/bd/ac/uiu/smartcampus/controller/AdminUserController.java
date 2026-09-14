@@ -6,6 +6,7 @@ import bd.ac.uiu.smartcampus.dto.AdminUserUpdateRequest;
 import bd.ac.uiu.smartcampus.model.Role;
 import bd.ac.uiu.smartcampus.service.AdminUserService;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -32,8 +33,13 @@ public class AdminUserController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<AdminUserDto> getUserById(@PathVariable Long id) {
-        return ResponseEntity.ok(adminUserService.getUserById(id));
+    public ResponseEntity<?> getUserById(@PathVariable Long id) {
+        try {
+            return ResponseEntity.ok(adminUserService.getUserById(id));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("success", false, "message", e.getMessage()));
+        }
     }
 
     @PostMapping
@@ -66,7 +72,7 @@ public class AdminUserController {
             @PathVariable Long id,
             @RequestBody Map<String, Boolean> request,
             Authentication authentication) {
-        if (!request.containsKey("active")) {
+        if (!request.containsKey("active") || request.get("active") == null) {
             return ResponseEntity.badRequest().body(Map.of("success", false, "message", "Missing 'active' field"));
         }
         try {

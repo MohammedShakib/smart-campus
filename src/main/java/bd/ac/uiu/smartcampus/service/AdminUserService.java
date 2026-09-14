@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -47,21 +48,24 @@ public class AdminUserService {
 
     @Transactional
     public AdminUserDto createUser(AdminUserCreateRequest request, String currentAdminEmail) {
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new IllegalArgumentException("Email already exists: " + request.getEmail());
+        String loginIdentifier = request.getEmail().trim();
+        String studentOrEmpId = blankToNull(request.getStudentOrEmpId());
+
+        if (userRepository.existsByEmailIgnoreCase(loginIdentifier)) {
+            throw new IllegalArgumentException("Login identifier already exists: " + loginIdentifier);
         }
-        if (request.getStudentOrEmpId() != null && !request.getStudentOrEmpId().isEmpty()) {
-            if (userRepository.existsByStudentOrEmpId(request.getStudentOrEmpId())) {
-                throw new IllegalArgumentException("Student or Employee ID already exists: " + request.getStudentOrEmpId());
+        if (studentOrEmpId != null) {
+            if (userRepository.existsByStudentOrEmpId(studentOrEmpId)) {
+                throw new IllegalArgumentException("Student or Employee ID already exists: " + studentOrEmpId);
             }
         }
 
         User user = new User(
-                request.getEmail(),
+                loginIdentifier,
                 passwordEncoder.encode(request.getPassword()),
-                request.getFullName(),
-                request.getStudentOrEmpId(),
-                request.getDepartment(),
+                request.getFullName().trim(),
+                studentOrEmpId,
+                blankToNull(request.getDepartment()),
                 request.getRole()
         );
         user.setActive(true);
@@ -78,25 +82,27 @@ public class AdminUserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + id));
 
-        if (!user.getEmail().equalsIgnoreCase(request.getEmail()) && userRepository.existsByEmail(request.getEmail())) {
-            throw new IllegalArgumentException("Email already exists: " + request.getEmail());
-        }
-        
-        if (request.getStudentOrEmpId() != null && !request.getStudentOrEmpId().isEmpty()) {
-            if (!request.getStudentOrEmpId().equals(user.getStudentOrEmpId()) && userRepository.existsByStudentOrEmpId(request.getStudentOrEmpId())) {
-                throw new IllegalArgumentException("Student or Employee ID already exists: " + request.getStudentOrEmpId());
-            }
+        String requestedLoginIdentifier = request.getEmail().trim();
+        String requestedStudentOrEmpId = blankToNull(request.getStudentOrEmpId());
+
+        if (!Objects.equals(user.getEmail(), requestedLoginIdentifier)) {
+            throw new IllegalArgumentException("Login identifier cannot be changed in Phase 1.");
         }
 
-        user.setEmail(request.getEmail());
-        user.setFullName(request.getFullName());
-        user.setStudentOrEmpId(request.getStudentOrEmpId());
-        user.setDepartment(request.getDepartment());
-        user.setRole(request.getRole());
+        if (!Objects.equals(user.getStudentOrEmpId(), requestedStudentOrEmpId)) {
+            throw new IllegalArgumentException("Student or Employee ID cannot be changed in Phase 1.");
+        }
+
+        if (user.getRole() != request.getRole()) {
+            throw new IllegalArgumentException("Role cannot be changed in Phase 1.");
+        }
+
+        user.setFullName(request.getFullName().trim());
+        user.setDepartment(blankToNull(request.getDepartment()));
 
         User savedUser = userRepository.save(user);
 
-        logAction(currentAdminEmail, "USER_UPDATED", "Updated user details for: " + savedUser.getEmail());
+        logAction(currentAdminEmail, "USER_UPDATED", "Updated safe profile fields for: " + savedUser.getEmail());
 
         return new AdminUserDto(savedUser);
     }
@@ -109,6 +115,9 @@ public class AdminUserService {
         if (!active && user.getEmail().equalsIgnoreCase(currentAdminEmail)) {
             throw new IllegalArgumentException("You cannot disable your own account.");
         }
+        if (!active && user.getRole() == Role.ROLE_ADMIN && userRepository.countByRoleAndActiveTrue(Role.ROLE_ADMIN) <= 1) {
+            throw new IllegalArgumentException("At least one active admin account must remain.");
+        }
 
         user.setActive(active);
         userRepository.save(user);
@@ -120,5 +129,12 @@ public class AdminUserService {
     private void logAction(String adminEmail, String actionType, String details) {
         AdminActionLog log = new AdminActionLog(adminEmail, actionType, details);
         actionLogRepository.save(log);
+    }
+
+    private String blankToNull(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return null;
+        }
+        return value.trim();
     }
 }
