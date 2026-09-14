@@ -24,4 +24,6 @@ public interface UserNotificationRepository extends JpaRepository<UserNotificati
     @Modifying
     @Query("UPDATE UserNotification n SET n.read = true WHERE n.recipient = :recipient AND n.read = false")
     void markAllAsReadByRecipient(@Param("recipient") User recipient);
+    
+    java.util.Optional<UserNotification> findByIdAndRecipient(Long id, User recipient);
 }

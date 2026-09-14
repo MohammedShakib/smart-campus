@@ -97,9 +97,9 @@ public class FacultyOfficeHourService {
                         NotificationType.OFFICE_HOURS,
                         "New office hour booking",
                         message,
-                        "queries",
+                        "officehours",
                         saved.getId().toString(),
-                        null
+                        "OFFICE_QUERY:" + saved.getId() + ":" + teacher.getId()
                 );
             });
             

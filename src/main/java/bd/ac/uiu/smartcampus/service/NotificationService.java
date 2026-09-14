@@ -8,6 +8,7 @@ import bd.ac.uiu.smartcampus.repository.UserNotificationRepository;
 import bd.ac.uiu.smartcampus.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,7 +48,12 @@ public class NotificationService {
         }
         UserNotification notification = new UserNotification(recipient, type, title, message, targetSection, referenceId);
         notification.setEventKey(eventKey);
-        return notificationRepository.save(notification);
+        try {
+            return notificationRepository.save(notification);
+        } catch (DataIntegrityViolationException e) {
+            logger.warn("Concurrent duplicate notification creation suppressed for eventKey: {}", eventKey);
+            return null;
+        }
     }
 
     @Transactional(readOnly = true)
@@ -65,12 +71,10 @@ public class NotificationService {
 
     @Transactional
     public void markAsRead(Long notificationId, User user) {
-        notificationRepository.findById(notificationId).ifPresent(notification -> {
-            if (notification.getRecipient().getId().equals(user.getId())) {
-                notification.setRead(true);
-                notificationRepository.save(notification);
-            }
-        });
+        UserNotification notification = notificationRepository.findByIdAndRecipient(notificationId, user)
+                .orElseThrow(() -> new IllegalArgumentException("Notification not found or access denied."));
+        notification.setRead(true);
+        notificationRepository.save(notification);
     }
 
     @Transactional
@@ -88,28 +92,25 @@ public class NotificationService {
         LocalTime upcomingLimit = now.plusMinutes(35); // Check classes starting in the next 35 minutes
         String currentDayOfWeek = today.getDayOfWeek().getDisplayName(TextStyle.FULL, Locale.US).toUpperCase();
 
-        List<User> teachers = userRepository.findByRole(Role.ROLE_TEACHER);
+        List<TeachingSchedule> schedules = teachingScheduleRepository.findByDayOfWeek(currentDayOfWeek);
+        
+        for (TeachingSchedule schedule : schedules) {
+            LocalTime startTime = schedule.getStartTime();
+            if (startTime.isAfter(now) && startTime.isBefore(upcomingLimit)) {
+                // Check if a session exists today, if so, ensure it's not COMPLETED
+                List<ClassSession> sessions = classSessionRepository.findByTeachingSchedule_TeacherEmailAndSessionDate(schedule.getTeacherEmail(), today);
+                boolean isCompleted = sessions.stream()
+                        .filter(s -> s.getTeachingSchedule().getId().equals(schedule.getId()))
+                        .anyMatch(s -> s.getStatus() == ClassStatus.COMPLETED);
 
-        for (User teacher : teachers) {
-            List<TeachingSchedule> schedules = teachingScheduleRepository.findByTeacherEmailOrderByDayOfWeekAscStartTimeAsc(teacher.getEmail());
-            for (TeachingSchedule schedule : schedules) {
-                if (schedule.getDayOfWeek().equalsIgnoreCase(currentDayOfWeek)) {
-                    LocalTime startTime = schedule.getStartTime();
-                    if (startTime.isAfter(now) && startTime.isBefore(upcomingLimit)) {
-                        // Check if a session exists today, if so, ensure it's not COMPLETED
-                        List<ClassSession> sessions = classSessionRepository.findByTeachingSchedule_TeacherEmailAndSessionDate(teacher.getEmail(), today);
-                        boolean isCompleted = sessions.stream()
-                                .filter(s -> s.getTeachingSchedule().getId().equals(schedule.getId()))
-                                .anyMatch(s -> s.getStatus() == ClassSession.SessionStatus.COMPLETED);
-
-                        if (!isCompleted) {
-                            String eventKey = "CLASS_REMINDER:" + schedule.getId() + ":" + today.toString();
-                            String message = String.format("%s — Section %s starts at %s in %s.",
-                                    schedule.getCourseCode(), schedule.getSectionName(),
-                                    schedule.getStartTime(), schedule.getRoomInfo());
-                            createNotification(teacher, NotificationType.CLASS_REMINDER, "Upcoming class", message, "schedule", schedule.getId().toString(), eventKey);
-                        }
-                    }
+                if (!isCompleted) {
+                    userRepository.findByEmail(schedule.getTeacherEmail()).ifPresent(teacher -> {
+                        String eventKey = "CLASS_REMINDER:" + schedule.getId() + ":" + today.toString();
+                        String message = String.format("%s — Section %s starts at %s in %s.",
+                                schedule.getCourseCode(), schedule.getSectionName(),
+                                schedule.getStartTime(), schedule.getRoomNumber());
+                        createNotification(teacher, NotificationType.CLASS_REMINDER, "Upcoming class", message, "schedule", schedule.getId().toString(), eventKey);
+                    });
                 }
             }
         }

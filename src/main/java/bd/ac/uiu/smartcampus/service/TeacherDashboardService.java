@@ -302,7 +302,7 @@ public class TeacherDashboardService {
                     message,
                     "attendance",
                     session.getId().toString(),
-                    null
+                    "ATTENDANCE_COMPLETED:" + session.getId()
             );
         });
 
@@ -531,7 +531,7 @@ public class TeacherDashboardService {
                     message,
                     "reservations",
                     saved.getId().toString(),
-                    null
+                    "RESERVATION_CREATED:" + saved.getId()
             );
         });
         

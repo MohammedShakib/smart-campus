@@ -7,6 +7,7 @@ import bd.ac.uiu.smartcampus.repository.MaintenanceComplaintRepository;
 import bd.ac.uiu.smartcampus.repository.UserRepository;
 import bd.ac.uiu.smartcampus.service.NotificationService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.annotation.PostConstruct;
 import java.util.ArrayDeque;
@@ -54,9 +55,10 @@ public class ComplaintQueueService {
     /**
      * Process next complaint in FIFO order (poll from head of queue)
      */
+    @Transactional
     public synchronized MaintenanceComplaint processNextComplaint() {
         if (!complaintQueue.isEmpty()) {
-            MaintenanceComplaint complaint = complaintQueue.poll();
+            MaintenanceComplaint complaint = complaintQueue.peek();
             complaint.setStatus("RESOLVED");
             repository.save(complaint);
             
@@ -70,12 +72,12 @@ public class ComplaintQueueService {
                             message,
                             "reportIssue",
                             complaint.getId().toString(),
-                            null
+                            "COMPLAINT_RESOLVED:" + complaint.getId()
                     );
                 });
             }
             
-            return complaint;
+            return complaintQueue.poll();
         }
         return null;
     }

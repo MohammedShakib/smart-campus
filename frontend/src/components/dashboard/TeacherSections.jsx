@@ -1084,7 +1084,7 @@ export function TeacherOfficeHoursSection() {
 // ─────────────────────────────────────────────────────────
 // NOTIFICATIONS SECTION
 // ─────────────────────────────────────────────────────────
-export function TeacherNotificationsSection() {
+export function TeacherNotificationsSection({ setActiveSection }) {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -1114,6 +1114,15 @@ export function TeacherNotificationsSection() {
       .catch(console.error);
   };
 
+  const handleNotificationClick = (notif) => {
+    if (!notif.read) {
+      markAsRead(notif.id);
+    }
+    if (notif.targetSection && setActiveSection) {
+      setActiveSection(notif.targetSection);
+    }
+  };
+
   const markAllAsRead = () => {
     api('/api/teacher/notifications/read-all', { method: 'POST' })
       .then(() => {
@@ -1129,8 +1138,8 @@ export function TeacherNotificationsSection() {
       <SectionHeader title="Notifications" subtitle="Stay updated on classes, students, and campus events." />
       {error && <Feedback result={{ type: 'error', text: error }} />}
 
-      <div style={{ marginBottom: '1rem', display: 'flex', gap: '0.5rem', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
+      <div className="notification-toolbar">
+        <div className="notification-filters">
           <button className={filter === 'all' ? 'primary-btn' : 'ghost-btn'} onClick={() => setFilter('all')}>All</button>
           <button className={filter === 'unread' ? 'primary-btn' : 'ghost-btn'} onClick={() => setFilter('unread')}>Unread</button>
         </div>
@@ -1144,26 +1153,20 @@ export function TeacherNotificationsSection() {
           ) : filteredNotifications.length === 0 ? (
             <p className="muted">No notifications.</p>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <div className="notification-list">
               {filteredNotifications.map((notif) => (
                 <div
                   key={notif.id}
-                  style={{
-                    padding: '1rem',
-                    borderRadius: 'var(--r-md)',
-                    background: notif.read ? 'var(--bg-card-alt)' : '#eff6ff',
-                    border: `1px solid ${notif.read ? 'var(--border)' : '#bfdbfe'}`,
-                    cursor: notif.read ? 'default' : 'pointer'
-                  }}
-                  onClick={() => !notif.read && markAsRead(notif.id)}
+                  className={`notification-item ${!notif.read ? 'notification-item--unread' : ''}`}
+                  onClick={() => handleNotificationClick(notif)}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                  <div className="notification-meta">
                     <strong>{notif.title}</strong>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--tx-muted)' }}>
+                    <span className="notification-time">
                       {new Date(notif.createdAt).toLocaleString()}
                     </span>
                   </div>
-                  <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--tx-secondary)' }}>{notif.message}</p>
+                  <p className="notification-message">{notif.message}</p>
                 </div>
               ))}
             </div>

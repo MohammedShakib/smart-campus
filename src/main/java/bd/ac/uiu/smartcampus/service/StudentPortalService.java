@@ -178,6 +178,19 @@ public class StudentPortalService {
             throw new IllegalArgumentException("Explanation or medical reason details are required.");
         }
 
+        User student = userRepository.findByStudentOrEmpId(studentId)
+                .orElseThrow(() -> new IllegalArgumentException("Student not found."));
+
+        List<ClassEnrollment> enrollments = enrollmentRepository.findByStudentAndActiveTrue(student);
+        ClassEnrollment targetEnrollment = enrollments.stream()
+                .filter(e -> e.getCourseCode().equalsIgnoreCase(request.getCourseCode()) &&
+                             e.getSectionName().equalsIgnoreCase(request.getSectionName()))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("You are not enrolled in this course/section."));
+
+        User authoritativeTeacher = targetEnrollment.getTeacher();
+        String authoritativeTeacherEmail = authoritativeTeacher.getEmail();
+
         LocalDate date = LocalDate.parse(request.getAbsenceDate());
 
         AbsenceExcuse excuse = new AbsenceExcuse(
@@ -187,7 +200,7 @@ public class StudentPortalService {
                 request.getCourseCode(),
                 request.getCourseTitle(),
                 request.getSectionName(),
-                request.getTeacherEmail() != null ? request.getTeacherEmail() : "teacher-demo",
+                authoritativeTeacherEmail,
                 date,
                 request.getReasonCategory() != null ? request.getReasonCategory() : "MEDICAL",
                 request.getExplanation().trim(),
@@ -196,19 +209,17 @@ public class StudentPortalService {
 
         AbsenceExcuse saved = absenceExcuseRepository.save(excuse);
         
-        userRepository.findByEmail(saved.getTeacherEmail()).ifPresent(teacher -> {
-            String message = String.format("A new absence excuse was submitted for %s — Section %s.",
-                    saved.getCourseCode(), saved.getSectionName());
-            notificationService.createNotification(
-                    teacher,
-                    NotificationType.ABSENCE_EXCUSE,
-                    "New absence excuse",
-                    message,
-                    "excuses",
-                    saved.getId().toString(),
-                    null
-            );
-        });
+        String message = String.format("A new absence excuse was submitted for %s — Section %s.",
+                saved.getCourseCode(), saved.getSectionName());
+        notificationService.createNotification(
+                authoritativeTeacher,
+                NotificationType.ABSENCE_EXCUSE,
+                "New absence excuse",
+                message,
+                "excuses",
+                saved.getId().toString(),
+                "ABSENCE_EXCUSE:" + saved.getId() + ":" + authoritativeTeacher.getId()
+        );
         
         return saved;
     }

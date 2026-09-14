@@ -105,11 +105,22 @@ export function DashboardPage() {
     loadDashboard();
     if (role === 'admin') loadAuditLogs();
     if (role === 'teacher') loadUnreadCount();
-    const timer = setInterval(() => {
+    
+    const telemetryTimer = setInterval(() => {
       api('/api/campus/telemetry').then((res) => setTelemetry(res.data)).catch(() => {});
-      if (role === 'teacher') loadUnreadCount();
     }, 4000);
-    return () => clearInterval(timer);
+    
+    let notifTimer;
+    if (role === 'teacher') {
+      notifTimer = setInterval(() => {
+        loadUnreadCount();
+      }, 25000);
+    }
+    
+    return () => {
+      clearInterval(telemetryTimer);
+      if (notifTimer) clearInterval(notifTimer);
+    };
   }, [role, loadDashboard, loadAuditLogs, loadUnreadCount]);
 
   if (error) return <ErrorState error={error} />;
@@ -238,6 +249,7 @@ export function DashboardPage() {
             role={role} section={activeSection}
             data={data} telemetry={telemetry} auditLogs={auditLogs}
             reload={loadDashboard} reloadLogs={loadAuditLogs}
+            setActiveSection={setActiveSection}
           />
         </div>
       </section>

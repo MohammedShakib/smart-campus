@@ -12,4 +12,5 @@ public interface TeachingScheduleRepository extends JpaRepository<TeachingSchedu
     List<TeachingSchedule> findByTeacherEmailOrderByDayOfWeekAscStartTimeAsc(String teacherEmail);
     Optional<TeachingSchedule> findByTeacherEmailAndCourseCodeAndSectionNameAndDayOfWeek(String teacherEmail, String courseCode, String sectionName, String dayOfWeek);
     boolean existsByTeacherEmailAndCourseCodeAndSectionNameAndDayOfWeek(String teacherEmail, String courseCode, String sectionName, String dayOfWeek);
+    List<TeachingSchedule> findByDayOfWeek(String dayOfWeek);
 }

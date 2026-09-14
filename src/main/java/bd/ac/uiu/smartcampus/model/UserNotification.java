@@ -41,7 +41,7 @@ public class UserNotification {
     @Column(length = 100)
     private String referenceId;
 
-    @Column(length = 200)
+    @Column(length = 200, unique = true)
     private String eventKey;
 
     public UserNotification() {

@@ -274,7 +274,7 @@ public class TeacherApiController {
                     savedNotice.getTitle(),
                     "notices",
                     savedNotice.getId().toString(),
-                    null
+                    "ANNOUNCEMENT:" + savedNotice.getId() + ":" + teacher.getId()
             );
         }
         
