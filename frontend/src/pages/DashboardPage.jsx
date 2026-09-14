@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  Activity, Bell, BookOpen, Bus, Building2, CalendarCheck, CalendarDays,
-  Camera,
-  ChevronRight, ClipboardCheck, Cpu, DoorOpen, FileText, GraduationCap,
-  IdCard, KeyRound, LogOut, Mail, MessageSquare, RadioTower,
-  Save, Search, Upload, UsersRound, Wrench, X
+  Activity, AlertTriangle, Bell, BookOpen, Bus, Building2, CalendarCheck, CalendarDays,
+  Camera, Car, ChevronRight, ClipboardCheck, Cpu, DoorOpen, FileText, FileWarning,
+  GraduationCap, IdCard, KeyRound, LogOut, Mail, MapPin, MessageSquare, QrCode,
+  RadioTower, Save, Search, ShieldCheck, Upload, UsersRound, Wrench, X
 } from 'lucide-react';
 import { api } from '../utils/api';
 import { initials, prettyRole } from '../utils/helpers';
@@ -59,13 +58,18 @@ const dashboardConfig = {
     ]
   },
   security: {
-    label: 'Security Post',
+    label: 'Security Command',
     path: '/dashboard/security',
     sections: [
-      { key: 'overview',  label: 'Overview',    icon: Activity },
-      { key: 'gate',      label: 'Gate Access', icon: DoorOpen },
-      { key: 'visitors',  label: 'Visitor Log', icon: UsersRound },
-      { key: 'busfleet',  label: 'Bus Fleet',   icon: Bus },
+      { key: 'overview',   label: 'Security Desk',       icon: ShieldCheck },
+      { key: 'visitors',   label: 'Visitors & Passes',   icon: UsersRound },
+      { key: 'scanner',    label: 'QR Pass Scanner',     icon: QrCode },
+      { key: 'gate',       label: 'Gate Terminal',       icon: DoorOpen },
+      { key: 'parking',    label: 'Parking Control',     icon: Car },
+      { key: 'emergency',  label: 'Emergency Command',   icon: AlertTriangle },
+      { key: 'incidents',  label: 'Incident Log',        icon: FileWarning },
+      { key: 'campusmap',  label: 'Security Map',        icon: MapPin },
+      { key: 'busfleet',   label: 'Bus Fleet',           icon: Bus },
     ]
   }
 };

@@ -31,6 +31,10 @@ public class DataInitializer implements CommandLineRunner {
     private final LostFoundItemRepository lostFoundItemRepository;
     private final LabEquipmentRepository labEquipmentRepository;
     private final FacultyOfficeHourSlotRepository officeHourSlotRepository;
+    private final CampusVisitorRepository campusVisitorRepository;
+    private final ParkingZoneRepository parkingZoneRepository;
+    private final EmergencyAlertRepository emergencyAlertRepository;
+    private final SecurityIncidentRepository securityIncidentRepository;
     private final PasswordEncoder passwordEncoder;
 
     public DataInitializer(UserRepository userRepository,
@@ -46,6 +50,10 @@ public class DataInitializer implements CommandLineRunner {
                            LostFoundItemRepository lostFoundItemRepository,
                            LabEquipmentRepository labEquipmentRepository,
                            FacultyOfficeHourSlotRepository officeHourSlotRepository,
+                           CampusVisitorRepository campusVisitorRepository,
+                           ParkingZoneRepository parkingZoneRepository,
+                           EmergencyAlertRepository emergencyAlertRepository,
+                           SecurityIncidentRepository securityIncidentRepository,
                            PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.noticeRepository = noticeRepository;
@@ -60,6 +68,10 @@ public class DataInitializer implements CommandLineRunner {
         this.lostFoundItemRepository = lostFoundItemRepository;
         this.labEquipmentRepository = labEquipmentRepository;
         this.officeHourSlotRepository = officeHourSlotRepository;
+        this.campusVisitorRepository = campusVisitorRepository;
+        this.parkingZoneRepository = parkingZoneRepository;
+        this.emergencyAlertRepository = emergencyAlertRepository;
+        this.securityIncidentRepository = securityIncidentRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -160,6 +172,9 @@ public class DataInitializer implements CommandLineRunner {
             actionLogRepository.save(new AdminActionLog("admin-demo", "SECURITY_POLICY", "Enforced BCrypt 10-round salt password hashing for all user accounts."));
             actionLogRepository.save(new AdminActionLog("admin-demo", "ROOM_CALIBRATION", "Calibrated 48 smart classrooms and 12 laboratory telemetry profiles."));
         }
+
+        // 14. Seed Security operations (Visitors, Parking Zones, Incidents)
+        seedSecurityData();
 
         logger.info("Seed data initialization completed successfully!");
     }
@@ -432,6 +447,85 @@ public class DataInitializer implements CommandLineRunner {
                                double powerKW, String building, String roomType) {
         if (!classroomRepository.existsByRoomNumber(roomNumber)) {
             classroomRepository.save(new Classroom(roomNumber, capacity, floor, occupied, powerKW, building, roomType));
+        }
+    }
+
+    private void seedSecurityData() {
+        // Seed Parking Zones
+        if (parkingZoneRepository.count() == 0) {
+            parkingZoneRepository.save(new ParkingZone("B1-EAST", "Basement 1 - East Wing (Faculty & Staff)", "FACULTY_VIP", 120, 84, 85));
+            parkingZoneRepository.save(new ParkingZone("B1-WEST", "Basement 1 - West Wing (General Cars)", "CAR", 150, 142, 90));
+            parkingZoneRepository.save(new ParkingZone("B2-BIKE", "Basement 2 - Motorcycle Bay", "MOTORCYCLE", 250, 246, 92));
+            parkingZoneRepository.save(new ParkingZone("OPEN-GROUND", "Open Ground - Overflow & Visitors", "GENERAL", 80, 28, 80));
+        }
+
+        // Seed Visitors
+        if (campusVisitorRepository.count() == 0) {
+            CampusVisitor v1 = new CampusVisitor(
+                    "Dr. Shamsul Alam", "01711009988", "shamsul.alam@partner-uni.edu",
+                    "External Examination & Research Collaboration", "Prof. Tariqul Islam", "CSE",
+                    LocalDate.now(), LocalTime.of(10, 30), "Dhaka Metro-Gha 14-8899", "1985449922001", false
+            );
+            v1.setPassCode("VIS-UIU-78219");
+            v1.setStatus("APPROVED");
+            v1.setApprovedBy("Security Desk");
+            campusVisitorRepository.save(v1);
+
+            CampusVisitor v2 = new CampusVisitor(
+                    "Kamrul Hasan (Vendor)", "01819223344", "kamrul@hvac-tech.com",
+                    "Central AC & Chiller Compressor Maintenance", "Engr. Zahirul Haque", "Administration",
+                    LocalDate.now(), LocalTime.of(11, 0), "Dhaka Metro-Ta 11-4455", "1990223344556", false
+            );
+            v2.setPassCode("VIS-UIU-90214");
+            v2.setStatus("PENDING");
+            campusVisitorRepository.save(v2);
+
+            CampusVisitor v3 = new CampusVisitor(
+                    "Anika Tabassum", "01912556677", "anika.tabassum@gmail.com",
+                    "Undergraduate Admission Counseling", "Admission Office", "Registrar",
+                    LocalDate.now(), LocalTime.of(9, 30), "N/A (Pedestrian)", "2002334455667", true
+            );
+            v3.setPassCode("VIS-UIU-33018");
+            v3.setStatus("CHECKED_IN");
+            v3.setActualCheckInTime(LocalDateTime.now().minusMinutes(45));
+            v3.setApprovedBy("Officer Abul Kalam");
+            campusVisitorRepository.save(v3);
+
+            CampusVisitor v4 = new CampusVisitor(
+                    "Mahbubur Rahman", "01611889900", "mahbub@corp-bank.com",
+                    "UIU Career Placement Interview Panel", "Career Counseling Center", "Student Affairs",
+                    LocalDate.now().minusDays(1), LocalTime.of(14, 0), "Dhaka Metro-Kha 12-3344", "1988990011223", false
+            );
+            v4.setPassCode("VIS-UIU-11928");
+            v4.setStatus("CHECKED_OUT");
+            v4.setActualCheckInTime(LocalDateTime.now().minusDays(1).withHour(14).withMinute(5));
+            v4.setActualCheckOutTime(LocalDateTime.now().minusDays(1).withHour(17).withMinute(30));
+            v4.setApprovedBy("Officer Abul Kalam");
+            campusVisitorRepository.save(v4);
+        }
+
+        // Seed Security Incidents
+        if (securityIncidentRepository.count() == 0) {
+            SecurityIncident inc1 = new SecurityIncident(
+                    "Tailgating Attempt at Gate 2 Vehicle Boom",
+                    "UNAUTHORIZED_ENTRY", "Gate 2 (North Barrier)", "HIGH",
+                    "An unidentified private car attempted to tailgate an authorized faculty vehicle without presenting an RFID pass.",
+                    "Unidentified Driver, Vehicle: Dhaka Metro-Ga 22-9012", "Officer Abul Kalam"
+            );
+            inc1.setStatus("INVESTIGATING");
+            inc1.setActionTaken("Security guard stopped vehicle manually. Vehicle was escorted to visitor bay for verification.");
+            securityIncidentRepository.save(inc1);
+
+            SecurityIncident inc2 = new SecurityIncident(
+                    "Basement 2 Motorcycle Bay Parking Line Obstruction",
+                    "TRAFFIC_PARKING", "Basement 2 Bay C", "LOW",
+                    "Two motorbikes parked outside designated yellow markers, blocking the fire hose cabinet access.",
+                    "Student Bikers (Reg: DH-1123, DH-4456)", "Officer Abul Kalam"
+            );
+            inc2.setStatus("RESOLVED");
+            inc2.setActionTaken("Owners contacted via student database and vehicles repositioned to Bay D.");
+            inc2.setResolvedAt(LocalDateTime.now().minusHours(2));
+            securityIncidentRepository.save(inc2);
         }
     }
 }

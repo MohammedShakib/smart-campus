@@ -39,6 +39,7 @@ public class DashboardApiController {
     private final CampusSimulationWorker simulationWorker;
     private final BusServerSocketManager busServerManager;
     private final TeacherDashboardService teacherDashboardService;
+    private final bd.ac.uiu.smartcampus.service.SecurityService securityService;
 
     public DashboardApiController(UserRepository userRepository,
                                   CampusNoticeRepository noticeRepository,
@@ -48,7 +49,8 @@ public class DashboardApiController {
                                   UniqueAttendeeSetService attendeeSetService,
                                   CampusSimulationWorker simulationWorker,
                                   BusServerSocketManager busServerManager,
-                                  TeacherDashboardService teacherDashboardService) {
+                                  TeacherDashboardService teacherDashboardService,
+                                  bd.ac.uiu.smartcampus.service.SecurityService securityService) {
         this.userRepository = userRepository;
         this.noticeRepository = noticeRepository;
         this.complaintRepository = complaintRepository;
@@ -58,6 +60,7 @@ public class DashboardApiController {
         this.simulationWorker = simulationWorker;
         this.busServerManager = busServerManager;
         this.teacherDashboardService = teacherDashboardService;
+        this.securityService = securityService;
     }
 
     @GetMapping("/admin")
@@ -107,6 +110,7 @@ public class DashboardApiController {
         data.put("uniqueGatePassCount", attendeeSetService.getUniqueCount());
         data.put("busLocations", busServerManager.getLatestBusLocations());
         data.put("notices", noticeRepository.findTop10ByOrderByPostedAtDesc());
+        data.put("securitySummary", securityService.getDashboardSummary());
         return ApiResponse.ok("Security dashboard data", data);
     }
 

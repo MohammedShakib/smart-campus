@@ -22,6 +22,13 @@ import { StudentLabEquipmentSection } from './student/StudentLabEquipmentSection
 import { StudentOfficeHoursSection } from './student/StudentOfficeHoursSection';
 import { AdminEquipmentSection } from './admin/AdminEquipmentSection';
 import { AdminUsersSection } from './admin/AdminUsersSection';
+import { SecurityOverviewSection } from './security/SecurityOverviewSection';
+import { SecurityVisitorsSection } from './security/SecurityVisitorsSection';
+import { SecurityQrScannerSection } from './security/SecurityQrScannerSection';
+import { SecurityParkingSection } from './security/SecurityParkingSection';
+import { SecurityEmergencySection } from './security/SecurityEmergencySection';
+import { SecurityIncidentsSection } from './security/SecurityIncidentsSection';
+import { SecurityMapSection } from './security/SecurityMapSection';
 
 /* ─────────────────────────────────────────────────────────
    SECTION ROUTER
@@ -40,6 +47,16 @@ export function DashboardSection({
   refreshUnreadCount
 }) {
   if (section === 'overview') {
+    if (role === 'security') {
+      return (
+        <SecurityOverviewSection
+          data={data}
+          reload={reload}
+          setActiveSection={setActiveSection}
+        />
+      );
+    }
+
     return (
       <>
         <WelcomeBanner data={data} telemetry={telemetry} role={role} />
@@ -101,8 +118,13 @@ export function DashboardSection({
   }
 
   if (role === 'security') {
+    if (section === 'visitors') return <SecurityVisitorsSection />;
+    if (section === 'scanner') return <SecurityQrScannerSection />;
+    if (section === 'parking') return <SecurityParkingSection />;
+    if (section === 'emergency') return <SecurityEmergencySection />;
+    if (section === 'incidents') return <SecurityIncidentsSection />;
+    if (section === 'campusmap') return <SecurityMapSection />;
     if (section === 'gate') return <GateSection data={data} reload={reload} />;
-    if (section === 'visitors') return <VisitorLogSection data={data} />;
     if (section === 'busfleet') return <ShuttleSection busLocations={data.busLocations || {}} />;
   }
 
