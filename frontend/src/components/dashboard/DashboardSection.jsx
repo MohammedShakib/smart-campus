@@ -107,37 +107,53 @@ function MetricGrid({ telemetry, data, role }) {
   const occupiedRooms = Number(telemetry.occupiedRooms || 0);
   const totalRooms = Number(telemetry.totalRooms || 0);
   const roomUtilization = totalRooms > 0 ? Math.round((occupiedRooms / totalRooms) * 100) : null;
-  const cards = [
-    {
-      label: 'Rooms Active',
-      value: `${telemetry.occupiedRooms} / ${telemetry.totalRooms}`,
-      icon: Building2,
-      tone: 'rooms',
-      detail: roomUtilization !== null ? `${roomUtilization}% utilized` : 'Classroom signal',
-      progress: roomUtilization
-    },
-    {
-      label: 'Campus Buses',
-      value: `${telemetry.activeBuses} running`,
-      icon: BusFront,
-      tone: 'buses',
-      detail: 'Live fleet'
-    },
-    {
-      label: 'Power Load',
-      value: `${telemetry.powerConsumptionKW} kW`,
-      icon: Zap,
-      tone: 'power',
-      detail: 'Metered load'
-    }
-  ];
+  const cards = role === 'student'
+    ? [
+        {
+          label: 'Campus Buses',
+          value: `${telemetry.activeBuses} running`,
+          icon: BusFront,
+          tone: 'buses',
+          detail: 'Live fleet'
+        },
+        {
+          label: 'My Tickets',
+          value: data.myComplaints?.length || 0,
+          icon: Wrench,
+          tone: 'power',
+          detail: 'Maintenance'
+        }
+      ]
+    : [
+        {
+          label: 'Rooms Active',
+          value: `${telemetry.occupiedRooms} / ${telemetry.totalRooms}`,
+          icon: Building2,
+          tone: 'rooms',
+          detail: roomUtilization !== null ? `${roomUtilization}% utilized` : 'Classroom signal',
+          progress: roomUtilization
+        },
+        {
+          label: 'Campus Buses',
+          value: `${telemetry.activeBuses} running`,
+          icon: BusFront,
+          tone: 'buses',
+          detail: 'Live fleet'
+        },
+        {
+          label: 'Power Load',
+          value: `${telemetry.powerConsumptionKW} kW`,
+          icon: Zap,
+          tone: 'power',
+          detail: 'Metered load'
+        }
+      ];
   if (role === 'admin')    cards.push({ label: 'Total Accounts', value: data.totalUsers, icon: UsersRound, tone: 'accounts', detail: 'Directory' });
   if (role === 'security') cards.push({ label: 'Unique Gate Passes', value: data.uniqueGatePassCount, icon: DoorOpen, tone: 'accounts', detail: 'Set collection' });
-  if (role === 'student')  cards.push({ label: 'My Tickets', value: data.myComplaints?.length || 0, icon: Wrench, tone: 'power', detail: 'Maintenance' });
   if (role === 'teacher')  cards.push({ label: 'Faculty on Campus', value: telemetry.facultyOnCampus, icon: UsersRound, tone: 'accounts', detail: 'Presence' });
 
   return (
-    <div className="metric-grid">
+    <div className={`metric-grid${role === 'student' ? ' metric-grid--student' : ''}`}>
       {cards.map(({ label, value, icon: Icon, tone, detail, progress }) => (
         <div className={`metric-card metric-card--${tone}`} key={label}>
           <div className="metric-card-head">

@@ -127,12 +127,15 @@ export function DashboardPage() {
           ))}
         </nav>
 
-        <div className="user-card">
-          <div className="avatar">{initials(displayName)}</div>
-          <div>
-            <strong>{displayName}</strong>
-            <span>{roleLabel}</span>
+        <div className={`user-card${role === 'student' ? ' user-card--student' : ''}`}>
+          <div className="user-card-main">
+            <div className="avatar">{initials(displayName)}</div>
+            <div>
+              <strong>{displayName}</strong>
+              <span>{roleLabel}</span>
+            </div>
           </div>
+          {role === 'student' && <a className="profile-logout" href="/logout"><LogOut size={15} /> Logout</a>}
         </div>
       </aside>
 
@@ -146,11 +149,13 @@ export function DashboardPage() {
             </div>
             <h1>{config.sections.find(s => s.key === activeSection)?.label}</h1>
           </div>
-          <div className="topbar-actions">
-            <span className="health"><Activity size={15} /> {telemetry.systemStatus}</span>
-            <button type="button" className="icon-btn" onClick={loadDashboard} title="Refresh" aria-label="Refresh dashboard"><RefreshCw size={15} /></button>
-            <a className="logout" href="/logout"><LogOut size={16} /> Logout</a>
-          </div>
+          {role !== 'student' && (
+            <div className="topbar-actions">
+              <span className="health"><Activity size={15} /> {telemetry.systemStatus}</span>
+              <button type="button" className="icon-btn" onClick={loadDashboard} title="Refresh" aria-label="Refresh dashboard"><RefreshCw size={15} /></button>
+              <a className="logout" href="/logout"><LogOut size={16} /> Logout</a>
+            </div>
+          )}
         </header>
 
         <div className="content">
