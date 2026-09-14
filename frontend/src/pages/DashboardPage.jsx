@@ -3,7 +3,7 @@ import {
   Activity, BookOpen, Bus, Building2, CalendarCheck, CalendarDays,
   Camera,
   ChevronRight, ClipboardCheck, Cpu, DoorOpen, FileText, GraduationCap,
-  IdCard, KeyRound, LogOut, Mail, MessageSquare, RadioTower, RefreshCw,
+  IdCard, KeyRound, LogOut, Mail, MessageSquare, RadioTower,
   Save, Search, Upload, UsersRound, Wrench, X
 } from 'lucide-react';
 import { api } from '../utils/api';
@@ -211,12 +211,6 @@ export function DashboardPage() {
             </div>
             <h1>{config.sections.find(s => s.key === activeSection)?.label}</h1>
           </div>
-          {role !== 'student' && (
-            <div className="topbar-actions">
-              <span className="health"><Activity size={15} /> {telemetry.systemStatus}</span>
-              <button type="button" className="icon-btn" onClick={loadDashboard} title="Refresh" aria-label="Refresh dashboard"><RefreshCw size={15} /></button>
-            </div>
-          )}
         </header>
 
         <div className="content">
