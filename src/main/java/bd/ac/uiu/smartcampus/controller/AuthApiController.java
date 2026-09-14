@@ -1,6 +1,8 @@
 package bd.ac.uiu.smartcampus.controller;
 
 import bd.ac.uiu.smartcampus.dto.ApiResponse;
+import bd.ac.uiu.smartcampus.dto.PasswordChangeRequest;
+import bd.ac.uiu.smartcampus.dto.ProfileUpdateRequest;
 import bd.ac.uiu.smartcampus.dto.RegisterRequest;
 import bd.ac.uiu.smartcampus.model.Role;
 import bd.ac.uiu.smartcampus.model.User;
@@ -48,10 +50,45 @@ public class AuthApiController {
             payload.put("role", userDetails.getRoleName());
             payload.put("department", userDetails.getDepartment());
             payload.put("studentOrEmpId", userDetails.getStudentOrEmpId());
+            payload.put("profileImageUrl", userDetails.getUser().getProfileImageUrl());
             payload.put("dashboardPath", dashboardPath(userDetails.getRoleName()));
         }
 
         return ApiResponse.ok("Current Smart Campus session", payload);
+    }
+
+    @PostMapping("/profile")
+    public ApiResponse<Map<String, Object>> updateProfile(@Valid @RequestBody ProfileUpdateRequest request,
+                                                          BindingResult bindingResult,
+                                                          @AuthenticationPrincipal CustomUserDetails userDetails) {
+        if (bindingResult.hasErrors()) {
+            return ApiResponse.error(bindingResult.getAllErrors().get(0).getDefaultMessage());
+        }
+        if (userDetails == null) {
+            return ApiResponse.error("Please sign in to update your profile.");
+        }
+
+        User user = authService.updateProfileImage(userDetails.getUsername(), request.getProfileImageUrl());
+        return ApiResponse.ok("Profile photo updated.", userPayload(user));
+    }
+
+    @PostMapping("/password")
+    public ApiResponse<Map<String, Object>> changePassword(@Valid @RequestBody PasswordChangeRequest request,
+                                                           BindingResult bindingResult,
+                                                           @AuthenticationPrincipal CustomUserDetails userDetails) {
+        if (bindingResult.hasErrors()) {
+            return ApiResponse.error(bindingResult.getAllErrors().get(0).getDefaultMessage());
+        }
+        if (userDetails == null) {
+            return ApiResponse.error("Please sign in to change your password.");
+        }
+
+        try {
+            authService.changePassword(userDetails.getUsername(), request.getCurrentPassword(), request.getNewPassword());
+            return ApiResponse.ok("Password changed successfully.", Map.of("changed", true));
+        } catch (IllegalArgumentException ex) {
+            return ApiResponse.error(ex.getMessage());
+        }
     }
 
     @PostMapping("/register")
@@ -89,5 +126,17 @@ public class AuthApiController {
             case "ROLE_SECURITY" -> "/dashboard/security";
             default -> "/dashboard/student";
         };
+    }
+
+    private Map<String, Object> userPayload(User user) {
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("fullName", user.getFullName());
+        payload.put("email", user.getEmail());
+        payload.put("role", user.getRole().name());
+        payload.put("department", user.getDepartment());
+        payload.put("studentOrEmpId", user.getStudentOrEmpId());
+        payload.put("profileImageUrl", user.getProfileImageUrl());
+        payload.put("dashboardPath", dashboardPath(user.getRole().name()));
+        return payload;
     }
 }

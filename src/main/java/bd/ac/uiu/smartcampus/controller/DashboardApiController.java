@@ -3,6 +3,7 @@ package bd.ac.uiu.smartcampus.controller;
 import bd.ac.uiu.smartcampus.dto.ApiResponse;
 import bd.ac.uiu.smartcampus.dto.CampusTelemetryDto;
 import bd.ac.uiu.smartcampus.model.Role;
+import bd.ac.uiu.smartcampus.model.User;
 import bd.ac.uiu.smartcampus.repository.CampusNoticeRepository;
 import bd.ac.uiu.smartcampus.repository.MaintenanceComplaintRepository;
 import bd.ac.uiu.smartcampus.repository.UserRepository;
@@ -124,11 +125,13 @@ public class DashboardApiController {
         if (userDetails == null) {
             return user;
         }
-        user.put("fullName", userDetails.getFullName());
-        user.put("email", userDetails.getUsername());
-        user.put("role", userDetails.getRoleName());
-        user.put("department", userDetails.getDepartment());
-        user.put("studentOrEmpId", userDetails.getStudentOrEmpId());
+        User latestUser = userRepository.findByEmail(userDetails.getUsername()).orElse(userDetails.getUser());
+        user.put("fullName", latestUser.getFullName());
+        user.put("email", latestUser.getEmail());
+        user.put("role", latestUser.getRole().name());
+        user.put("department", latestUser.getDepartment());
+        user.put("studentOrEmpId", latestUser.getStudentOrEmpId());
+        user.put("profileImageUrl", latestUser.getProfileImageUrl());
         return user;
     }
 

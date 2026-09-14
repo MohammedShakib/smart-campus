@@ -49,6 +49,28 @@ public class AuthService {
         return userRepository.findByEmail(email);
     }
 
+    @Transactional
+    public User updateProfileImage(String email, String profileImageUrl) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("User account was not found."));
+        String normalizedUrl = profileImageUrl == null || profileImageUrl.isBlank()
+                ? null
+                : profileImageUrl.trim();
+        user.setProfileImageUrl(normalizedUrl);
+        return userRepository.save(user);
+    }
+
+    @Transactional
+    public void changePassword(String email, String currentPassword, String newPassword) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("User account was not found."));
+        if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+            throw new IllegalArgumentException("Current password is incorrect.");
+        }
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+    }
+
     public long getTotalUsersCount() {
         return userRepository.count();
     }

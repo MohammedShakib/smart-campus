@@ -39,6 +39,9 @@ public class User {
     @Column
     private LocalDateTime lastLogin;
 
+    @Column(length = 500)
+    private String profileImageUrl;
+
     public User() {
     }
 
@@ -132,5 +135,13 @@ public class User {
 
     public void setLastLogin(LocalDateTime lastLogin) {
         this.lastLogin = lastLogin;
+    }
+
+    public String getProfileImageUrl() {
+        return profileImageUrl;
+    }
+
+    public void setProfileImageUrl(String profileImageUrl) {
+        this.profileImageUrl = profileImageUrl;
     }
 }

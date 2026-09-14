@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Activity, BookOpen, Bus, Building2, CalendarCheck, CalendarDays,
+  Camera,
   ChevronRight, ClipboardCheck, Cpu, DoorOpen, FileText, GraduationCap,
-  LogOut, MessageSquare, RadioTower, RefreshCw, Search, UsersRound, Wrench
+  IdCard, KeyRound, LogOut, Mail, MessageSquare, RadioTower, RefreshCw,
+  Save, Search, Upload, UsersRound, Wrench, X
 } from 'lucide-react';
 import { api } from '../utils/api';
 import { initials, prettyRole } from '../utils/helpers';
@@ -74,6 +76,10 @@ export function DashboardPage() {
   const [telemetry, setTelemetry] = useState(null);
   const [auditLogs, setAuditLogs] = useState([]);
   const [error, setError] = useState(null);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [profileBusy, setProfileBusy] = useState(false);
+  const [profileMessage, setProfileMessage] = useState(null);
+  const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '' });
 
   const loadDashboard = useCallback(() => {
     api(`/api/dashboard/${role}`)
@@ -101,6 +107,60 @@ export function DashboardPage() {
   const displayName = userName.replace(/\s*\((Admin|Teacher|Student|Security)\)\s*$/i, '');
   const userRole = prettyRole(data.user?.role);
   const roleLabel = userRole === 'Admin' ? 'Administrator' : userRole;
+  const profileImageUrl = data.user?.profileImageUrl;
+
+  function updateUserPayload(userPayload) {
+    setData((current) => current ? { ...current, user: { ...current.user, ...userPayload } } : current);
+  }
+
+  async function handleProfilePhotoChange(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setProfileBusy(true);
+    setProfileMessage(null);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const uploadResponse = await fetch('/api/upload', {
+        method: 'POST',
+        credentials: 'same-origin',
+        body: formData
+      });
+      const uploadPayload = await uploadResponse.json();
+      if (!uploadPayload.success || !uploadPayload.data) {
+        throw new Error(uploadPayload.message || 'Photo upload failed.');
+      }
+      const profilePayload = await api('/api/auth/profile', {
+        method: 'POST',
+        body: JSON.stringify({ profileImageUrl: uploadPayload.data })
+      });
+      updateUserPayload(profilePayload.data);
+      setProfileMessage({ type: 'success', text: 'Profile photo updated.' });
+    } catch (err) {
+      setProfileMessage({ type: 'error', text: err.message });
+    } finally {
+      setProfileBusy(false);
+      event.target.value = '';
+    }
+  }
+
+  async function handlePasswordChange(event) {
+    event.preventDefault();
+    setProfileBusy(true);
+    setProfileMessage(null);
+    try {
+      await api('/api/auth/password', {
+        method: 'POST',
+        body: JSON.stringify(passwordForm)
+      });
+      setPasswordForm({ currentPassword: '', newPassword: '' });
+      setProfileMessage({ type: 'success', text: 'Password changed successfully.' });
+    } catch (err) {
+      setProfileMessage({ type: 'error', text: err.message });
+    } finally {
+      setProfileBusy(false);
+    }
+  }
 
   return (
     <main className="dashboard-shell">
@@ -128,14 +188,16 @@ export function DashboardPage() {
         </nav>
 
         <div className={`user-card${role === 'student' ? ' user-card--student' : ''}`}>
-          <div className="user-card-main">
-            <div className="avatar">{initials(displayName)}</div>
+          <button type="button" className="user-card-main user-card-trigger" onClick={() => setProfileOpen(true)}>
+            <div className="avatar">
+              {profileImageUrl ? <img src={profileImageUrl} alt="" /> : initials(displayName)}
+            </div>
             <div>
               <strong>{displayName}</strong>
               <span>{roleLabel}</span>
             </div>
-          </div>
-          {role === 'student' && <a className="profile-logout" href="/logout"><LogOut size={15} /> Logout</a>}
+          </button>
+          {role === 'student' && <a className="profile-logout" href="/logout" title="Logout" aria-label="Logout"><LogOut size={17} /></a>}
         </div>
       </aside>
 
@@ -166,6 +228,123 @@ export function DashboardPage() {
           />
         </div>
       </section>
+
+      {profileOpen && (
+        <ProfileDialog
+          user={data.user}
+          displayName={displayName}
+          roleLabel={roleLabel}
+          profileImageUrl={profileImageUrl}
+          busy={profileBusy}
+          message={profileMessage}
+          passwordForm={passwordForm}
+          onClose={() => setProfileOpen(false)}
+          onPhotoChange={handleProfilePhotoChange}
+          onPasswordChange={handlePasswordChange}
+          onPasswordFormChange={setPasswordForm}
+        />
+      )}
     </main>
+  );
+}
+
+function ProfileDialog({
+  user,
+  displayName,
+  roleLabel,
+  profileImageUrl,
+  busy,
+  message,
+  passwordForm,
+  onClose,
+  onPhotoChange,
+  onPasswordChange,
+  onPasswordFormChange
+}) {
+  return (
+    <div className="profile-modal-backdrop" role="presentation" onMouseDown={onClose}>
+      <section className="profile-modal" role="dialog" aria-modal="true" aria-labelledby="profile-title" onMouseDown={(event) => event.stopPropagation()}>
+        <header className="profile-modal-head">
+          <div>
+            <span>Smart Campus Profile</span>
+            <h2 id="profile-title">Profile settings</h2>
+          </div>
+          <button type="button" className="icon-btn" onClick={onClose} aria-label="Close profile settings">
+            <X size={16} />
+          </button>
+        </header>
+
+        <div className="profile-identity">
+          <div className="profile-avatar-large">
+            {profileImageUrl ? <img src={profileImageUrl} alt="" /> : initials(displayName)}
+          </div>
+          <div>
+            <strong>{displayName}</strong>
+            <span>{roleLabel}</span>
+          </div>
+          <label className="profile-photo-btn">
+            <Camera size={16} />
+            <span>Change Photo</span>
+            <input type="file" accept="image/*" onChange={onPhotoChange} disabled={busy} />
+          </label>
+        </div>
+
+        <div className="profile-info-grid">
+          <div className="profile-info-item">
+            <Mail size={15} />
+            <div>
+              <span>Email</span>
+              <strong>{user?.email || '-'}</strong>
+            </div>
+          </div>
+          <div className="profile-info-item">
+            <IdCard size={15} />
+            <div>
+              <span>ID</span>
+              <strong>{user?.studentOrEmpId || '-'}</strong>
+            </div>
+          </div>
+          <div className="profile-info-item profile-info-item--wide">
+            <Upload size={15} />
+            <div>
+              <span>Department</span>
+              <strong>{user?.department || '-'}</strong>
+            </div>
+          </div>
+        </div>
+
+        <form className="profile-password-form" onSubmit={onPasswordChange}>
+          <div className="profile-section-title">
+            <KeyRound size={16} />
+            <span>Password</span>
+          </div>
+          <input
+            type="password"
+            placeholder="Current password"
+            value={passwordForm.currentPassword}
+            onChange={(event) => onPasswordFormChange({ ...passwordForm, currentPassword: event.target.value })}
+            required
+          />
+          <input
+            type="password"
+            placeholder="New password"
+            value={passwordForm.newPassword}
+            onChange={(event) => onPasswordFormChange({ ...passwordForm, newPassword: event.target.value })}
+            minLength={6}
+            required
+          />
+          <div className="profile-actions">
+            <a className="ghost-btn" href="/login?forgot=true">
+              Forgot password
+            </a>
+            <button className="primary-btn" type="submit" disabled={busy}>
+              <Save size={16} /> Save Password
+            </button>
+          </div>
+        </form>
+
+        {message && <div className={`profile-message profile-message--${message.type}`}>{message.text}</div>}
+      </section>
+    </div>
   );
 }

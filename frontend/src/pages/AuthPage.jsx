@@ -61,6 +61,7 @@ export function AuthPage() {
     if (query.get('error')) return { type: 'error', text: 'Invalid email/ID or password. Use a demo account or try again.' };
     if (query.get('logout')) return { type: 'success', text: 'You have been logged out securely from Smart Campus.' };
     if (query.get('registered')) return { type: 'success', text: 'Account created! You can now sign in.' };
+    if (query.get('forgot')) return { type: 'success', text: 'Password recovery request noted. Contact campus IT/admin to verify your ID and reset access.' };
     return registerMessage;
   }, [query, registerMessage]);
 
