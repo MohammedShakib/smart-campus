@@ -24,6 +24,8 @@ public class TeacherDashboardService {
     private final ClassroomRepository classroomRepository;
     private final ClassEnrollmentRepository enrollmentRepository;
     private final UserRepository userRepository;
+    private final MaintenanceComplaintRepository complaintRepository;
+    private final NotificationService notificationService;
 
     public TeacherDashboardService(TeachingScheduleRepository scheduleRepository,
                                    AttendanceSessionRepository sessionRepository,
@@ -32,7 +34,9 @@ public class TeacherDashboardService {
                                    ClassSessionRepository classSessionRepository,
                                    ClassroomRepository classroomRepository,
                                    ClassEnrollmentRepository enrollmentRepository,
-                                   UserRepository userRepository) {
+                                   UserRepository userRepository,
+                                   MaintenanceComplaintRepository complaintRepository,
+                                   NotificationService notificationService) {
         this.scheduleRepository = scheduleRepository;
         this.sessionRepository = sessionRepository;
         this.recordRepository = recordRepository;
@@ -41,6 +45,8 @@ public class TeacherDashboardService {
         this.classroomRepository = classroomRepository;
         this.enrollmentRepository = enrollmentRepository;
         this.userRepository = userRepository;
+        this.complaintRepository = complaintRepository;
+        this.notificationService = notificationService;
     }
 
     // ─────────────────────────────────────────────────────────
@@ -281,6 +287,24 @@ public class TeacherDashboardService {
                 recordRepository.save(absentRecord);
             }
         }
+        
+        // Notify Teacher
+        userRepository.findByEmail(teacherEmail).ifPresent(teacher -> {
+            long presentCount = recordRepository.countByAttendanceSessionAndStatus(session, AttendanceStatus.PRESENT);
+            long lateCount = recordRepository.countByAttendanceSessionAndStatus(session, AttendanceStatus.LATE);
+            long absentCount = recordRepository.countByAttendanceSessionAndStatus(session, AttendanceStatus.ABSENT);
+            String message = String.format("%s Section %s — %d Present, %d Late, %d Absent.",
+                    schedule.getCourseCode(), schedule.getSectionName(), presentCount, lateCount, absentCount);
+            notificationService.createNotification(
+                    teacher,
+                    NotificationType.ATTENDANCE,
+                    "Attendance completed",
+                    message,
+                    "attendance",
+                    session.getId().toString(),
+                    null
+            );
+        });
 
         return session;
     }
@@ -494,7 +518,24 @@ public class TeacherDashboardService {
         if (!reservationRepository.findConflicts(roomNumber, date, start, end).isEmpty()) {
             throw new IllegalArgumentException("Room is already reserved for an overlapping time.");
         }
-        return reservationRepository.save(new RoomReservation(teacherEmail, roomNumber, date, start, end, purpose));
+        RoomReservation saved = reservationRepository.save(new RoomReservation(teacherEmail, roomNumber, date, start, end, purpose));
+        
+        userRepository.findByEmail(teacherEmail).ifPresent(teacher -> {
+            // Sep 16, 2026, 10:30 AM-12:00 PM format simplified
+            String message = String.format("%s reserved for %s, %s–%s.",
+                    roomNumber, date, start, end);
+            notificationService.createNotification(
+                    teacher,
+                    NotificationType.RESERVATION,
+                    "Room reserved",
+                    message,
+                    "reservations",
+                    saved.getId().toString(),
+                    null
+            );
+        });
+        
+        return saved;
     }
 
     public List<Classroom> getClassrooms() {
@@ -514,6 +555,23 @@ public class TeacherDashboardService {
     // ─────────────────────────────────────────────────────────
     // PRIVATE HELPERS
     // ─────────────────────────────────────────────────────────
+
+    public List<TeacherIssueDto> getTeacherIssues(CustomUserDetails userDetails) {
+        String reporterId = userDetails != null && userDetails.getStudentOrEmpId() != null && !userDetails.getStudentOrEmpId().isBlank()
+                ? userDetails.getStudentOrEmpId()
+                : userDetails != null ? userDetails.getUsername() : "unknown";
+
+        List<MaintenanceComplaint> complaints = complaintRepository.findByReporterIdAndReporterRoleOrderByReportedAtDesc(reporterId, "ROLE_TEACHER");
+        return complaints.stream().map(c -> new TeacherIssueDto(
+                c.getId(),
+                c.getIssueTitle(),
+                c.getLocation(),
+                c.getPriority(),
+                c.getStatus(),
+                c.getDescription(),
+                c.getReportedAt()
+        )).collect(Collectors.toList());
+    }
 
     private TeachingSchedule ownedSchedule(Long scheduleId, String teacherEmail) {
         TeachingSchedule schedule = scheduleRepository.findById(scheduleId)

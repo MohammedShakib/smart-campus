@@ -3,8 +3,10 @@ package bd.ac.uiu.smartcampus.controller;
 import bd.ac.uiu.smartcampus.dto.*;
 import bd.ac.uiu.smartcampus.model.*;
 import bd.ac.uiu.smartcampus.repository.CampusNoticeRepository;
+import bd.ac.uiu.smartcampus.repository.UserRepository;
 import bd.ac.uiu.smartcampus.security.CustomUserDetails;
 import bd.ac.uiu.smartcampus.service.FacultyOfficeHourService;
+import bd.ac.uiu.smartcampus.service.NotificationService;
 import bd.ac.uiu.smartcampus.service.StudentPortalService;
 import bd.ac.uiu.smartcampus.service.TeacherDashboardService;
 import org.springframework.http.HttpStatus;
@@ -25,15 +27,21 @@ public class TeacherApiController {
     private final CampusNoticeRepository noticeRepository;
     private final StudentPortalService studentPortalService;
     private final FacultyOfficeHourService officeHourService;
+    private final NotificationService notificationService;
+    private final UserRepository userRepository;
 
     public TeacherApiController(TeacherDashboardService teacherService,
                                 CampusNoticeRepository noticeRepository,
                                 StudentPortalService studentPortalService,
-                                FacultyOfficeHourService officeHourService) {
+                                FacultyOfficeHourService officeHourService,
+                                NotificationService notificationService,
+                                UserRepository userRepository) {
         this.teacherService = teacherService;
         this.noticeRepository = noticeRepository;
         this.studentPortalService = studentPortalService;
         this.officeHourService = officeHourService;
+        this.notificationService = notificationService;
+        this.userRepository = userRepository;
     }
 
     // ─────────────────────────────────────────────────────────
@@ -254,12 +262,33 @@ public class TeacherApiController {
                 "MEDIUM",
                 userDetails.getFullName()
         );
-        return ApiResponse.ok("Academic announcement published", noticeRepository.save(notice));
+        CampusNotice savedNotice = noticeRepository.save(notice);
+        
+        // Notify all teachers (except publisher, if we want, but simple is all)
+        List<User> teachers = userRepository.findByRole(Role.ROLE_TEACHER);
+        for (User teacher : teachers) {
+            notificationService.createNotification(
+                    teacher,
+                    NotificationType.ANNOUNCEMENT,
+                    "New academic announcement",
+                    savedNotice.getTitle(),
+                    "notices",
+                    savedNotice.getId().toString(),
+                    null
+            );
+        }
+        
+        return ApiResponse.ok("Academic announcement published", savedNotice);
     }
 
     // ─────────────────────────────────────────────────────────
     // EXCEPTION HANDLER
     // ─────────────────────────────────────────────────────────
+
+    @GetMapping("/issues")
+    public ApiResponse<List<TeacherIssueDto>> getTeacherIssues(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        return ApiResponse.ok("Teacher issues", teacherService.getTeacherIssues(userDetails));
+    }
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiResponse<Void>> handleBadRequest(IllegalArgumentException exception) {

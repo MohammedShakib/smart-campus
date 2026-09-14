@@ -12,7 +12,8 @@ import {
   TeacherOverviewToday,
   TeacherReportIssueSection,
   TeacherReservationSection,
-  TeacherScheduleSection
+  TeacherScheduleSection,
+  TeacherNotificationsSection
 } from './TeacherSections';
 import { TeacherStudentsSection } from './teacher/TeacherStudentsSection';
 import { StudentAttendanceSection } from './student/StudentAttendanceSection';
@@ -63,6 +64,7 @@ export function DashboardSection({ role, section, data, telemetry, auditLogs, re
     if (section === 'reservations') return <TeacherReservationSection data={data} reload={reload} />;
     if (section === 'notices') return <TeacherNoticesSection notices={data.notices || []} reload={reload} />;
     if (section === 'reportIssue') return <TeacherReportIssueSection data={data} reload={reload} />;
+    if (section === 'notifications') return <TeacherNotificationsSection />;
   }
 
   if (role === 'student') {

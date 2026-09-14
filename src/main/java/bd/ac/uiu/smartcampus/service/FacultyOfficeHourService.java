@@ -3,9 +3,11 @@ package bd.ac.uiu.smartcampus.service;
 import bd.ac.uiu.smartcampus.dto.OfficeHourBookingRequest;
 import bd.ac.uiu.smartcampus.dto.OfficeHourSlotCreateRequest;
 import bd.ac.uiu.smartcampus.model.FacultyOfficeHourSlot;
+import bd.ac.uiu.smartcampus.model.NotificationType;
 import bd.ac.uiu.smartcampus.model.User;
 import bd.ac.uiu.smartcampus.repository.FacultyOfficeHourSlotRepository;
 import bd.ac.uiu.smartcampus.repository.UserRepository;
+import bd.ac.uiu.smartcampus.service.NotificationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -26,6 +28,7 @@ public class FacultyOfficeHourService {
 
     private final FacultyOfficeHourSlotRepository slotRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     /**
      * In-memory JVM lock registry per slotId.
@@ -35,9 +38,11 @@ public class FacultyOfficeHourService {
     private final ConcurrentHashMap<Long, ReentrantLock> slotLockRegistry = new ConcurrentHashMap<>();
 
     public FacultyOfficeHourService(FacultyOfficeHourSlotRepository slotRepository,
-                                    UserRepository userRepository) {
+                                    UserRepository userRepository,
+                                    NotificationService notificationService) {
         this.slotRepository = slotRepository;
         this.userRepository = userRepository;
+        this.notificationService = notificationService;
     }
 
     /**
@@ -83,6 +88,21 @@ public class FacultyOfficeHourService {
 
             FacultyOfficeHourSlot saved = slotRepository.save(slot);
             logger.info("Successfully booked office hour slot #{} for student {}", slotId, studentId);
+            
+            userRepository.findByEmail(saved.getTeacherEmail()).ifPresent(teacher -> {
+                String message = String.format("%s booked an office hour for %s on %s at %s.",
+                        studentName, request.getQueryTopic(), saved.getSlotDate(), saved.getStartTime());
+                notificationService.createNotification(
+                        teacher,
+                        NotificationType.OFFICE_HOURS,
+                        "New office hour booking",
+                        message,
+                        "queries",
+                        saved.getId().toString(),
+                        null
+                );
+            });
+            
             return saved;
         } finally {
             lock.unlock();

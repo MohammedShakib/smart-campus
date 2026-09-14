@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  Activity, BookOpen, Bus, Building2, CalendarCheck, CalendarDays,
+  Activity, Bell, BookOpen, Bus, Building2, CalendarCheck, CalendarDays,
   Camera,
   ChevronRight, ClipboardCheck, Cpu, DoorOpen, FileText, GraduationCap,
   IdCard, KeyRound, LogOut, Mail, MessageSquare, RadioTower,
@@ -40,6 +40,7 @@ const dashboardConfig = {
       { key: 'reservations', label: 'Reserve Room',          icon: CalendarCheck },
       { key: 'notices',      label: 'Announcements',         icon: RadioTower },
       { key: 'reportIssue',  label: 'Report Issue',          icon: Wrench },
+      { key: 'notifications',label: 'Notifications',         icon: Bell },
     ]
   },
   student: {
@@ -75,6 +76,7 @@ export function DashboardPage() {
   const [data, setData] = useState(null);
   const [telemetry, setTelemetry] = useState(null);
   const [auditLogs, setAuditLogs] = useState([]);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [error, setError] = useState(null);
   const [profileOpen, setProfileOpen] = useState(false);
   const [profileBusy, setProfileBusy] = useState(false);
@@ -91,14 +93,24 @@ export function DashboardPage() {
     api('/api/campus/logs?limit=20').then((res) => setAuditLogs(res?.data || [])).catch(() => {});
   }, []);
 
+  const loadUnreadCount = useCallback(() => {
+    if (role === 'teacher') {
+      api('/api/teacher/notifications/unread-count').then((res) => {
+        setUnreadNotifications(res.data?.count || 0);
+      }).catch(() => {});
+    }
+  }, [role]);
+
   useEffect(() => {
     loadDashboard();
     if (role === 'admin') loadAuditLogs();
+    if (role === 'teacher') loadUnreadCount();
     const timer = setInterval(() => {
       api('/api/campus/telemetry').then((res) => setTelemetry(res.data)).catch(() => {});
+      if (role === 'teacher') loadUnreadCount();
     }, 4000);
     return () => clearInterval(timer);
-  }, [role, loadDashboard, loadAuditLogs]);
+  }, [role, loadDashboard, loadAuditLogs, loadUnreadCount]);
 
   if (error) return <ErrorState error={error} />;
   if (!data || !telemetry) return <LoadingState />;
@@ -210,6 +222,14 @@ export function DashboardPage() {
               <span className="breadcrumb-active">{config.sections.find(s => s.key === activeSection)?.label}</span>
             </div>
             <h1>{config.sections.find(s => s.key === activeSection)?.label}</h1>
+          </div>
+          <div className="topbar-actions">
+            {role === 'teacher' && (
+              <button className="topbar-bell" onClick={() => setActiveSection('notifications')} aria-label="Notifications">
+                <Bell size={18} />
+                {unreadNotifications > 0 && <span className="topbar-badge">{unreadNotifications > 99 ? '99+' : unreadNotifications}</span>}
+              </button>
+            )}
           </div>
         </header>
 

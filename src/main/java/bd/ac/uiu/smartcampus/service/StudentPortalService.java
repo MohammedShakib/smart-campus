@@ -13,6 +13,8 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import bd.ac.uiu.smartcampus.service.NotificationService;
+
 @Service
 public class StudentPortalService {
 
@@ -26,6 +28,7 @@ public class StudentPortalService {
     private final LostFoundItemRepository lostFoundItemRepository;
     private final LabEquipmentRepository labEquipmentRepository;
     private final EquipmentBookingRepository equipmentBookingRepository;
+    private final NotificationService notificationService;
 
     public StudentPortalService(UserRepository userRepository,
                                 ClassEnrollmentRepository enrollmentRepository,
@@ -34,7 +37,8 @@ public class StudentPortalService {
                                 AbsenceExcuseRepository absenceExcuseRepository,
                                 LostFoundItemRepository lostFoundItemRepository,
                                 LabEquipmentRepository labEquipmentRepository,
-                                EquipmentBookingRepository equipmentBookingRepository) {
+                                EquipmentBookingRepository equipmentBookingRepository,
+                                NotificationService notificationService) {
         this.userRepository = userRepository;
         this.enrollmentRepository = enrollmentRepository;
         this.attendanceSessionRepository = attendanceSessionRepository;
@@ -43,6 +47,7 @@ public class StudentPortalService {
         this.lostFoundItemRepository = lostFoundItemRepository;
         this.labEquipmentRepository = labEquipmentRepository;
         this.equipmentBookingRepository = equipmentBookingRepository;
+        this.notificationService = notificationService;
     }
 
     // ─────────────────────────────────────────────────────────
@@ -189,7 +194,23 @@ public class StudentPortalService {
                 request.getDocumentUrl()
         );
 
-        return absenceExcuseRepository.save(excuse);
+        AbsenceExcuse saved = absenceExcuseRepository.save(excuse);
+        
+        userRepository.findByEmail(saved.getTeacherEmail()).ifPresent(teacher -> {
+            String message = String.format("A new absence excuse was submitted for %s — Section %s.",
+                    saved.getCourseCode(), saved.getSectionName());
+            notificationService.createNotification(
+                    teacher,
+                    NotificationType.ABSENCE_EXCUSE,
+                    "New absence excuse",
+                    message,
+                    "excuses",
+                    saved.getId().toString(),
+                    null
+            );
+        });
+        
+        return saved;
     }
 
     @Transactional(readOnly = true)

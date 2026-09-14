@@ -1,7 +1,11 @@
 package bd.ac.uiu.smartcampus.syllabus.collections;
 
 import bd.ac.uiu.smartcampus.model.MaintenanceComplaint;
+import bd.ac.uiu.smartcampus.model.NotificationType;
+import bd.ac.uiu.smartcampus.model.User;
 import bd.ac.uiu.smartcampus.repository.MaintenanceComplaintRepository;
+import bd.ac.uiu.smartcampus.repository.UserRepository;
+import bd.ac.uiu.smartcampus.service.NotificationService;
 import org.springframework.stereotype.Service;
 
 import jakarta.annotation.PostConstruct;
@@ -19,9 +23,15 @@ public class ComplaintQueueService {
 
     private final Queue<MaintenanceComplaint> complaintQueue = new ArrayDeque<>();
     private final MaintenanceComplaintRepository repository;
+    private final NotificationService notificationService;
+    private final UserRepository userRepository;
 
-    public ComplaintQueueService(MaintenanceComplaintRepository repository) {
+    public ComplaintQueueService(MaintenanceComplaintRepository repository,
+                                 NotificationService notificationService,
+                                 UserRepository userRepository) {
         this.repository = repository;
+        this.notificationService = notificationService;
+        this.userRepository = userRepository;
     }
 
     @PostConstruct
@@ -49,6 +59,22 @@ public class ComplaintQueueService {
             MaintenanceComplaint complaint = complaintQueue.poll();
             complaint.setStatus("RESOLVED");
             repository.save(complaint);
+            
+            if ("ROLE_TEACHER".equals(complaint.getReporterRole())) {
+                userRepository.findByStudentOrEmpId(complaint.getReporterId()).ifPresent(teacher -> {
+                    String message = String.format("\"%s\" in %s has been resolved.", complaint.getIssueTitle(), complaint.getLocation());
+                    notificationService.createNotification(
+                            teacher,
+                            NotificationType.COMPLAINT_UPDATE,
+                            "Maintenance issue resolved",
+                            message,
+                            "reportIssue",
+                            complaint.getId().toString(),
+                            null
+                    );
+                });
+            }
+            
             return complaint;
         }
         return null;

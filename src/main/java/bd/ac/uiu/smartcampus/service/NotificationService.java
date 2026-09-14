@@ -1,0 +1,117 @@
+package bd.ac.uiu.smartcampus.service;
+
+import bd.ac.uiu.smartcampus.dto.NotificationDto;
+import bd.ac.uiu.smartcampus.model.*;
+import bd.ac.uiu.smartcampus.repository.ClassSessionRepository;
+import bd.ac.uiu.smartcampus.repository.TeachingScheduleRepository;
+import bd.ac.uiu.smartcampus.repository.UserNotificationRepository;
+import bd.ac.uiu.smartcampus.repository.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.TextStyle;
+import java.util.List;
+import java.util.Locale;
+import java.util.stream.Collectors;
+
+@Service
+public class NotificationService {
+
+    private static final Logger logger = LoggerFactory.getLogger(NotificationService.class);
+    private final UserNotificationRepository notificationRepository;
+    private final UserRepository userRepository;
+    private final TeachingScheduleRepository teachingScheduleRepository;
+    private final ClassSessionRepository classSessionRepository;
+
+    public NotificationService(UserNotificationRepository notificationRepository,
+                               UserRepository userRepository,
+                               TeachingScheduleRepository teachingScheduleRepository,
+                               ClassSessionRepository classSessionRepository) {
+        this.notificationRepository = notificationRepository;
+        this.userRepository = userRepository;
+        this.teachingScheduleRepository = teachingScheduleRepository;
+        this.classSessionRepository = classSessionRepository;
+    }
+
+    @Transactional
+    public UserNotification createNotification(User recipient, NotificationType type, String title, String message, String targetSection, String referenceId, String eventKey) {
+        if (eventKey != null && notificationRepository.existsByRecipientAndEventKey(recipient, eventKey)) {
+            logger.debug("Notification with eventKey {} already exists for user {}", eventKey, recipient.getEmail());
+            return null; // Skip duplicate
+        }
+        UserNotification notification = new UserNotification(recipient, type, title, message, targetSection, referenceId);
+        notification.setEventKey(eventKey);
+        return notificationRepository.save(notification);
+    }
+
+    @Transactional(readOnly = true)
+    public List<NotificationDto> getNotifications(User user) {
+        return notificationRepository.findByRecipientOrderByCreatedAtDesc(user)
+                .stream()
+                .map(NotificationDto::new)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public long getUnreadCount(User user) {
+        return notificationRepository.countByRecipientAndReadFalse(user);
+    }
+
+    @Transactional
+    public void markAsRead(Long notificationId, User user) {
+        notificationRepository.findById(notificationId).ifPresent(notification -> {
+            if (notification.getRecipient().getId().equals(user.getId())) {
+                notification.setRead(true);
+                notificationRepository.save(notification);
+            }
+        });
+    }
+
+    @Transactional
+    public void markAllAsRead(User user) {
+        notificationRepository.markAllAsReadByRecipient(user);
+    }
+
+    // 5 minutes scheduler for Class Reminders
+    @Scheduled(fixedRate = 300000)
+    @Transactional
+    public void scheduleClassReminders() {
+        logger.info("Running class reminder scheduler...");
+        LocalDate today = LocalDate.now();
+        LocalTime now = LocalTime.now();
+        LocalTime upcomingLimit = now.plusMinutes(35); // Check classes starting in the next 35 minutes
+        String currentDayOfWeek = today.getDayOfWeek().getDisplayName(TextStyle.FULL, Locale.US).toUpperCase();
+
+        List<User> teachers = userRepository.findByRole(Role.ROLE_TEACHER);
+
+        for (User teacher : teachers) {
+            List<TeachingSchedule> schedules = teachingScheduleRepository.findByTeacherEmailOrderByDayOfWeekAscStartTimeAsc(teacher.getEmail());
+            for (TeachingSchedule schedule : schedules) {
+                if (schedule.getDayOfWeek().equalsIgnoreCase(currentDayOfWeek)) {
+                    LocalTime startTime = schedule.getStartTime();
+                    if (startTime.isAfter(now) && startTime.isBefore(upcomingLimit)) {
+                        // Check if a session exists today, if so, ensure it's not COMPLETED
+                        List<ClassSession> sessions = classSessionRepository.findByTeachingSchedule_TeacherEmailAndSessionDate(teacher.getEmail(), today);
+                        boolean isCompleted = sessions.stream()
+                                .filter(s -> s.getTeachingSchedule().getId().equals(schedule.getId()))
+                                .anyMatch(s -> s.getStatus() == ClassSession.SessionStatus.COMPLETED);
+
+                        if (!isCompleted) {
+                            String eventKey = "CLASS_REMINDER:" + schedule.getId() + ":" + today.toString();
+                            String message = String.format("%s — Section %s starts at %s in %s.",
+                                    schedule.getCourseCode(), schedule.getSectionName(),
+                                    schedule.getStartTime(), schedule.getRoomInfo());
+                            createNotification(teacher, NotificationType.CLASS_REMINDER, "Upcoming class", message, "schedule", schedule.getId().toString(), eventKey);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

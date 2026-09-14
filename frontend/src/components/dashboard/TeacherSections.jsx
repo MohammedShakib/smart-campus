@@ -612,6 +612,29 @@ export function TeacherReportIssueSection({ data, reload }) {
   const [ticket, setTicket] = useState({ location: '', issueTitle: '', priority: 'MEDIUM', description: '' });
   const [result, setResult] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [issues, setIssues] = useState([]);
+  const [loadingIssues, setLoadingIssues] = useState(true);
+  const [issuesError, setIssuesError] = useState(null);
+  const [expandedIssueId, setExpandedIssueId] = useState(null);
+
+  const loadIssues = () => {
+    setLoadingIssues(true);
+    setIssuesError(null);
+    api('/api/teacher/issues')
+      .then((res) => {
+        setIssues(res.data || []);
+      })
+      .catch((err) => {
+        setIssuesError(err.message);
+      })
+      .finally(() => {
+        setLoadingIssues(false);
+      });
+  };
+
+  useEffect(() => {
+    loadIssues();
+  }, []);
 
   function submit(event) {
     event.preventDefault();
@@ -622,6 +645,7 @@ export function TeacherReportIssueSection({ data, reload }) {
         setResult({ type: 'success', text: res.message });
         setTicket({ location: '', issueTitle: '', priority: 'MEDIUM', description: '' });
         reload();
+        loadIssues(); // Refresh history immediately
       })
       .catch((err) => setResult({ type: 'error', text: err.message }))
       .finally(() => setBusy(false));
@@ -649,6 +673,68 @@ export function TeacherReportIssueSection({ data, reload }) {
             <strong>Shared Admin workflow</strong>
             <p>Your report enters the same queue that Admin processes in first-in, first-out order.</p>
           </div>
+        </Panel>
+      </div>
+
+      <div style={{ marginTop: '2rem' }}>
+        <Panel title="My Reported Issues" tag="History">
+          {loadingIssues ? (
+            <p className="muted" style={{ padding: '1.5rem 0' }}>Loading issue history...</p>
+          ) : issuesError ? (
+            <p className="error-text" style={{ padding: '1.5rem 0', color: 'var(--tx-danger)' }}>Failed to load history: {issuesError}</p>
+          ) : issues.length === 0 ? (
+            <p className="muted" style={{ padding: '1.5rem 0' }}>No issues reported yet. Submitted classroom or campus issues will appear here.</p>
+          ) : (
+            <div className="table-wrapper">
+              <table className="custom-data-table">
+                <thead>
+                  <tr>
+                    <th>Issue</th>
+                    <th>Location</th>
+                    <th>Priority</th>
+                    <th>Status</th>
+                    <th>Reported</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {issues.map(issue => (
+                    <React.Fragment key={issue.id}>
+                      <tr>
+                        <td><strong>{issue.issueTitle}</strong></td>
+                        <td>{issue.location}</td>
+                        <td>
+                          <span className={`badge badge--${issue.priority === 'HIGH' ? 'danger' : issue.priority === 'LOW' ? 'neutral' : 'warning'}`}>
+                            {issue.priority}
+                          </span>
+                        </td>
+                        <td>
+                          <span className={`badge badge--${issue.status === 'RESOLVED' || issue.status === 'COMPLETED' ? 'success' : issue.status === 'PENDING' ? 'warning' : 'primary'}`}>
+                            {issue.status}
+                          </span>
+                        </td>
+                        <td>{new Date(issue.reportedAt).toLocaleString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}</td>
+                        <td>
+                          <button className="icon-btn" onClick={() => setExpandedIssueId(expandedIssueId === issue.id ? null : issue.id)} title="View Details">
+                            {expandedIssueId === issue.id ? 'Hide' : 'View'}
+                          </button>
+                        </td>
+                      </tr>
+                      {expandedIssueId === issue.id && (
+                        <tr>
+                          <td colSpan="6" style={{ padding: '1rem', backgroundColor: 'var(--bg-card-alt)' }}>
+                            <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--tx-secondary)' }}>
+                              <strong>Description:</strong> {issue.description || 'No description provided.'}
+                            </p>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </Panel>
       </div>
     </div>
@@ -995,3 +1081,95 @@ export function TeacherOfficeHoursSection() {
   );
 }
 
+// ─────────────────────────────────────────────────────────
+// NOTIFICATIONS SECTION
+// ─────────────────────────────────────────────────────────
+export function TeacherNotificationsSection() {
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [filter, setFilter] = useState('all');
+
+  const loadNotifications = () => {
+    setLoading(true);
+    api('/api/teacher/notifications')
+      .then((res) => {
+        setNotifications(res.data || []);
+      })
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadNotifications();
+  }, []);
+
+  const markAsRead = (id) => {
+    api(`/api/teacher/notifications/${id}/read`, { method: 'POST' })
+      .then(() => {
+        setNotifications((prev) =>
+          prev.map((n) => (n.id === id ? { ...n, read: true } : n))
+        );
+      })
+      .catch(console.error);
+  };
+
+  const markAllAsRead = () => {
+    api('/api/teacher/notifications/read-all', { method: 'POST' })
+      .then(() => {
+        setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+      })
+      .catch(console.error);
+  };
+
+  const filteredNotifications = filter === 'unread' ? notifications.filter(n => !n.read) : notifications;
+
+  return (
+    <div>
+      <SectionHeader title="Notifications" subtitle="Stay updated on classes, students, and campus events." />
+      {error && <Feedback result={{ type: 'error', text: error }} />}
+
+      <div style={{ marginBottom: '1rem', display: 'flex', gap: '0.5rem', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <button className={filter === 'all' ? 'primary-btn' : 'ghost-btn'} onClick={() => setFilter('all')}>All</button>
+          <button className={filter === 'unread' ? 'primary-btn' : 'ghost-btn'} onClick={() => setFilter('unread')}>Unread</button>
+        </div>
+        <button className="ghost-btn" onClick={markAllAsRead}>Mark all as read</button>
+      </div>
+
+      <div className="section-grid" style={{ gridTemplateColumns: '1fr' }}>
+        <Panel title="Recent Notifications">
+          {loading ? (
+            <p className="muted">Loading notifications...</p>
+          ) : filteredNotifications.length === 0 ? (
+            <p className="muted">No notifications.</p>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              {filteredNotifications.map((notif) => (
+                <div
+                  key={notif.id}
+                  style={{
+                    padding: '1rem',
+                    borderRadius: 'var(--r-md)',
+                    background: notif.read ? 'var(--bg-card-alt)' : '#eff6ff',
+                    border: `1px solid ${notif.read ? 'var(--border)' : '#bfdbfe'}`,
+                    cursor: notif.read ? 'default' : 'pointer'
+                  }}
+                  onClick={() => !notif.read && markAsRead(notif.id)}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                    <strong>{notif.title}</strong>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--tx-muted)' }}>
+                      {new Date(notif.createdAt).toLocaleString()}
+                    </span>
+                  </div>
+                  <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--tx-secondary)' }}>{notif.message}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </Panel>
+      </div>
+    </div>
+  );
+}
