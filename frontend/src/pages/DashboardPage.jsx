@@ -101,6 +101,14 @@ export function DashboardPage() {
     }
   }, [role]);
 
+  const decrementUnreadNotifications = useCallback((amount = 1) => {
+    setUnreadNotifications((current) => Math.max(current - amount, 0));
+  }, []);
+
+  const clearUnreadNotifications = useCallback(() => {
+    setUnreadNotifications(0);
+  }, []);
+
   useEffect(() => {
     loadDashboard();
     if (role === 'admin') loadAuditLogs();
@@ -250,6 +258,9 @@ export function DashboardPage() {
             data={data} telemetry={telemetry} auditLogs={auditLogs}
             reload={loadDashboard} reloadLogs={loadAuditLogs}
             setActiveSection={setActiveSection}
+            onNotificationRead={decrementUnreadNotifications}
+            onAllNotificationsRead={clearUnreadNotifications}
+            refreshUnreadCount={loadUnreadCount}
           />
         </div>
       </section>

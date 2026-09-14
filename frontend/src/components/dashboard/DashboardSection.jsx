@@ -25,7 +25,19 @@ import { AdminEquipmentSection } from './admin/AdminEquipmentSection';
 /* ─────────────────────────────────────────────────────────
    SECTION ROUTER
 ───────────────────────────────────────────────────────── */
-export function DashboardSection({ role, section, data, telemetry, auditLogs, reload, reloadLogs, setActiveSection }) {
+export function DashboardSection({
+  role,
+  section,
+  data,
+  telemetry,
+  auditLogs,
+  reload,
+  reloadLogs,
+  setActiveSection,
+  onNotificationRead,
+  onAllNotificationsRead,
+  refreshUnreadCount
+}) {
   if (section === 'overview') {
     return (
       <>
@@ -64,7 +76,16 @@ export function DashboardSection({ role, section, data, telemetry, auditLogs, re
     if (section === 'reservations') return <TeacherReservationSection data={data} reload={reload} />;
     if (section === 'notices') return <TeacherNoticesSection notices={data.notices || []} reload={reload} />;
     if (section === 'reportIssue') return <TeacherReportIssueSection data={data} reload={reload} />;
-    if (section === 'notifications') return <TeacherNotificationsSection setActiveSection={setActiveSection} />;
+    if (section === 'notifications') {
+      return (
+        <TeacherNotificationsSection
+          setActiveSection={setActiveSection}
+          onNotificationRead={onNotificationRead}
+          onAllNotificationsRead={onAllNotificationsRead}
+          refreshUnreadCount={refreshUnreadCount}
+        />
+      );
+    }
   }
 
   if (role === 'student') {

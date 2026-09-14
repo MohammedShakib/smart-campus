@@ -1084,7 +1084,12 @@ export function TeacherOfficeHoursSection() {
 // ─────────────────────────────────────────────────────────
 // NOTIFICATIONS SECTION
 // ─────────────────────────────────────────────────────────
-export function TeacherNotificationsSection({ setActiveSection }) {
+export function TeacherNotificationsSection({
+  setActiveSection,
+  onNotificationRead,
+  onAllNotificationsRead,
+  refreshUnreadCount
+}) {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -1105,13 +1110,20 @@ export function TeacherNotificationsSection({ setActiveSection }) {
   }, []);
 
   const markAsRead = (id) => {
+    const target = notifications.find((notification) => notification.id === id);
+    if (!target || target.read) return;
+
     api(`/api/teacher/notifications/${id}/read`, { method: 'POST' })
       .then(() => {
         setNotifications((prev) =>
           prev.map((n) => (n.id === id ? { ...n, read: true } : n))
         );
+        onNotificationRead?.(1);
       })
-      .catch(console.error);
+      .catch((err) => {
+        console.error(err);
+        refreshUnreadCount?.();
+      });
   };
 
   const handleNotificationClick = (notif) => {
@@ -1127,8 +1139,12 @@ export function TeacherNotificationsSection({ setActiveSection }) {
     api('/api/teacher/notifications/read-all', { method: 'POST' })
       .then(() => {
         setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+        onAllNotificationsRead?.();
       })
-      .catch(console.error);
+      .catch((err) => {
+        console.error(err);
+        refreshUnreadCount?.();
+      });
   };
 
   const filteredNotifications = filter === 'unread' ? notifications.filter(n => !n.read) : notifications;

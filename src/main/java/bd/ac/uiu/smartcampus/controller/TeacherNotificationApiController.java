@@ -6,6 +6,8 @@ import bd.ac.uiu.smartcampus.model.User;
 import bd.ac.uiu.smartcampus.repository.UserRepository;
 import bd.ac.uiu.smartcampus.security.CustomUserDetails;
 import bd.ac.uiu.smartcampus.service.NotificationService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -58,5 +60,11 @@ public class TeacherNotificationApiController {
         User teacher = getAuthenticatedTeacher(userDetails);
         notificationService.markAllAsRead(teacher);
         return ApiResponse.ok("All notifications marked as read", null);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiResponse<Void>> handleNotificationAccessFailure(IllegalArgumentException exception) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.error("Notification not found"));
     }
 }
