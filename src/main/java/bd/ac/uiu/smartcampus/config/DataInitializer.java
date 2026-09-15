@@ -22,6 +22,15 @@ public class DataInitializer implements CommandLineRunner {
 
     private static final Logger logger = LoggerFactory.getLogger(DataInitializer.class);
 
+    @org.springframework.beans.factory.annotation.Autowired
+    private BusRepository busRepository;
+    @org.springframework.beans.factory.annotation.Autowired
+    private BusRouteRepository busRouteRepository;
+    @org.springframework.beans.factory.annotation.Autowired
+    private CampusEventRepository campusEventRepository;
+    @org.springframework.beans.factory.annotation.Autowired
+    private CafeteriaMenuItemRepository cafeteriaMenuItemRepository;
+
     private final UserRepository userRepository;
     private final CampusNoticeRepository noticeRepository;
     private final MaintenanceComplaintRepository complaintRepository;
@@ -210,7 +219,42 @@ public class DataInitializer implements CommandLineRunner {
         // 14. Seed Security operations (Visitors, Parking Zones, Incidents)
         seedSecurityData();
 
+        // 15. Seed Campus Operations (Phase 4)
+        seedCampusOperationsData();
+
         logger.info("Seed data initialization completed successfully!");
+    }
+
+    private void seedCampusOperationsData() {
+        if (busRepository.count() == 0) {
+            busRepository.save(new Bus("BUS-01", "DHAKA METRO-JA 11-2233", 40, "Karim Mia", "01711223344"));
+            busRepository.save(new Bus("BUS-02", "DHAKA METRO-JA 44-5566", 50, "Rahim Uddin", "01811223344"));
+        }
+        
+        if (busRouteRepository.count() == 0) {
+            BusRoute r1 = new BusRoute("R-01", "Natun Bazar to UIU", "Natun Bazar", "UIU");
+            r1.addStop(new BusRouteStop("Natun Bazar", 1, 0));
+            r1.addStop(new BusRouteStop("100 Feet Bridge", 2, 10));
+            r1.addStop(new BusRouteStop("UIU", 3, 20));
+            busRouteRepository.save(r1);
+
+            BusRoute r2 = new BusRoute("R-02", "Kuril to UIU", "Kuril", "UIU");
+            r2.addStop(new BusRouteStop("Kuril Flyover", 1, 0));
+            r2.addStop(new BusRouteStop("Bashundhara Gate", 2, 15));
+            r2.addStop(new BusRouteStop("UIU", 3, 30));
+            busRouteRepository.save(r2);
+        }
+
+        if (campusEventRepository.count() == 0) {
+            campusEventRepository.save(new CampusEvent("Tech Fest 2026", "Annual technology festival.", LocalDate.now().plusDays(10), LocalTime.of(10, 0), LocalTime.of(18, 0), "UIU Open Ground", 500, "CSE Club", "PUBLISHED"));
+            campusEventRepository.save(new CampusEvent("Job Fair", "Career networking event.", LocalDate.now().plusDays(15), LocalTime.of(9, 0), LocalTime.of(17, 0), "UIU Lobby", 1000, "Career Counseling Center", "DRAFT"));
+        }
+
+        if (cafeteriaMenuItemRepository.count() == 0) {
+            cafeteriaMenuItemRepository.save(new CafeteriaMenuItem("Chicken Sandwich", "SNACKS", java.math.BigDecimal.valueOf(120), true, "Freshly made sandwich with grilled chicken."));
+            cafeteriaMenuItemRepository.save(new CafeteriaMenuItem("Cold Coffee", "DRINKS", java.math.BigDecimal.valueOf(80), true, "Refreshing cold coffee."));
+            cafeteriaMenuItemRepository.save(new CafeteriaMenuItem("Fried Rice with Chicken", "LUNCH", java.math.BigDecimal.valueOf(250), true, "Classic fried rice and fried chicken combo."));
+        }
     }
 
     private void seedMasterData() {

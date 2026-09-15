@@ -26,6 +26,7 @@ import { AdminStudentsSection } from './admin/AdminStudentsSection';
 import { AdminTeachersSection } from './admin/AdminTeachersSection';
 import AcademicSetupSection from './admin/AcademicSetupSection';
 import AcademicOperationsTabs from './admin/academic-operations/AcademicOperationsTabs';
+import CampusOperationsTabs from './admin/campus-operations/CampusOperationsTabs';
 import { SecurityOverviewSection } from './security/SecurityOverviewSection';
 import { SecurityVisitorsSection } from './security/SecurityVisitorsSection';
 import { SecurityQrScannerSection } from './security/SecurityQrScannerSection';
@@ -86,6 +87,7 @@ export function DashboardSection({
     if (section === 'teachers') return <AdminTeachersSection />;
     if (section === 'academic') return <AcademicSetupSection />;
     if (section === 'academic-operations') return <AcademicOperationsTabs />;
+    if (section === 'campus-operations') return <CampusOperationsTabs />;
     if (section === 'equipment') return <AdminEquipmentSection />;
     if (section === 'classrooms') return <ClassroomsSection classrooms={sampleClassrooms()} />;
     if (section === 'transport') return <TransportSection data={data} />;

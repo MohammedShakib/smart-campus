@@ -23,6 +23,7 @@ const dashboardConfig = {
       { key: 'teachers',    label: 'Teachers',          icon: Presentation },
       { key: 'academic',    label: 'Academic Setup',    icon: Building2 },
       { key: 'academic-operations', label: 'Academic Operations', icon: CalendarDays },
+      { key: 'campus-operations', label: 'Campus Operations', icon: Building2 },
       { key: 'equipment',   label: 'Lab & Equipment',   icon: Cpu },
       { key: 'classrooms',  label: 'Smart Classrooms',  icon: Building2 },
       { key: 'transport',   label: 'Transport',         icon: Bus },

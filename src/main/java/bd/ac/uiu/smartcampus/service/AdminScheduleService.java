@@ -56,7 +56,7 @@ public class AdminScheduleService {
 
         User teacher = userRepository.findById(request.getTeacherId())
                 .orElseThrow(() -> new IllegalArgumentException("Teacher not found"));
-        if (teacher.getRoles().stream().noneMatch(r -> r.getName().equals("ROLE_TEACHER"))) {
+        if (!teacher.getRole().name().equals("ROLE_TEACHER")) {
             throw new IllegalArgumentException("Assigned user is not a teacher");
         }
 
