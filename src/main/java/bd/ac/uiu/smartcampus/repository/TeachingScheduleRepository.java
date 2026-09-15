@@ -25,4 +25,35 @@ public interface TeachingScheduleRepository extends JpaRepository<TeachingSchedu
     @org.springframework.data.jpa.repository.Query("SELECT COUNT(DISTINCT s.teacherEmail) FROM TeachingSchedule s " +
            "WHERE s.teacherEmail IN :teacherEmails")
     long countTeachersWithClassesByTeacherEmails(@org.springframework.data.repository.query.Param("teacherEmails") java.util.Collection<String> teacherEmails);
+
+    @org.springframework.data.jpa.repository.Query("SELECT COUNT(s) > 0 FROM TeachingSchedule s " +
+            "WHERE s.classroomRef.id = :classroomId AND s.dayOfWeek = :dayOfWeek " +
+            "AND s.startTime < :endTime AND s.endTime > :startTime " +
+            "AND (:excludeId IS NULL OR s.id != :excludeId)")
+    boolean hasRoomConflict(@org.springframework.data.repository.query.Param("classroomId") Long classroomId, 
+                            @org.springframework.data.repository.query.Param("dayOfWeek") String dayOfWeek, 
+                            @org.springframework.data.repository.query.Param("startTime") java.time.LocalTime startTime, 
+                            @org.springframework.data.repository.query.Param("endTime") java.time.LocalTime endTime, 
+                            @org.springframework.data.repository.query.Param("excludeId") Long excludeId);
+
+    @org.springframework.data.jpa.repository.Query("SELECT COUNT(s) > 0 FROM TeachingSchedule s " +
+            "WHERE s.teacherEmail = :teacherEmail AND s.dayOfWeek = :dayOfWeek " +
+            "AND s.startTime < :endTime AND s.endTime > :startTime " +
+            "AND (:excludeId IS NULL OR s.id != :excludeId)")
+    boolean hasTeacherConflict(@org.springframework.data.repository.query.Param("teacherEmail") String teacherEmail, 
+                               @org.springframework.data.repository.query.Param("dayOfWeek") String dayOfWeek, 
+                               @org.springframework.data.repository.query.Param("startTime") java.time.LocalTime startTime, 
+                               @org.springframework.data.repository.query.Param("endTime") java.time.LocalTime endTime, 
+                               @org.springframework.data.repository.query.Param("excludeId") Long excludeId);
+
+    @org.springframework.data.jpa.repository.Query("SELECT COUNT(s) > 0 FROM TeachingSchedule s " +
+            "WHERE s.courseRef.id = :courseId AND s.sectionName = :sectionName AND s.dayOfWeek = :dayOfWeek " +
+            "AND s.startTime = :startTime AND s.endTime = :endTime " +
+            "AND (:excludeId IS NULL OR s.id != :excludeId)")
+    boolean isDuplicateSchedule(@org.springframework.data.repository.query.Param("courseId") Long courseId, 
+                                @org.springframework.data.repository.query.Param("sectionName") String sectionName, 
+                                @org.springframework.data.repository.query.Param("dayOfWeek") String dayOfWeek, 
+                                @org.springframework.data.repository.query.Param("startTime") java.time.LocalTime startTime, 
+                                @org.springframework.data.repository.query.Param("endTime") java.time.LocalTime endTime, 
+                                @org.springframework.data.repository.query.Param("excludeId") Long excludeId);
 }

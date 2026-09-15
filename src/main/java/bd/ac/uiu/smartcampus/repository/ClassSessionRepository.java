@@ -13,4 +13,6 @@ import java.util.Optional;
 public interface ClassSessionRepository extends JpaRepository<ClassSession, Long> {
     Optional<ClassSession> findByTeachingScheduleAndSessionDate(TeachingSchedule teachingSchedule, LocalDate sessionDate);
     List<ClassSession> findByTeachingSchedule_TeacherEmailAndSessionDate(String teacherEmail, LocalDate sessionDate);
+    
+    List<ClassSession> findByStatus(bd.ac.uiu.smartcampus.model.ClassStatus status);
 }

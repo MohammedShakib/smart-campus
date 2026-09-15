@@ -21,6 +21,8 @@ public interface AttendanceSessionRepository extends JpaRepository<AttendanceSes
 
     boolean existsByTeacherEmail(String teacherEmail);
 
+    boolean existsByTeachingScheduleId(Long scheduleId);
+
     Optional<AttendanceSession> findByTeachingScheduleAndTeacherEmailAndActiveTrue(
             TeachingSchedule teachingSchedule, String teacherEmail);
 
