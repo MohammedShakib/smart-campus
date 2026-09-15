@@ -4,7 +4,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "bus_route_stops")
+@Table(
+        name = "bus_route_stops",
+        uniqueConstraints = @UniqueConstraint(columnNames = {"route_id", "stop_order"})
+)
 public class BusRouteStop {
 
     @Id

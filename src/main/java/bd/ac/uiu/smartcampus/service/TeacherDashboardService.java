@@ -528,11 +528,17 @@ public class TeacherDashboardService {
         LocalDate date = LocalDate.parse(required(request.getReservationDate(), "Date is required."));
         LocalTime start = LocalTime.parse(required(request.getStartTime(), "Start time is required."));
         LocalTime end = LocalTime.parse(required(request.getEndTime(), "End time is required."));
+        if (date.isBefore(LocalDate.now())) {
+            throw new IllegalArgumentException("Reservation date cannot be in the past.");
+        }
         if (!start.isBefore(end)) {
             throw new IllegalArgumentException("End time must be after start time.");
         }
         if (!reservationRepository.findConflicts(roomNumber, date, start, end).isEmpty()) {
             throw new IllegalArgumentException("Room is already reserved for an overlapping time.");
+        }
+        if (scheduleRepository.hasRoomConflict(room.getId(), dayName(date), start, end, null)) {
+            throw new IllegalArgumentException("Room has a scheduled class during this time.");
         }
         RoomReservation saved = reservationRepository.save(new RoomReservation(teacherEmail, roomNumber, date, start, end, purpose));
         
@@ -567,9 +573,15 @@ public class TeacherDashboardService {
     }
 
     public List<ClassroomDto> availableRooms(LocalDate date, LocalTime start, LocalTime end) {
+        if (!start.isBefore(end)) {
+            throw new IllegalArgumentException("End time must be after start time.");
+        }
+        String dayOfWeek = dayName(date);
         List<ClassroomDto> available = new ArrayList<>();
         for (Classroom room : getClassrooms()) {
-            if (reservationRepository.findConflicts(room.getRoomNumber(), date, start, end).isEmpty()) {
+            boolean reservationConflict = !reservationRepository.findConflicts(room.getRoomNumber(), date, start, end).isEmpty();
+            boolean scheduleConflict = scheduleRepository.hasRoomConflict(room.getId(), dayOfWeek, start, end, null);
+            if (!reservationConflict && !scheduleConflict) {
                 available.add(new ClassroomDto(room));
             }
         }
@@ -721,5 +733,10 @@ public class TeacherDashboardService {
             return pieces[0] + " " + pieces[1];
         }
         return roomNumber.trim();
+    }
+
+    private String dayName(LocalDate date) {
+        String value = date.getDayOfWeek().name().toLowerCase(Locale.ROOT);
+        return value.substring(0, 1).toUpperCase(Locale.ROOT) + value.substring(1);
     }
 }

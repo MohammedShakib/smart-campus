@@ -12,7 +12,7 @@ const ParkingManagement = () => {
         setLoading(true);
         try {
             const res = await api('/api/admin/campus-operations/parking');
-            setZones(res.data);
+            setZones(res.data || []);
             setError('');
         } catch (err) {
             console.error(err);
@@ -36,7 +36,7 @@ const ParkingManagement = () => {
             setFormData({});
             fetchData();
         } catch (err) {
-            alert(err.response?.data?.message || 'Failed to save parking zone.');
+            alert(err.message || 'Failed to save parking zone.');
         }
     };
 
@@ -50,7 +50,7 @@ const ParkingManagement = () => {
                 });
                 fetchData();
             } catch (err) {
-                alert(err.response?.data?.message || 'Failed to update capacity.');
+                alert(err.message || 'Failed to update capacity.');
             }
         }
     };
@@ -65,7 +65,7 @@ const ParkingManagement = () => {
                 });
                 fetchData();
             } catch (err) {
-                alert(err.response?.data?.message || 'Failed to update occupancy.');
+                alert(err.message || 'Failed to update occupancy.');
             }
         }
     };
@@ -137,7 +137,7 @@ const ParkingManagement = () => {
                             </div>
                             <div className="form-group">
                                 <label>Allowed Vehicle Type</label>
-                                <select required value={formData.allowedVehicleType || ''} onChange={e => setFormData({...formData, allowedVehicleType: e.target.value})}>
+                                <select required value={formData.type || ''} onChange={e => setFormData({...formData, type: e.target.value})}>
                                     <option value="">Select Type</option>
                                     <option value="CAR">Car</option>
                                     <option value="MOTORCYCLE">Motorcycle</option>

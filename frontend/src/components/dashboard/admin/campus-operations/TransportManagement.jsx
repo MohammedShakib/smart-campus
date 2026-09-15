@@ -19,8 +19,8 @@ const TransportManagement = () => {
                 api('/api/admin/campus-operations/buses'),
                 api('/api/admin/campus-operations/routes')
             ]);
-            setBuses(busesRes.data);
-            setRoutes(routesRes.data);
+            setBuses(busesRes.data || []);
+            setRoutes(routesRes.data || []);
             setError('');
         } catch (err) {
             console.error(err);
@@ -32,9 +32,9 @@ const TransportManagement = () => {
 
     const fetchTracking = async () => {
         try {
-            const res = await api('/api/dashboard');
-            if (res.data && res.data.busLocations) {
-                setBusLocations(res.data.busLocations);
+            const res = await api('/api/campus/bus/locations');
+            if (res.data) {
+                setBusLocations(res.data);
             }
         } catch (err) {
             console.error('Failed to fetch tracking data', err);
@@ -70,20 +70,21 @@ const TransportManagement = () => {
             setFormData({});
             fetchData();
         } catch (err) {
-            alert(err.response?.data?.message || 'Failed to save data.');
+            alert(err.message || 'Failed to save data.');
         }
     };
 
     const handleStatusToggle = async (id, currentStatus, type) => {
         try {
             if (type === 'bus') {
-                await api(`/api/admin/campus-operations/buses/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status: currentStatus, active: !currentStatus }) });
+                const bus = buses.find(item => item.id === id);
+                await api(`/api/admin/campus-operations/buses/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status: bus?.operationalStatus || 'AVAILABLE', active: !currentStatus }) });
             } else {
                 await api(`/api/admin/campus-operations/routes/${id}/status`, { method: 'PATCH', body: JSON.stringify({ active: !currentStatus }) });
             }
             fetchData();
         } catch (err) {
-            alert(err.response?.data?.message || 'Failed to update status.');
+            alert(err.message || 'Failed to update status.');
         }
     };
 

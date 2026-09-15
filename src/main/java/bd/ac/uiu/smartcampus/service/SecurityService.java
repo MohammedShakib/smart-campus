@@ -130,6 +130,9 @@ public class SecurityService {
     public CampusVisitor approveVisitor(Long id, String approvedBy, String remarks) {
         CampusVisitor visitor = visitorRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Visitor not found with ID: " + id));
+        if (!"PENDING".equals(visitor.getStatus())) {
+            throw new IllegalStateException("Visitor is not pending.");
+        }
         visitor.setStatus("APPROVED");
         visitor.setApprovedBy(approvedBy != null ? approvedBy : "Gate Security Officer");
         if (remarks != null && !remarks.isBlank()) {
@@ -143,6 +146,9 @@ public class SecurityService {
     public CampusVisitor rejectVisitor(Long id, String rejectedBy, String remarks) {
         CampusVisitor visitor = visitorRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Visitor not found with ID: " + id));
+        if (!"PENDING".equals(visitor.getStatus())) {
+            throw new IllegalStateException("Visitor is not pending.");
+        }
         visitor.setStatus("REJECTED");
         visitor.setApprovedBy(rejectedBy != null ? rejectedBy : "Gate Security Officer");
         if (remarks != null && !remarks.isBlank()) {
@@ -173,6 +179,9 @@ public class SecurityService {
 
         if ("REJECTED".equals(visitor.getStatus())) {
             throw new IllegalStateException("Cannot check in a rejected visitor pass.");
+        }
+        if ("PENDING".equals(visitor.getStatus())) {
+            throw new IllegalStateException("Visitor pass must be approved before check-in.");
         }
         if ("CHECKED_IN".equals(visitor.getStatus())) {
             throw new IllegalStateException("Visitor is already checked in at " + visitor.getActualCheckInTime());
@@ -230,12 +239,16 @@ public class SecurityService {
         ParkingZone zone = parkingZoneRepository.findByZoneCode(zoneCode)
                 .orElseThrow(() -> new IllegalArgumentException("Parking zone not found: " + zoneCode));
 
-        if (dto.getCurrentOccupied() != null) {
-            zone.setCurrentOccupied(Math.max(0, dto.getCurrentOccupied()));
+        int capacity = dto.getTotalCapacity() != null ? dto.getTotalCapacity() : zone.getTotalCapacity();
+        int occupied = dto.getCurrentOccupied() != null ? dto.getCurrentOccupied() : zone.getCurrentOccupied();
+        if (capacity <= 0) {
+            throw new IllegalArgumentException("Parking capacity must be greater than zero.");
         }
-        if (dto.getTotalCapacity() != null && dto.getTotalCapacity() > 0) {
-            zone.setTotalCapacity(dto.getTotalCapacity());
+        if (occupied < 0 || occupied > capacity) {
+            throw new IllegalArgumentException("Parking occupancy cannot exceed capacity.");
         }
+        zone.setTotalCapacity(capacity);
+        zone.setCurrentOccupied(occupied);
         if (dto.getStatus() != null && !dto.getStatus().isBlank()) {
             zone.setStatus(dto.getStatus());
         } else {

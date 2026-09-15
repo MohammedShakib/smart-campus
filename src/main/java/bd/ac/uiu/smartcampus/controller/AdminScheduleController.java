@@ -1,5 +1,6 @@
 package bd.ac.uiu.smartcampus.controller;
 
+import bd.ac.uiu.smartcampus.dto.ApiResponse;
 import bd.ac.uiu.smartcampus.dto.TeachingScheduleRequest;
 import bd.ac.uiu.smartcampus.dto.TeachingScheduleResponse;
 import bd.ac.uiu.smartcampus.service.AdminScheduleService;
@@ -23,22 +24,22 @@ public class AdminScheduleController {
     }
 
     @GetMapping
-    public ResponseEntity<List<TeachingScheduleResponse>> getAllSchedules() {
-        return ResponseEntity.ok(scheduleService.getAllSchedules());
+    public ResponseEntity<ApiResponse<List<TeachingScheduleResponse>>> getAllSchedules() {
+        return ResponseEntity.ok(ApiResponse.ok("Fetched schedules", scheduleService.getAllSchedules()));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<TeachingScheduleResponse> getSchedule(@PathVariable Long id) {
-        return ResponseEntity.ok(scheduleService.getScheduleById(id));
+    public ResponseEntity<ApiResponse<TeachingScheduleResponse>> getSchedule(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.ok("Fetched schedule", scheduleService.getScheduleById(id)));
     }
 
     @PostMapping
-    public ResponseEntity<TeachingScheduleResponse> createSchedule(@Valid @RequestBody TeachingScheduleRequest request, Principal principal) {
-        return ResponseEntity.ok(scheduleService.createSchedule(request, principal.getName()));
+    public ResponseEntity<ApiResponse<TeachingScheduleResponse>> createSchedule(@Valid @RequestBody TeachingScheduleRequest request, Principal principal) {
+        return ResponseEntity.ok(ApiResponse.ok("Created schedule", scheduleService.createSchedule(request, principal.getName())));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<TeachingScheduleResponse> updateSchedule(@PathVariable Long id, @Valid @RequestBody TeachingScheduleRequest request, Principal principal) {
-        return ResponseEntity.ok(scheduleService.updateSchedule(id, request, principal.getName()));
+    public ResponseEntity<ApiResponse<TeachingScheduleResponse>> updateSchedule(@PathVariable Long id, @Valid @RequestBody TeachingScheduleRequest request, Principal principal) {
+        return ResponseEntity.ok(ApiResponse.ok("Updated schedule", scheduleService.updateSchedule(id, request, principal.getName())));
     }
 }

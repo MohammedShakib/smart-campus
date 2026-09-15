@@ -10,7 +10,7 @@ const LostFoundAdmin = () => {
         setLoading(true);
         try {
             const res = await api('/api/admin/campus-operations/lost-found');
-            setItems(res.data);
+            setItems(res.data || []);
             setError('');
         } catch (err) {
             console.error(err);
@@ -32,7 +32,7 @@ const LostFoundAdmin = () => {
             });
             fetchData();
         } catch (err) {
-            alert(err.response?.data?.message || 'Failed to resolve item.');
+            alert(err.message || 'Failed to resolve item.');
         }
     };
 
@@ -76,17 +76,17 @@ const LostFoundAdmin = () => {
                                             )}
                                             <div>
                                                 <strong>{item.title}</strong><br/>
-                                                <small>{item.description.substring(0, 50)}...</small>
+                                                <small>{(item.description || '').substring(0, 50)}...</small>
                                             </div>
                                         </div>
                                     </td>
                                     <td>
-                                        <span className={`status-badge ${item.itemType === 'LOST' ? 'error' : 'success'}`}>{item.itemType}</span><br/>
+                                        <span className={`status-badge ${item.type === 'LOST' ? 'error' : 'success'}`}>{item.type}</span><br/>
                                         <small>{item.category}</small>
                                     </td>
                                     <td>
-                                        {item.locationName}<br/>
-                                        <small>{item.dateLostFound}</small>
+                                        {item.location}<br/>
+                                        <small>{item.itemDate}</small>
                                     </td>
                                     <td>
                                         {item.reporterName}<br/>

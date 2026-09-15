@@ -1,6 +1,7 @@
 package bd.ac.uiu.smartcampus.model;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Table(name = "lab_equipment")
@@ -22,6 +23,7 @@ public class LabEquipment {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "home_classroom_id")
+    @JsonIgnore
     private Classroom homeClassroom;
 
     @Column(name = "total_quantity", nullable = false)

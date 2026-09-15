@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../../../../utils/api';
 
+const dataOf = (payload) => Array.isArray(payload) ? payload : (payload?.data || []);
+
 const ScheduleManagement = () => {
     const [schedules, setSchedules] = useState([]);
     const [courses, setCourses] = useState([]);
@@ -33,12 +35,12 @@ const ScheduleManagement = () => {
                 api('/api/admin/teachers'),
                 api('/api/admin/classrooms')
             ]);
-            setSchedules(schedulesRes.data);
-            setCourses(coursesRes.data);
-            setTeachers(teachersRes.data);
-            setClassrooms(classroomsRes.data);
+            setSchedules(dataOf(schedulesRes));
+            setCourses(dataOf(coursesRes));
+            setTeachers(dataOf(teachersRes));
+            setClassrooms(dataOf(classroomsRes));
         } catch (err) {
-            setError(err.response?.data?.message || 'Failed to load schedules');
+            setError(err.message || 'Failed to load schedules');
         } finally {
             setLoading(false);
         }
@@ -64,7 +66,7 @@ const ScheduleManagement = () => {
             });
             fetchData();
         } catch (err) {
-            alert(err.response?.data?.message || 'Failed to save schedule');
+            alert(err.message || 'Failed to save schedule');
         }
     };
 
@@ -103,14 +105,14 @@ const ScheduleManagement = () => {
                                 <label>Course</label>
                                 <select name="courseId" value={formData.courseId} onChange={handleInputChange} required>
                                     <option value="">Select Course...</option>
-                                    {courses.map(c => <option key={c.id} value={c.id}>{c.courseCode} - {c.courseName}</option>)}
+                                    {courses.filter(c => c.active).map(c => <option key={c.id} value={c.id}>{c.courseCode} - {c.courseName}</option>)}
                                 </select>
                             </div>
                             <div className="form-group">
                                 <label>Teacher</label>
                                 <select name="teacherId" value={formData.teacherId} onChange={handleInputChange} required>
                                     <option value="">Select Teacher...</option>
-                                    {teachers.map(t => <option key={t.id} value={t.id}>{t.fullName} ({t.email})</option>)}
+                                    {teachers.filter(t => t.active !== false).map(t => <option key={t.id} value={t.id}>{t.fullName} ({t.email})</option>)}
                                 </select>
                             </div>
                         </div>
@@ -119,7 +121,7 @@ const ScheduleManagement = () => {
                                 <label>Classroom</label>
                                 <select name="classroomId" value={formData.classroomId} onChange={handleInputChange} required>
                                     <option value="">Select Classroom...</option>
-                                    {classrooms.map(c => <option key={c.id} value={c.id}>{c.roomNumber}</option>)}
+                                    {classrooms.filter(c => c.active).map(c => <option key={c.id} value={c.id}>{c.roomNumber}</option>)}
                                 </select>
                             </div>
                             <div className="form-group">

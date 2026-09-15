@@ -12,7 +12,7 @@ const CafeteriaManagement = () => {
         setLoading(true);
         try {
             const res = await api('/api/admin/campus-operations/cafeteria');
-            setMenuItems(res.data);
+            setMenuItems(res.data || []);
             setError('');
         } catch (err) {
             console.error(err);
@@ -34,7 +34,7 @@ const CafeteriaManagement = () => {
             setFormData({});
             fetchData();
         } catch (err) {
-            alert(err.response?.data?.message || 'Failed to save menu item.');
+            alert(err.message || 'Failed to save menu item.');
         }
     };
 
@@ -46,7 +46,7 @@ const CafeteriaManagement = () => {
             });
             fetchData();
         } catch (err) {
-            alert(err.response?.data?.message || 'Failed to update availability.');
+            alert(err.message || 'Failed to update availability.');
         }
     };
 
@@ -90,7 +90,7 @@ const CafeteriaManagement = () => {
                                             <tr key={item.id} style={{ opacity: item.available ? 1 : 0.6 }}>
                                                 <td><strong>{item.name}</strong></td>
                                                 <td>{item.description}</td>
-                                                <td>৳{item.price.toFixed(2)}</td>
+                                                <td>BDT {Number(item.price).toFixed(2)}</td>
                                                 <td><span className={`status-badge ${item.available ? 'success' : 'error'}`}>{item.available ? 'Available' : 'Out of Stock'}</span></td>
                                                 <td>
                                                     <button className="btn btn-small btn-secondary" onClick={() => handleAvailabilityToggle(item.id, item.available)}>Toggle</button>

@@ -16,6 +16,8 @@ public class AdminAcademicOperationsService {
     private final AttendanceSessionRepository attendanceSessionRepository;
     private final AttendanceRecordRepository attendanceRecordRepository;
     private final RoomReservationRepository roomReservationRepository;
+    private final TeachingScheduleRepository teachingScheduleRepository;
+    private final ClassroomRepository classroomRepository;
     private final AdminActionLogRepository auditLogRepository;
     private final NotificationService notificationService;
     private final UserRepository userRepository;
@@ -24,6 +26,8 @@ public class AdminAcademicOperationsService {
                                           AttendanceSessionRepository attendanceSessionRepository,
                                           AttendanceRecordRepository attendanceRecordRepository,
                                           RoomReservationRepository roomReservationRepository,
+                                          TeachingScheduleRepository teachingScheduleRepository,
+                                          ClassroomRepository classroomRepository,
                                           AdminActionLogRepository auditLogRepository,
                                           NotificationService notificationService,
                                           UserRepository userRepository) {
@@ -31,6 +35,8 @@ public class AdminAcademicOperationsService {
         this.attendanceSessionRepository = attendanceSessionRepository;
         this.attendanceRecordRepository = attendanceRecordRepository;
         this.roomReservationRepository = roomReservationRepository;
+        this.teachingScheduleRepository = teachingScheduleRepository;
+        this.classroomRepository = classroomRepository;
         this.auditLogRepository = auditLogRepository;
         this.notificationService = notificationService;
         this.userRepository = userRepository;
@@ -40,6 +46,7 @@ public class AdminAcademicOperationsService {
         return classSessionRepository.findByStatus(ClassStatus.ACTIVE).stream().map(session -> {
             Map<String, Object> payload = new LinkedHashMap<>();
             payload.put("id", session.getId());
+            payload.put("teachingScheduleId", session.getTeachingSchedule().getId());
             payload.put("courseCode", session.getTeachingSchedule().getCourseCode());
             payload.put("courseTitle", session.getTeachingSchedule().getCourseTitle());
             payload.put("sectionName", session.getTeachingSchedule().getSectionName());
@@ -116,32 +123,83 @@ public class AdminAcademicOperationsService {
         RoomReservation reservation = roomReservationRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Reservation not found"));
 
-        if ("APPROVED".equalsIgnoreCase(status) || "REJECTED".equalsIgnoreCase(status) || "CANCELLED".equalsIgnoreCase(status)) {
-            reservation.setStatus(status.toUpperCase());
-            roomReservationRepository.save(reservation);
-
-            auditLogRepository.save(new AdminActionLog(adminEmail, "RESERVATION_" + status.toUpperCase(), "Reservation ID " + id + " updated to " + status));
-
-            if ("APPROVED".equalsIgnoreCase(status) || "REJECTED".equalsIgnoreCase(status)) {
-                userRepository.findByEmail(reservation.getTeacherEmail()).ifPresent(teacher -> {
-                    String message = String.format("Your room reservation for %s on %s was %s.",
-                            reservation.getRoomNumber(), reservation.getReservationDate(), status.toLowerCase());
-                    notificationService.createNotification(
-                            teacher,
-                            NotificationType.RESERVATION,
-                            "Reservation " + status,
-                            message,
-                            "reservations",
-                            reservation.getId().toString(),
-                            "RESERVATION_" + status.toUpperCase() + ":" + reservation.getId()
-                    );
-                });
-            }
-        } else {
+        String nextStatus = status == null ? "" : status.trim().toUpperCase(Locale.ROOT);
+        if (!Set.of("APPROVED", "REJECTED", "CANCELLED").contains(nextStatus)) {
             throw new IllegalArgumentException("Invalid status update");
+        }
+        validateReservationTransition(reservation.getStatus(), nextStatus);
+        if ("APPROVED".equals(nextStatus)) {
+            validateReservationApproval(reservation);
+        }
+
+        reservation.setStatus(nextStatus);
+        roomReservationRepository.save(reservation);
+
+        auditLogRepository.save(new AdminActionLog(adminEmail, "RESERVATION_" + nextStatus, "Reservation ID " + id + " updated to " + nextStatus));
+
+        if ("APPROVED".equals(nextStatus) || "REJECTED".equals(nextStatus)) {
+            userRepository.findByEmail(reservation.getTeacherEmail()).ifPresent(teacher -> {
+                String message = String.format("Your room reservation for %s on %s was %s.",
+                        reservation.getRoomNumber(), reservation.getReservationDate(), nextStatus.toLowerCase(Locale.ROOT));
+                notificationService.createNotification(
+                        teacher,
+                        NotificationType.RESERVATION,
+                        "Reservation " + nextStatus,
+                        message,
+                        "reservations",
+                        reservation.getId().toString(),
+                        "RESERVATION_" + nextStatus + ":" + reservation.getId()
+                );
+            });
         }
 
         return reservationPayload(reservation);
+    }
+
+    private void validateReservationTransition(String currentStatus, String nextStatus) {
+        String current = currentStatus == null ? "RESERVED" : currentStatus.toUpperCase(Locale.ROOT);
+        if (current.equals(nextStatus)) {
+            return;
+        }
+        if (Set.of("REJECTED", "CANCELLED", "CHECKED_OUT").contains(current)) {
+            throw new IllegalArgumentException("Reservation is already closed.");
+        }
+        if ("APPROVED".equals(current) && !"CANCELLED".equals(nextStatus)) {
+            throw new IllegalArgumentException("Approved reservations can only be cancelled.");
+        }
+        if (!Set.of("RESERVED", "PENDING", "APPROVED").contains(current)) {
+            throw new IllegalArgumentException("Invalid reservation state transition.");
+        }
+    }
+
+    private void validateReservationApproval(RoomReservation reservation) {
+        boolean hasReservationConflict = roomReservationRepository.findConflicts(
+                        reservation.getRoomNumber(),
+                        reservation.getReservationDate(),
+                        reservation.getStartTime(),
+                        reservation.getEndTime()
+                )
+                .stream()
+                .anyMatch(existing -> !existing.getId().equals(reservation.getId()));
+        if (hasReservationConflict) {
+            throw new IllegalArgumentException("Room is already reserved for an overlapping time.");
+        }
+
+        classroomRepository.findByRoomNumber(reservation.getRoomNumber()).ifPresent(room -> {
+            if (teachingScheduleRepository.hasRoomConflict(
+                    room.getId(),
+                    dayName(reservation.getReservationDate()),
+                    reservation.getStartTime(),
+                    reservation.getEndTime(),
+                    null)) {
+                throw new IllegalArgumentException("Room has a scheduled class during this time.");
+            }
+        });
+    }
+
+    private String dayName(java.time.LocalDate date) {
+        String value = date.getDayOfWeek().name().toLowerCase(Locale.ROOT);
+        return value.substring(0, 1).toUpperCase(Locale.ROOT) + value.substring(1);
     }
 
     private Map<String, Object> reservationPayload(RoomReservation reservation) {

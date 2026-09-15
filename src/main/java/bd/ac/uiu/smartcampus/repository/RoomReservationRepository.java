@@ -20,7 +20,7 @@ public interface RoomReservationRepository extends JpaRepository<RoomReservation
            SELECT r FROM RoomReservation r
            WHERE r.roomNumber = :roomNumber
              AND r.reservationDate = :reservationDate
-             AND r.status = 'RESERVED'
+             AND r.status IN ('RESERVED', 'APPROVED')
              AND :startTime < r.endTime
              AND :endTime > r.startTime
            """)

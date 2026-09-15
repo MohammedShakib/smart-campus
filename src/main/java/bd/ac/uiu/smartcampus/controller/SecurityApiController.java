@@ -75,36 +75,24 @@ public class SecurityApiController {
 
     @GetMapping("/visitors/verify")
     public ApiResponse<CampusVisitor> verifyPass(@RequestParam String passCode) {
-        try {
-            CampusVisitor visitor = securityService.verifyPassCode(passCode);
-            return ApiResponse.ok("Valid QR Pass: " + visitor.getVisitorName() + " (" + visitor.getStatus() + ")", visitor);
-        } catch (IllegalArgumentException e) {
-            return ApiResponse.error(e.getMessage());
-        }
+        CampusVisitor visitor = securityService.verifyPassCode(passCode);
+        return ApiResponse.ok("Valid QR Pass: " + visitor.getVisitorName() + " (" + visitor.getStatus() + ")", visitor);
     }
 
     @PostMapping("/visitors/checkin")
     public ApiResponse<CampusVisitor> confirmEntry(@RequestParam String passCodeOrId,
                                                    @AuthenticationPrincipal CustomUserDetails userDetails) {
         String officer = userDetails != null ? userDetails.getFullName() : "Gate Security Post";
-        try {
-            CampusVisitor checkedIn = securityService.confirmEntry(passCodeOrId, officer);
-            return ApiResponse.ok("Entry Confirmed: Visitor " + checkedIn.getVisitorName() + " checked in successfully!", checkedIn);
-        } catch (Exception e) {
-            return ApiResponse.error(e.getMessage());
-        }
+        CampusVisitor checkedIn = securityService.confirmEntry(passCodeOrId, officer);
+        return ApiResponse.ok("Entry Confirmed: Visitor " + checkedIn.getVisitorName() + " checked in successfully!", checkedIn);
     }
 
     @PostMapping("/visitors/checkout")
     public ApiResponse<CampusVisitor> confirmExit(@RequestParam String passCodeOrId,
                                                   @AuthenticationPrincipal CustomUserDetails userDetails) {
         String officer = userDetails != null ? userDetails.getFullName() : "Gate Security Post";
-        try {
-            CampusVisitor checkedOut = securityService.confirmExit(passCodeOrId, officer);
-            return ApiResponse.ok("Exit Confirmed: Visitor " + checkedOut.getVisitorName() + " checked out. Pass closed.", checkedOut);
-        } catch (Exception e) {
-            return ApiResponse.error(e.getMessage());
-        }
+        CampusVisitor checkedOut = securityService.confirmExit(passCodeOrId, officer);
+        return ApiResponse.ok("Exit Confirmed: Visitor " + checkedOut.getVisitorName() + " checked out. Pass closed.", checkedOut);
     }
 
     // ─── PARKING MANAGEMENT ─────────────────────────────────────

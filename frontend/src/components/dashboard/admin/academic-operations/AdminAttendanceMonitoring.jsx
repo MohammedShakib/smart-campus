@@ -13,10 +13,10 @@ const AdminAttendanceMonitoring = () => {
     const fetchAttendanceSessions = async () => {
         try {
             const res = await api('/api/admin/academic-operations/attendance');
-            setAttendanceSessions(res.data);
+            setAttendanceSessions(res.data || res || []);
             setError('');
         } catch (err) {
-            setError('Failed to fetch attendance history.');
+            setError(err.message || 'Failed to fetch attendance history.');
         } finally {
             setLoading(false);
         }

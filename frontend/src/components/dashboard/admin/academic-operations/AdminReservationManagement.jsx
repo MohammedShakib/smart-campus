@@ -13,10 +13,10 @@ const AdminReservationManagement = () => {
     const fetchReservations = async () => {
         try {
             const res = await api('/api/admin/academic-operations/reservations');
-            setReservations(res.data);
+            setReservations(res.data || res || []);
             setError('');
         } catch (err) {
-            setError('Failed to fetch reservations.');
+            setError(err.message || 'Failed to fetch reservations.');
         } finally {
             setLoading(false);
         }
@@ -27,7 +27,7 @@ const AdminReservationManagement = () => {
             await api(`/api/admin/academic-operations/reservations/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status: newStatus }) });
             fetchReservations();
         } catch (err) {
-            alert(err.response?.data?.message || 'Failed to update reservation status.');
+            alert(err.message || 'Failed to update reservation status.');
         }
     };
 

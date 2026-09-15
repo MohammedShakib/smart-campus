@@ -41,8 +41,11 @@ public class AdminCampusOperationsController {
 
     @PatchMapping("/buses/{id}/status")
     public ApiResponse<Bus> updateBusStatus(@PathVariable Long id, @RequestBody Map<String, Object> payload, Authentication authentication) {
-        String status = (String) payload.get("status");
-        boolean active = (Boolean) payload.get("active");
+        String status = payload.get("status") instanceof String value ? value : null;
+        Object activeValue = payload.get("active");
+        if (!(activeValue instanceof Boolean active)) {
+            throw new IllegalArgumentException("active is required.");
+        }
         return ApiResponse.ok("Updated bus status", service.updateBusStatus(id, status, active, getAdminEmail(authentication)));
     }
 
@@ -66,6 +69,9 @@ public class AdminCampusOperationsController {
     @PatchMapping("/routes/{id}/status")
     public ApiResponse<BusRoute> updateRouteStatus(@PathVariable Long id, @RequestBody Map<String, Boolean> payload, Authentication authentication) {
         Boolean active = payload.get("active");
+        if (active == null) {
+            throw new IllegalArgumentException("active is required.");
+        }
         return ApiResponse.ok("Updated route status", service.updateRouteStatus(id, active, getAdminEmail(authentication)));
     }
 
@@ -83,12 +89,18 @@ public class AdminCampusOperationsController {
     @PatchMapping("/parking/{id}/occupancy")
     public ApiResponse<ParkingZone> updateParkingOccupancy(@PathVariable Long id, @RequestBody Map<String, Integer> payload, Authentication authentication) {
         Integer occupied = payload.get("occupied");
+        if (occupied == null) {
+            throw new IllegalArgumentException("occupied is required.");
+        }
         return ApiResponse.ok("Updated parking occupancy", service.updateParkingOccupancy(id, occupied, getAdminEmail(authentication)));
     }
     
     @PatchMapping("/parking/{id}/capacity")
     public ApiResponse<ParkingZone> updateParkingCapacity(@PathVariable Long id, @RequestBody Map<String, Integer> payload, Authentication authentication) {
         Integer capacity = payload.get("capacity");
+        if (capacity == null) {
+            throw new IllegalArgumentException("capacity is required.");
+        }
         return ApiResponse.ok("Updated parking capacity", service.updateParkingCapacity(id, capacity, getAdminEmail(authentication)));
     }
 
@@ -140,6 +152,9 @@ public class AdminCampusOperationsController {
     @PatchMapping("/cafeteria/{id}/availability")
     public ApiResponse<CafeteriaMenuItem> updateMenuAvailability(@PathVariable Long id, @RequestBody Map<String, Boolean> payload, Authentication authentication) {
         Boolean available = payload.get("available");
+        if (available == null) {
+            throw new IllegalArgumentException("available is required.");
+        }
         return ApiResponse.ok("Updated menu availability", service.updateMenuItemAvailability(id, available, getAdminEmail(authentication)));
     }
 

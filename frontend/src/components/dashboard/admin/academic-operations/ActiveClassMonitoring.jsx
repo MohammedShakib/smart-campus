@@ -15,10 +15,10 @@ const ActiveClassMonitoring = () => {
     const fetchActiveClasses = async () => {
         try {
             const res = await api('/api/admin/academic-operations/active-classes');
-            setActiveClasses(res.data);
+            setActiveClasses(res.data || res || []);
             setError('');
         } catch (err) {
-            setError('Failed to fetch active classes.');
+            setError(err.message || 'Failed to fetch active classes.');
         } finally {
             setLoading(false);
         }

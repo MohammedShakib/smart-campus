@@ -10,7 +10,7 @@ const VisitorManagement = () => {
         setLoading(true);
         try {
             const res = await api('/api/admin/campus-operations/visitors');
-            setVisitors(res.data);
+            setVisitors(res.data || []);
             setError('');
         } catch (err) {
             console.error(err);
@@ -29,7 +29,7 @@ const VisitorManagement = () => {
             await api(`/api/admin/campus-operations/visitors/${id}/approve`, { method: 'POST' });
             fetchData();
         } catch (err) {
-            alert(err.response?.data?.message || 'Failed to approve.');
+            alert(err.message || 'Failed to approve.');
         }
     };
 
@@ -43,7 +43,7 @@ const VisitorManagement = () => {
                 });
                 fetchData();
             } catch (err) {
-                alert(err.response?.data?.message || 'Failed to reject.');
+                alert(err.message || 'Failed to reject.');
             }
         }
     };
@@ -86,11 +86,11 @@ const VisitorManagement = () => {
                                 <tr key={v.id}>
                                     <td>
                                         <strong>{v.visitorName}</strong><br/>
-                                        <small>{v.visitorPhone}</small>
+                                        <small>{v.phone}</small>
                                     </td>
                                     <td>{v.purpose}</td>
                                     <td>{v.hostName}<br/><small>{v.hostDepartment}</small></td>
-                                    <td>{v.visitDate}<br/><small>{v.expectedTime}</small></td>
+                                    <td>{v.visitDate}<br/><small>{v.expectedEntryTime}</small></td>
                                     <td><code style={{background: '#eee', padding: '2px 4px'}}>{v.passCode}</code></td>
                                     <td>
                                         <span className={`status-badge ${getStatusClass(v.status)}`}>{v.status}</span>

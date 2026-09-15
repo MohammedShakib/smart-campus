@@ -12,7 +12,7 @@ const EventManagement = () => {
         setLoading(true);
         try {
             const res = await api('/api/admin/campus-operations/events');
-            setEvents(res.data);
+            setEvents(res.data || []);
             setError('');
         } catch (err) {
             console.error(err);
@@ -34,7 +34,7 @@ const EventManagement = () => {
             setFormData({});
             fetchData();
         } catch (err) {
-            alert(err.response?.data?.message || 'Failed to save event.');
+            alert(err.message || 'Failed to save event.');
         }
     };
 
@@ -46,7 +46,7 @@ const EventManagement = () => {
             });
             fetchData();
         } catch (err) {
-            alert(err.response?.data?.message || 'Failed to update status.');
+            alert(err.message || 'Failed to update status.');
         }
     };
 
