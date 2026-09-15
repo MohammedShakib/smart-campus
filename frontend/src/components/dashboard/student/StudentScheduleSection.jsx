@@ -39,6 +39,7 @@ export function StudentScheduleSection() {
     item.courseCode,
     item.courseTitle,
     item.sectionName,
+    item.teacherName || item.teacherEmail,
     item.roomNumber,
     item.dayOfWeek,
     `${formatTime(item.startTime)} - ${formatTime(item.endTime)}`,
@@ -56,7 +57,7 @@ export function StudentScheduleSection() {
           </div>
           <div className="panel-body">
             <Table
-              headers={['Code', 'Course', 'Section', 'Room', 'Day', 'Time', 'Status']}
+              headers={['Code', 'Course', 'Section', 'Teacher', 'Room', 'Day', 'Time', 'Status']}
               rows={todayClasses.map(mapToRow)}
               empty="No classes scheduled today."
             />
@@ -70,7 +71,7 @@ export function StudentScheduleSection() {
           </div>
           <div className="panel-body">
             <Table
-              headers={['Code', 'Course', 'Section', 'Room', 'Day', 'Time', 'Status']}
+              headers={['Code', 'Course', 'Section', 'Teacher', 'Room', 'Day', 'Time', 'Status']}
               rows={otherClasses.map(mapToRow)}
               empty="No other classes scheduled."
             />

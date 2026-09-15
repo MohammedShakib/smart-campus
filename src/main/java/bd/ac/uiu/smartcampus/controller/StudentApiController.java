@@ -190,7 +190,7 @@ public class StudentApiController {
     // ─────────────────────────────────────────────────────────
 
     @GetMapping("/schedule")
-    public ApiResponse<List<TeachingSchedule>> getStudentSchedule(
+    public ApiResponse<List<TeachingScheduleResponse>> getStudentSchedule(
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         String studentEmail = userDetails != null ? userDetails.getUsername() : "student-demo";
         String studentId = userDetails != null ? userDetails.getStudentOrEmpId() : "011211001";

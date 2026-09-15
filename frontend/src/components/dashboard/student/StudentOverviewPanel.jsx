@@ -94,7 +94,7 @@ export function StudentOverviewPanel({ data, reload }) {
               <span>{nextClass.courseCode} - {nextClass.sectionName}</span>
               <strong>{nextClass.courseTitle}</strong>
               <p>{nextClass.dayOfWeek} • {formatTime(nextClass.startTime)} to {formatTime(nextClass.endTime)}</p>
-              <p>Room: {nextClass.roomNumber} • {nextClass.teacherEmail}</p>
+              <p>Room: {nextClass.roomNumber} • {nextClass.teacherName || nextClass.teacherEmail}</p>
             </div>
           ) : (
             <p className="muted">No upcoming class found.</p>

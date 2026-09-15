@@ -465,7 +465,7 @@ public class StudentPortalService {
     // ─────────────────────────────────────────────────────────
 
     @Transactional(readOnly = true)
-    public List<TeachingSchedule> getStudentSchedule(String studentEmail, String studentId) {
+    public List<TeachingScheduleResponse> getStudentSchedule(String studentEmail, String studentId) {
         User student = userRepository.findByEmail(studentEmail).orElse(null);
         if (student == null) {
             student = userRepository.findByStudentOrEmpId(studentId).orElse(null);
@@ -475,11 +475,16 @@ public class StudentPortalService {
         }
 
         List<ClassEnrollment> enrollments = enrollmentRepository.findByStudentAndActiveTrue(student);
-        List<TeachingSchedule> scheduleList = new ArrayList<>();
+        List<TeachingScheduleResponse> scheduleList = new ArrayList<>();
         for (ClassEnrollment enrollment : enrollments) {
             List<TeachingSchedule> schedules = teachingScheduleRepository.findByCourseCodeAndSectionName(
                     enrollment.getCourseCode(), enrollment.getSectionName());
-            scheduleList.addAll(schedules);
+            for (TeachingSchedule schedule : schedules) {
+                TeachingScheduleResponse response = TeachingScheduleResponse.fromEntity(schedule);
+                userRepository.findByEmail(schedule.getTeacherEmail())
+                        .ifPresent(teacher -> response.setTeacherName(teacher.getFullName()));
+                scheduleList.add(response);
+            }
         }
         return scheduleList;
     }
