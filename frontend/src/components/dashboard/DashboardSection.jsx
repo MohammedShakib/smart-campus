@@ -20,6 +20,11 @@ import { StudentAttendanceSection } from './student/StudentAttendanceSection';
 import { StudentLostFoundSection } from './student/StudentLostFoundSection';
 import { StudentLabEquipmentSection } from './student/StudentLabEquipmentSection';
 import { StudentOfficeHoursSection } from './student/StudentOfficeHoursSection';
+import { StudentOverviewPanel } from './student/StudentOverviewPanel';
+import { StudentScheduleSection } from './student/StudentScheduleSection';
+import { StudentEventsSection } from './student/StudentEventsSection';
+import { StudentCafeteriaSection } from './student/StudentCafeteriaSection';
+import { StudentNotificationsSection } from './student/StudentNotificationsSection';
 import { AdminEquipmentSection } from './admin/AdminEquipmentSection';
 import { AdminUsersSection } from './admin/AdminUsersSection';
 import { AdminStudentsSection } from './admin/AdminStudentsSection';
@@ -125,6 +130,9 @@ export function DashboardSection({
     if (section === 'schedule') return <StudentScheduleSection data={data} />;
     if (section === 'shuttle') return <ShuttleSection busLocations={data.busLocations || {}} />;
     if (section === 'tickets') return <TicketsSection data={data} reload={reload} />;
+    if (section === 'events') return <StudentEventsSection />;
+    if (section === 'cafeteria') return <StudentCafeteriaSection />;
+    if (section === 'notifications') return <StudentNotificationsSection />;
   }
 
   if (role === 'security') {
@@ -448,28 +456,6 @@ function NoticesSection({ notices }) {
 /* ─────────────────────────────────────────────────────────
    STUDENT PANELS
 ───────────────────────────────────────────────────────── */
-function StudentOverviewPanel({ data, reload }) {
-  return (
-    <Panel title="My Support Tickets" tag="Maintenance">
-      <TicketForm data={data} reload={reload} />
-      <Table
-        headers={['Issue', 'Location', 'Priority', 'Status']}
-        rows={(data.myComplaints || []).slice(0, 5).map((item) => [item.issueTitle, item.location, item.priority, item.status])}
-        empty="No support tickets submitted yet."
-      />
-    </Panel>
-  );
-}
-
-function StudentScheduleSection({ data }) {
-  const classrooms = sampleClassrooms();
-  return (
-    <div>
-      <SectionHeader title="Class Schedule" subtitle="Available and occupied rooms across campus." />
-      <ClassroomsSection classrooms={classrooms} />
-    </div>
-  );
-}
 
 function TicketsSection({ data, reload }) {
   return (

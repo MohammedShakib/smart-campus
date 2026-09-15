@@ -5,12 +5,15 @@ import bd.ac.uiu.smartcampus.model.*;
 import bd.ac.uiu.smartcampus.security.CustomUserDetails;
 import bd.ac.uiu.smartcampus.service.FacultyOfficeHourService;
 import bd.ac.uiu.smartcampus.service.StudentPortalService;
+import bd.ac.uiu.smartcampus.service.NotificationService;
+import bd.ac.uiu.smartcampus.repository.UserRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/student")
@@ -18,11 +21,25 @@ public class StudentApiController {
 
     private final StudentPortalService studentPortalService;
     private final FacultyOfficeHourService officeHourService;
+    private final NotificationService notificationService;
+    private final UserRepository userRepository;
 
     public StudentApiController(StudentPortalService studentPortalService,
-                                FacultyOfficeHourService officeHourService) {
+                                FacultyOfficeHourService officeHourService,
+                                NotificationService notificationService,
+                                UserRepository userRepository) {
         this.studentPortalService = studentPortalService;
         this.officeHourService = officeHourService;
+        this.notificationService = notificationService;
+        this.userRepository = userRepository;
+    }
+
+    private User getAuthenticatedStudent(CustomUserDetails userDetails) {
+        if (userDetails == null) {
+            throw new RuntimeException("Unauthorized");
+        }
+        return userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new RuntimeException("Student not found"));
     }
 
     // ─────────────────────────────────────────────────────────
@@ -166,6 +183,61 @@ public class StudentApiController {
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         String studentId = userDetails != null ? userDetails.getStudentOrEmpId() : "011211001";
         return ApiResponse.ok("Appointment cancelled", officeHourService.cancelAppointment(id, studentId));
+    }
+
+    // ─────────────────────────────────────────────────────────
+    // 5. SCHEDULE, NOTIFICATIONS, EVENTS, CAFETERIA, EMERGENCIES
+    // ─────────────────────────────────────────────────────────
+
+    @GetMapping("/schedule")
+    public ApiResponse<List<TeachingSchedule>> getStudentSchedule(
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        String studentEmail = userDetails != null ? userDetails.getUsername() : "student-demo";
+        String studentId = userDetails != null ? userDetails.getStudentOrEmpId() : "011211001";
+        return ApiResponse.ok("Student class schedule", studentPortalService.getStudentSchedule(studentEmail, studentId));
+    }
+
+    @GetMapping("/events")
+    public ApiResponse<List<CampusEvent>> getPublishedEvents() {
+        return ApiResponse.ok("Published campus events", studentPortalService.getPublishedEvents());
+    }
+
+    @GetMapping("/cafeteria")
+    public ApiResponse<List<CafeteriaMenuItem>> getCafeteriaMenu() {
+        return ApiResponse.ok("Cafeteria menu", studentPortalService.getCafeteriaMenu());
+    }
+
+    @GetMapping("/emergencies/active")
+    public ApiResponse<List<EmergencyAlert>> getActiveEmergencies() {
+        return ApiResponse.ok("Active emergencies", studentPortalService.getActiveEmergencies());
+    }
+
+    @GetMapping("/notifications")
+    public ApiResponse<List<NotificationDto>> getNotifications(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        User student = getAuthenticatedStudent(userDetails);
+        List<NotificationDto> notifications = notificationService.getNotifications(student);
+        return ApiResponse.ok("Student notifications fetched", notifications);
+    }
+
+    @GetMapping("/notifications/unread-count")
+    public ApiResponse<Map<String, Long>> getUnreadCount(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        User student = getAuthenticatedStudent(userDetails);
+        long count = notificationService.getUnreadCount(student);
+        return ApiResponse.ok("Unread count fetched", Map.of("count", count));
+    }
+
+    @PostMapping("/notifications/{id}/read")
+    public ApiResponse<Void> markAsRead(@PathVariable Long id, @AuthenticationPrincipal CustomUserDetails userDetails) {
+        User student = getAuthenticatedStudent(userDetails);
+        notificationService.markAsRead(id, student);
+        return ApiResponse.ok("Notification marked as read", null);
+    }
+
+    @PostMapping("/notifications/read-all")
+    public ApiResponse<Void> markAllAsRead(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        User student = getAuthenticatedStudent(userDetails);
+        notificationService.markAllAsRead(student);
+        return ApiResponse.ok("All notifications marked as read", null);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

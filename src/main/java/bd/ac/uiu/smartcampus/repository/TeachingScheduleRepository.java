@@ -14,6 +14,7 @@ public interface TeachingScheduleRepository extends JpaRepository<TeachingSchedu
     boolean existsByTeacherEmailAndCourseCodeAndSectionNameAndDayOfWeek(String teacherEmail, String courseCode, String sectionName, String dayOfWeek);
     List<TeachingSchedule> findByDayOfWeek(String dayOfWeek);
     List<TeachingSchedule> findByCourseCode(String courseCode);
+    List<TeachingSchedule> findByCourseCodeAndSectionName(String courseCode, String sectionName);
 
     boolean existsByTeacherEmail(String teacherEmail);
 

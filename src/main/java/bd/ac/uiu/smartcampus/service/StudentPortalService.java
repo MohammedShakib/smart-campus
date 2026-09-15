@@ -29,6 +29,10 @@ public class StudentPortalService {
     private final LabEquipmentRepository labEquipmentRepository;
     private final EquipmentBookingRepository equipmentBookingRepository;
     private final NotificationService notificationService;
+    private final TeachingScheduleRepository teachingScheduleRepository;
+    private final CampusEventRepository eventRepository;
+    private final CafeteriaMenuItemRepository cafeteriaMenuRepository;
+    private final EmergencyAlertRepository emergencyAlertRepository;
 
     public StudentPortalService(UserRepository userRepository,
                                 ClassEnrollmentRepository enrollmentRepository,
@@ -38,7 +42,11 @@ public class StudentPortalService {
                                 LostFoundItemRepository lostFoundItemRepository,
                                 LabEquipmentRepository labEquipmentRepository,
                                 EquipmentBookingRepository equipmentBookingRepository,
-                                NotificationService notificationService) {
+                                NotificationService notificationService,
+                                TeachingScheduleRepository teachingScheduleRepository,
+                                CampusEventRepository eventRepository,
+                                CafeteriaMenuItemRepository cafeteriaMenuRepository,
+                                EmergencyAlertRepository emergencyAlertRepository) {
         this.userRepository = userRepository;
         this.enrollmentRepository = enrollmentRepository;
         this.attendanceSessionRepository = attendanceSessionRepository;
@@ -48,6 +56,10 @@ public class StudentPortalService {
         this.labEquipmentRepository = labEquipmentRepository;
         this.equipmentBookingRepository = equipmentBookingRepository;
         this.notificationService = notificationService;
+        this.teachingScheduleRepository = teachingScheduleRepository;
+        this.eventRepository = eventRepository;
+        this.cafeteriaMenuRepository = cafeteriaMenuRepository;
+        this.emergencyAlertRepository = emergencyAlertRepository;
     }
 
     // ─────────────────────────────────────────────────────────
@@ -446,5 +458,44 @@ public class StudentPortalService {
         }
 
         return updateBookingStatus(bookingId, EquipmentBooking.BookingStatus.CANCELLED, "Cancelled by student");
+    }
+
+    // ─────────────────────────────────────────────────────────
+    // 4. STUDENT SCHEDULE, EVENTS, CAFETERIA, EMERGENCIES
+    // ─────────────────────────────────────────────────────────
+
+    @Transactional(readOnly = true)
+    public List<TeachingSchedule> getStudentSchedule(String studentEmail, String studentId) {
+        User student = userRepository.findByEmail(studentEmail).orElse(null);
+        if (student == null) {
+            student = userRepository.findByStudentOrEmpId(studentId).orElse(null);
+        }
+        if (student == null) {
+            return Collections.emptyList();
+        }
+
+        List<ClassEnrollment> enrollments = enrollmentRepository.findByStudentAndActiveTrue(student);
+        List<TeachingSchedule> scheduleList = new ArrayList<>();
+        for (ClassEnrollment enrollment : enrollments) {
+            List<TeachingSchedule> schedules = teachingScheduleRepository.findByCourseCodeAndSectionName(
+                    enrollment.getCourseCode(), enrollment.getSectionName());
+            scheduleList.addAll(schedules);
+        }
+        return scheduleList;
+    }
+
+    @Transactional(readOnly = true)
+    public List<CampusEvent> getPublishedEvents() {
+        return eventRepository.findByEventDateGreaterThanEqualOrderByEventDateAsc(LocalDate.now());
+    }
+
+    @Transactional(readOnly = true)
+    public List<CafeteriaMenuItem> getCafeteriaMenu() {
+        return cafeteriaMenuRepository.findAll();
+    }
+
+    @Transactional(readOnly = true)
+    public List<EmergencyAlert> getActiveEmergencies() {
+        return emergencyAlertRepository.findByActiveTrueOrderByBroadcastTimeDesc();
     }
 }

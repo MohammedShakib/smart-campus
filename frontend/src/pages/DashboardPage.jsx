@@ -53,13 +53,16 @@ const dashboardConfig = {
     path: '/dashboard/student',
     sections: [
       { key: 'overview',     label: 'Overview',             icon: Activity },
-      { key: 'attendance',   label: 'Attendance & Excuses', icon: CalendarCheck },
-      { key: 'lostfound',    label: 'Lost & Found Board',   icon: Search },
-      { key: 'labequipment', label: 'Hardware & Lab',       icon: Cpu },
-      { key: 'officehours',  label: 'Faculty Office Hours', icon: MessageSquare },
       { key: 'schedule',     label: 'Class Schedule',       icon: ClipboardCheck },
+      { key: 'attendance',   label: 'Attendance & Excuses', icon: CalendarCheck },
+      { key: 'officehours',  label: 'Faculty Office Hours', icon: MessageSquare },
+      { key: 'labequipment', label: 'Hardware & Lab',       icon: Cpu },
+      { key: 'lostfound',    label: 'Lost & Found Board',   icon: Search },
+      { key: 'events',       label: 'Campus Events',        icon: CalendarDays },
+      { key: 'cafeteria',    label: 'Cafeteria',            icon: Building2 },
       { key: 'shuttle',      label: 'Shuttle Fleet',        icon: Bus },
       { key: 'tickets',      label: 'Support Tickets',      icon: Wrench },
+      { key: 'notifications',label: 'Notifications',        icon: Bell },
     ]
   },
   security: {
@@ -253,7 +256,7 @@ export function DashboardPage() {
             <h1>{config.sections.find(s => s.key === activeSection)?.label}</h1>
           </div>
           <div className="topbar-actions">
-            {role === 'teacher' && (
+            {(role === 'teacher' || role === 'student') && (
               <button className="topbar-bell" onClick={() => setActiveSection('notifications')} aria-label="Notifications">
                 <Bell size={18} />
                 {unreadNotifications > 0 && <span className="topbar-badge">{unreadNotifications > 99 ? '99+' : unreadNotifications}</span>}
