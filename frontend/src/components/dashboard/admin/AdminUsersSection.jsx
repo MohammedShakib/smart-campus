@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Search, Plus, Edit2, CheckCircle, XCircle, Save, X } from 'lucide-react';
 import { api } from '../../../utils/api';
 import { prettyRole } from '../../../utils/helpers';
-import { SectionHeader, Panel, ActionButton, StatRow } from '../../shared/SharedComponents';
+import { SectionHeader, Panel, ActionButton, EmptyState } from '../../shared/SharedComponents';
 
 export function AdminUsersSection() {
   const [users, setUsers] = useState([]);
@@ -52,22 +52,31 @@ export function AdminUsersSection() {
   const totalDisabled = users.filter(u => !u.active).length;
 
   return (
-    <div>
+    <div className="admin-management-page">
       <SectionHeader title="User Management" subtitle="Manage campus accounts, roles, and access status." />
 
       {message && <div className={`notice ${message.type}`} style={{ marginBottom: '1rem' }}>{message.text}</div>}
 
-      <div className="section-grid">
-        <Panel title="Account Statistics" tag="Overview">
-          <div className="stat-list">
-            <StatRow label="Total Users" value={totalUsers} color="accent" />
-            <StatRow label="Students" value={totalStudents} color="emerald" />
-            <StatRow label="Teachers" value={totalTeachers} color="sky" />
-            <StatRow label="Disabled" value={totalDisabled} color="rose" />
-          </div>
-        </Panel>
+      <div className="metric-grid">
+        <div className="metric-card metric-card--accounts">
+          <div className="metric-card-head"><span>Total Users</span></div>
+          <strong>{totalUsers}</strong>
+        </div>
+        <div className="metric-card metric-card--rooms">
+          <div className="metric-card-head"><span>Students</span></div>
+          <strong>{totalStudents}</strong>
+        </div>
+        <div className="metric-card metric-card--buses">
+          <div className="metric-card-head"><span>Teachers</span></div>
+          <strong>{totalTeachers}</strong>
+        </div>
+        <div className="metric-card metric-card--power">
+          <div className="metric-card-head"><span>Disabled</span></div>
+          <strong>{totalDisabled}</strong>
+        </div>
+      </div>
 
-        <div style={{ gridColumn: '1 / -1' }}>
+      <div style={{ marginTop: '1.25rem' }}>
           {(isCreating || editingUser) && (
             <UserForm
               user={editingUser}
@@ -77,38 +86,47 @@ export function AdminUsersSection() {
             />
           )}
 
-          <Panel title="User Directory" tag={`${users.length} accounts`}>
-            <div className="toolbar" style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
-              <div style={{ flex: 1, minWidth: '200px', position: 'relative' }}>
-                <Search size={16} style={{ position: 'absolute', left: '10px', top: '10px', color: 'var(--tx-muted)' }} />
-                <input
-                  type="text"
-                  placeholder="Search by name, login, or ID..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  style={{ paddingLeft: '35px', width: '100%' }}
-                />
+          <Panel title="User Directory" tag={`${users.length} ACCOUNTS`}>
+            <div className="admin-toolbar">
+              <div className="admin-toolbar-left" style={{ flex: 1 }}>
+                <div className="admin-search">
+                  <Search size={16} />
+                  <input
+                    type="text"
+                    placeholder="Search by name, login, or ID..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                  />
+                </div>
+                <div className="admin-filter-group">
+                  <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}>
+                    <option value="">All Roles</option>
+                    <option value="ROLE_ADMIN">Admin</option>
+                    <option value="ROLE_TEACHER">Teacher</option>
+                    <option value="ROLE_STUDENT">Student</option>
+                    <option value="ROLE_SECURITY">Security</option>
+                  </select>
+                </div>
+                <div className="admin-filter-group">
+                  <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+                    <option value="">All Status</option>
+                    <option value="true">Active</option>
+                    <option value="false">Disabled</option>
+                  </select>
+                </div>
               </div>
-              <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)} style={{ width: 'auto' }}>
-                <option value="">All Roles</option>
-                <option value="ROLE_ADMIN">Admin</option>
-                <option value="ROLE_TEACHER">Teacher</option>
-                <option value="ROLE_STUDENT">Student</option>
-                <option value="ROLE_SECURITY">Security</option>
-              </select>
-              <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} style={{ width: 'auto' }}>
-                <option value="">All Status</option>
-                <option value="true">Active</option>
-                <option value="false">Disabled</option>
-              </select>
-              <ActionButton label="Add User" icon={Plus} onClick={() => { setIsCreating(true); setEditingUser(null); }} />
+              <div className="admin-toolbar-right">
+                <ActionButton label="Add User" icon={Plus} onClick={() => { setIsCreating(true); setEditingUser(null); }} />
+              </div>
             </div>
 
             {loading ? (
-              <p className="muted">Loading users...</p>
+              <p className="muted" style={{ padding: '3rem 0', textAlign: 'center' }}>Loading users...</p>
+            ) : users.length === 0 ? (
+              <EmptyState title="No users found" message="Try changing the search or filter criteria." />
             ) : (
-              <div className="table-responsive">
-                <table className="data-table">
+              <div className="admin-table-wrap">
+                <table className="admin-table">
                   <thead>
                     <tr>
                       <th>Name</th>
@@ -120,17 +138,16 @@ export function AdminUsersSection() {
                     </tr>
                   </thead>
                   <tbody>
-                    {users.length === 0 ? (
-                      <tr><td colSpan="6" className="empty-cell">No users found. Try changing the search or filter.</td></tr>
-                    ) : (
-                      users.map(user => (
+                    {users.map(user => {
+                      const roleClass = user.role.toLowerCase().replace('role_', 'role-');
+                      return (
                         <tr key={user.id}>
                           <td><strong>{user.fullName}</strong></td>
                           <td>{user.studentOrEmpId || '-'}</td>
                           <td>{user.email}</td>
-                          <td>{prettyRole(user.role)}</td>
+                          <td><span className={`admin-role-badge ${roleClass}`}>{prettyRole(user.role)}</span></td>
                           <td>
-                            <span className={`badge ${user.active ? 'badge--active' : 'badge--inactive'}`} style={user.active ? {backgroundColor: 'rgba(16, 185, 129, 0.15)', color: 'var(--emerald)'} : {backgroundColor: 'rgba(244, 63, 94, 0.15)', color: 'var(--rose)'}}>
+                            <span className={`admin-status-badge ${user.active ? 'status-active' : 'status-disabled'}`}>
                               {user.active ? 'ACTIVE' : 'DISABLED'}
                             </span>
                           </td>
@@ -143,8 +160,8 @@ export function AdminUsersSection() {
                             )}
                           </td>
                         </tr>
-                      ))
-                    )}
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -152,7 +169,6 @@ export function AdminUsersSection() {
           </Panel>
         </div>
       </div>
-    </div>
   );
 }
 
@@ -193,22 +209,22 @@ function UserForm({ user, onClose, onSuccess, onError }) {
 
   return (
     <Panel title={user ? "Edit User" : "Add New User"} tag="Form" style={{ marginBottom: '1.5rem', border: '1px solid var(--border)' }}>
-      <form onSubmit={handleSubmit} className="ticket-form">
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', gridColumn: '1/-1' }}>
-          <div>
-            <label style={{ fontSize: '0.74rem', fontWeight: 700, color: 'var(--tx-muted)', textTransform: 'uppercase', marginBottom: '0.4rem', display: 'block' }}>Full Name *</label>
+      <form onSubmit={handleSubmit}>
+        <div className="admin-form-grid">
+          <div className="admin-form-group">
+            <label>Full Name *</label>
             <input required value={formData.fullName} onChange={e => setFormData({...formData, fullName: e.target.value})} placeholder="e.g. John Doe" />
           </div>
-          <div>
-            <label style={{ fontSize: '0.74rem', fontWeight: 700, color: 'var(--tx-muted)', textTransform: 'uppercase', marginBottom: '0.4rem', display: 'block' }}>Login Identifier *</label>
+          <div className="admin-form-group">
+            <label>Login Identifier *</label>
             <input type="text" required disabled={!!user} value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} placeholder="e.g. teacher-demo" />
           </div>
-          <div>
-            <label style={{ fontSize: '0.74rem', fontWeight: 700, color: 'var(--tx-muted)', textTransform: 'uppercase', marginBottom: '0.4rem', display: 'block' }}>University / Employee ID</label>
+          <div className="admin-form-group">
+            <label>University / Employee ID</label>
             <input disabled={!!user} value={formData.studentOrEmpId} onChange={e => setFormData({...formData, studentOrEmpId: e.target.value})} placeholder="e.g. 011211001" />
           </div>
-          <div>
-            <label style={{ fontSize: '0.74rem', fontWeight: 700, color: 'var(--tx-muted)', textTransform: 'uppercase', marginBottom: '0.4rem', display: 'block' }}>Role *</label>
+          <div className="admin-form-group">
+            <label>Role *</label>
             <select required value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})}>
               <option value="ROLE_STUDENT">Student</option>
               <option value="ROLE_TEACHER">Teacher</option>
@@ -216,22 +232,24 @@ function UserForm({ user, onClose, onSuccess, onError }) {
               <option value="ROLE_SECURITY">Security</option>
             </select>
           </div>
-          <div style={{ gridColumn: '1/-1', fontSize: '0.8rem', color: 'var(--tx-muted)' }}>
-            Note: Login Identifier and ID are immutable. Role changes for accounts with existing academic/operational data will be blocked by the backend to prevent data corruption.
+          <div className="admin-form-group" style={{ gridColumn: '1/-1' }}>
+            <span style={{ fontSize: '0.8rem', color: 'var(--tx-muted)' }}>
+              Note: Login Identifier and ID are immutable. Role changes for accounts with existing academic/operational data will be blocked by the backend to prevent data corruption.
+            </span>
           </div>
-          <div>
-            <label style={{ fontSize: '0.74rem', fontWeight: 700, color: 'var(--tx-muted)', textTransform: 'uppercase', marginBottom: '0.4rem', display: 'block' }}>Department</label>
+          <div className="admin-form-group">
+            <label>Department</label>
             <input value={formData.department} onChange={e => setFormData({...formData, department: e.target.value})} placeholder="e.g. Computer Science" />
           </div>
           {!user && (
-            <div>
-              <label style={{ fontSize: '0.74rem', fontWeight: 700, color: 'var(--tx-muted)', textTransform: 'uppercase', marginBottom: '0.4rem', display: 'block' }}>Temporary Password *</label>
+            <div className="admin-form-group">
+              <label>Temporary Password *</label>
               <input type="password" required={!user} minLength={6} value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} placeholder="Min 6 characters" />
             </div>
           )}
         </div>
 
-        <div style={{ gridColumn: '1/-1', display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '1rem' }}>
+        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '1.5rem' }}>
           <button type="button" className="ghost-btn" onClick={onClose} disabled={saving}><X size={16} /> Cancel</button>
           <button type="submit" className="primary-btn" disabled={saving}><Save size={16} /> {saving ? 'Saving...' : 'Save User'}</button>
         </div>

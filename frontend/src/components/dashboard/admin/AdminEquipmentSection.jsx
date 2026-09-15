@@ -18,7 +18,7 @@ import {
   Box
 } from 'lucide-react';
 import { api } from '../../../utils/api';
-import { SectionHeader, Panel } from '../../shared/SharedComponents';
+import { SectionHeader, Panel, ErrorState, EmptyState } from '../../shared/SharedComponents';
 
 export function AdminEquipmentSection() {
   const [bookings, setBookings] = useState([]);
@@ -122,7 +122,7 @@ export function AdminEquipmentSection() {
   const returnedCount = bookings.filter((b) => b.status === 'RETURNED').length;
 
   return (
-    <div className="admin-equipment-wrapper">
+    <div className="admin-management-page">
       <SectionHeader
         title="Hardware & Lab Equipment Checkout Management"
         subtitle="Review, accept, or decline student equipment borrowing requests. Manage laboratory stock allocations, handovers, and return logs."
@@ -181,8 +181,8 @@ export function AdminEquipmentSection() {
         tag={`${filteredBookings.length} items`}
       >
         {/* Filter Bar */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
-          <div className="tab-pill-bar" style={{ margin: 0 }}>
+        <div className="admin-toolbar">
+          <div className="admin-toolbar-left tab-pill-bar" style={{ margin: 0, gap: '0.25rem', padding: '4px', background: 'var(--bg-card)', borderRadius: 'var(--r-md)', border: '1px solid var(--border)' }}>
             <button
               type="button"
               className={`tab-pill ${filterStatus === 'ALL' ? 'active' : ''}`}
@@ -227,8 +227,8 @@ export function AdminEquipmentSection() {
             </button>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <div className="search-box" style={{ maxWidth: '240px' }}>
+          <div className="admin-toolbar-right">
+            <div className="admin-search" style={{ minWidth: '220px' }}>
               <Search size={15} />
               <input
                 type="text"
@@ -247,14 +247,10 @@ export function AdminEquipmentSection() {
         {loading ? (
           <p className="muted" style={{ padding: '3rem 0', textAlign: 'center' }}>Loading equipment requests...</p>
         ) : filteredBookings.length === 0 ? (
-          <div className="empty-state-box">
-            <Cpu size={32} style={{ color: 'var(--tx-muted)', marginBottom: '0.75rem' }} />
-            <h3>No Equipment Requests Found</h3>
-            <p className="muted">No student checkout requests match your current filters.</p>
-          </div>
+          <EmptyState title="No Equipment Requests Found" message="No student checkout requests match your current filters." icon={Cpu} />
         ) : (
-          <div className="table-responsive">
-            <table className="data-table">
+          <div className="admin-table-wrap">
+            <table className="admin-table">
               <thead>
                 <tr>
                   <th>Req #</th>

@@ -26,6 +26,10 @@ public class User {
     @Column(length = 50)
     private String department; // e.g., CSE, EEE, BBA, Administration
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "department_id")
+    private Department departmentRef;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
     private Role role;
@@ -143,5 +147,13 @@ public class User {
 
     public void setProfileImageUrl(String profileImageUrl) {
         this.profileImageUrl = profileImageUrl;
+    }
+
+    public Department getDepartmentRef() {
+        return departmentRef;
+    }
+
+    public void setDepartmentRef(Department departmentRef) {
+        this.departmentRef = departmentRef;
     }
 }

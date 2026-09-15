@@ -18,7 +18,7 @@ import {
   Clock
 } from 'lucide-react';
 import { api } from '../../../utils/api';
-import { SectionHeader, Panel, LoadingState, ErrorState } from '../../shared/SharedComponents';
+import { SectionHeader, Panel, LoadingState, ErrorState, EmptyState } from '../../shared/SharedComponents';
 import { initials } from '../../../utils/helpers';
 import '../../../styles/dashboard.css';
 
@@ -133,7 +133,7 @@ export function AdminTeachersSection() {
   }
 
   return (
-    <div className="admin-teachers-page">
+    <div className="admin-management-page">
       <SectionHeader title="Teacher Management" subtitle="Manage faculty profiles, teaching assignments, schedules and account access." />
       <TeacherMessage message={message} />
 
@@ -147,32 +147,38 @@ export function AdminTeachersSection() {
       )}
 
       <Panel title="Teacher Directory" tag={`${teachers.length} found`}>
-        <div className="admin-teachers-toolbar">
-          <form className="teacher-search-bar" onSubmit={handleSearch}>
-            <Search size={18} />
-            <input
-              type="text"
-              placeholder="Search by name, ID or login..."
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-            />
-            <button type="submit" className="primary-btn">Search</button>
+        <div className="admin-toolbar">
+          <div className="admin-toolbar-left" style={{ flex: 1 }}>
+            <form className="admin-search" onSubmit={handleSearch}>
+              <Search size={16} />
+              <input
+                type="text"
+                placeholder="Search by name, ID or login..."
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+              />
+              <button type="submit" style={{ display: 'none' }}>Search</button>
+            </form>
+            <div className="admin-filter-group">
+              <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+                <option value="">All Statuses</option>
+                <option value="active">Active Only</option>
+                <option value="disabled">Disabled Only</option>
+              </select>
+            </div>
+            <div className="admin-filter-group">
+              <select value={departmentFilter} onChange={(event) => setDepartmentFilter(event.target.value)}>
+                <option value="">All Departments</option>
+                {departments.map((department) => (
+                  <option key={department} value={department}>{department}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div className="admin-toolbar-right">
             {(search || statusFilter || departmentFilter) && (
-              <button type="button" className="ghost-btn" onClick={clearFilters}>Clear</button>
+              <button type="button" className="ghost-btn" onClick={clearFilters}>Clear Filters</button>
             )}
-          </form>
-          <div className="teacher-filters">
-            <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
-              <option value="">All Statuses</option>
-              <option value="active">Active Only</option>
-              <option value="disabled">Disabled Only</option>
-            </select>
-            <select value={departmentFilter} onChange={(event) => setDepartmentFilter(event.target.value)}>
-              <option value="">All Departments</option>
-              {departments.map((department) => (
-                <option key={department} value={department}>{department}</option>
-              ))}
-            </select>
             <button className="icon-btn" onClick={loadData} title="Refresh" type="button">
               <RefreshCw size={18} />
             </button>
@@ -182,10 +188,12 @@ export function AdminTeachersSection() {
         {loading ? (
           <LoadingState />
         ) : error ? (
-          <ErrorState error={error} />
+          <ErrorState error={error} onRetry={loadData} />
+        ) : teachers.length === 0 ? (
+          <EmptyState title="No teachers found" message="Try changing the search or filter criteria." />
         ) : (
-          <div className="table-wrapper admin-teachers-table">
-            <table className="data-table">
+          <div className="admin-table-wrap">
+            <table className="admin-table">
               <thead>
                 <tr>
                   <th>Teacher Info</th>
@@ -235,11 +243,6 @@ export function AdminTeachersSection() {
                     </td>
                   </tr>
                 ))}
-                {teachers.length === 0 && (
-                  <tr>
-                    <td colSpan="7" className="empty-cell">No teachers found matching your criteria.</td>
-                  </tr>
-                )}
               </tbody>
             </table>
           </div>

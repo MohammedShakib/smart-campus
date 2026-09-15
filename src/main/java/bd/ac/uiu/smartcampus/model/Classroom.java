@@ -28,6 +28,10 @@ public class Classroom implements Comparable<Classroom> {
     @Column(length = 80)
     private String building;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "building_id")
+    private Building buildingRef;
+
     @Column(length = 80)
     private String roomType;
 
@@ -112,5 +116,13 @@ public class Classroom implements Comparable<Classroom> {
 
     public void setRoomType(String roomType) {
         this.roomType = roomType;
+    }
+
+    public Building getBuildingRef() {
+        return buildingRef;
+    }
+
+    public void setBuildingRef(Building buildingRef) {
+        this.buildingRef = buildingRef;
     }
 }

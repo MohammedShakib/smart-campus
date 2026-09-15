@@ -27,6 +27,14 @@ public class TeachingSchedule {
     @Column(nullable = false, length = 50)
     private String roomNumber;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "course_id")
+    private Course courseRef;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "classroom_id")
+    private Classroom classroomRef;
+
     @Column(nullable = false, length = 20)
     private String dayOfWeek;
 
@@ -155,5 +163,21 @@ public class TeachingSchedule {
 
     public void setEndedAt(LocalDateTime endedAt) {
         this.endedAt = endedAt;
+    }
+
+    public Course getCourseRef() {
+        return courseRef;
+    }
+
+    public void setCourseRef(Course courseRef) {
+        this.courseRef = courseRef;
+    }
+
+    public Classroom getClassroomRef() {
+        return classroomRef;
+    }
+
+    public void setClassroomRef(Classroom classroomRef) {
+        this.classroomRef = classroomRef;
     }
 }

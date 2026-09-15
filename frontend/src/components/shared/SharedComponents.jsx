@@ -1,5 +1,5 @@
-﻿import React from 'react';
-import { BusFront, Loader2 } from 'lucide-react';
+import React from 'react';
+import { BusFront, Loader2, AlertCircle, Search, RotateCw } from 'lucide-react';
 
 export function SectionHeader({ title, subtitle }) {
   return (
@@ -126,12 +126,45 @@ export function LoadingState() {
   );
 }
 
-export function ErrorState({ error }) {
+export function ErrorState({ error, onRetry }) {
+  const isAuthError = String(error).toLowerCase().includes('401') || String(error).toLowerCase().includes('session');
+  
+  if (isAuthError) {
+    return (
+      <div className="admin-error-state">
+        <AlertCircle size={32} style={{ color: 'var(--amber)', marginBottom: '0.75rem' }} />
+        <h3>Session Expired</h3>
+        <p className="muted">Please sign in again to continue.</p>
+        <a className="primary-btn" href="/login" style={{ marginTop: '1rem', display: 'inline-flex' }}>Sign in again</a>
+      </div>
+    );
+  }
+
   return (
-    <div className="center-state">
-      <p>{error}</p>
-      <a className="primary-btn" href="/login">Back to login</a>
+    <div className="admin-error-state">
+      <AlertCircle size={32} style={{ color: 'var(--rose)', marginBottom: '0.75rem' }} />
+      <h3>Couldn't load data</h3>
+      <p className="muted">{error || 'Please check the server connection and try again.'}</p>
+      {onRetry && (
+        <button className="secondary-btn" onClick={onRetry} type="button" style={{ marginTop: '1rem' }}>
+          <RotateCw size={16} /> Retry
+        </button>
+      )}
     </div>
   );
 }
 
+export function EmptyState({ title, message, icon: Icon = Search, action }) {
+  return (
+    <div className="admin-empty-state">
+      <Icon size={32} style={{ color: 'var(--tx-muted)', marginBottom: '0.75rem' }} />
+      <h3>{title || 'No records found'}</h3>
+      <p className="muted">{message || 'Try changing your search or filters.'}</p>
+      {action && (
+        <div style={{ marginTop: '1rem' }}>
+          {action}
+        </div>
+      )}
+    </div>
+  );
+}

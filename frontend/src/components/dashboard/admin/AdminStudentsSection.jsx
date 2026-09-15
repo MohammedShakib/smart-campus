@@ -15,7 +15,7 @@ import {
   Activity
 } from 'lucide-react';
 import { api } from '../../../utils/api';
-import { SectionHeader, Panel, LoadingState, ErrorState } from '../../shared/SharedComponents';
+import { SectionHeader, Panel, LoadingState, ErrorState, EmptyState } from '../../shared/SharedComponents';
 import { initials } from '../../../utils/helpers';
 import '../../../styles/dashboard.css';
 
@@ -130,7 +130,7 @@ export function AdminStudentsSection() {
   }
 
   return (
-    <div className="admin-students-page">
+    <div className="admin-management-page">
       <SectionHeader title="Student Management" subtitle="Manage ROLE_STUDENT accounts, view enrollments and monitor academic attendance." />
       <StudentMessage message={message} />
 
@@ -144,32 +144,38 @@ export function AdminStudentsSection() {
       )}
 
       <Panel title="Student Directory" tag={`${students.length} found`}>
-        <div className="admin-students-toolbar">
-          <form className="student-search-bar" onSubmit={handleSearch}>
-            <Search size={18} />
-            <input
-              type="text"
-              placeholder="Search by name, ID or email..."
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-            />
-            <button type="submit" className="primary-btn">Search</button>
+        <div className="admin-toolbar">
+          <div className="admin-toolbar-left" style={{ flex: 1 }}>
+            <form className="admin-search" onSubmit={handleSearch}>
+              <Search size={16} />
+              <input
+                type="text"
+                placeholder="Search by name, ID or email..."
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+              />
+              <button type="submit" style={{ display: 'none' }}>Search</button>
+            </form>
+            <div className="admin-filter-group">
+              <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+                <option value="">All Statuses</option>
+                <option value="active">Active Only</option>
+                <option value="disabled">Disabled Only</option>
+              </select>
+            </div>
+            <div className="admin-filter-group">
+              <select value={departmentFilter} onChange={(event) => setDepartmentFilter(event.target.value)}>
+                <option value="">All Departments</option>
+                {departments.map((department) => (
+                  <option key={department} value={department}>{department}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div className="admin-toolbar-right">
             {(search || statusFilter || departmentFilter) && (
-              <button type="button" className="ghost-btn" onClick={clearFilters}>Clear</button>
+              <button type="button" className="ghost-btn" onClick={clearFilters}>Clear Filters</button>
             )}
-          </form>
-          <div className="student-filters">
-            <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
-              <option value="">All Statuses</option>
-              <option value="active">Active Only</option>
-              <option value="disabled">Disabled Only</option>
-            </select>
-            <select value={departmentFilter} onChange={(event) => setDepartmentFilter(event.target.value)}>
-              <option value="">All Departments</option>
-              {departments.map((department) => (
-                <option key={department} value={department}>{department}</option>
-              ))}
-            </select>
             <button className="icon-btn" onClick={loadData} title="Refresh" type="button">
               <RefreshCw size={18} />
             </button>
@@ -179,10 +185,12 @@ export function AdminStudentsSection() {
         {loading ? (
           <LoadingState />
         ) : error ? (
-          <ErrorState error={error} />
+          <ErrorState error={error} onRetry={loadData} />
+        ) : students.length === 0 ? (
+          <EmptyState title="No students found" message="Try changing the search or filter criteria." />
         ) : (
-          <div className="table-wrapper admin-students-table">
-            <table className="data-table">
+          <div className="admin-table-wrap">
+            <table className="admin-table">
               <thead>
                 <tr>
                   <th>Student Info</th>
@@ -232,11 +240,6 @@ export function AdminStudentsSection() {
                     </td>
                   </tr>
                 ))}
-                {students.length === 0 && (
-                  <tr>
-                    <td colSpan="7" className="empty-cell">No students found matching your criteria.</td>
-                  </tr>
-                )}
               </tbody>
             </table>
           </div>

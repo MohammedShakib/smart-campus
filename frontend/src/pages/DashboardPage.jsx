@@ -21,6 +21,7 @@ const dashboardConfig = {
       { key: 'users',       label: 'Users',             icon: UsersRound },
       { key: 'students',    label: 'Students',          icon: GraduationCap },
       { key: 'teachers',    label: 'Teachers',          icon: Presentation },
+      { key: 'academic',    label: 'Academic Setup',    icon: Building2 },
       { key: 'equipment',   label: 'Lab & Equipment',   icon: Cpu },
       { key: 'classrooms',  label: 'Smart Classrooms',  icon: Building2 },
       { key: 'transport',   label: 'Transport',         icon: Bus },

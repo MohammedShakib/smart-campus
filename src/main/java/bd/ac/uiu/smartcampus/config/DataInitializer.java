@@ -37,6 +37,9 @@ public class DataInitializer implements CommandLineRunner {
     private final SecurityIncidentRepository securityIncidentRepository;
     private final StudentProfileRepository studentProfileRepository;
     private final TeacherProfileRepository teacherProfileRepository;
+    private final DepartmentRepository departmentRepository;
+    private final CourseRepository courseRepository;
+    private final BuildingRepository buildingRepository;
     private final PasswordEncoder passwordEncoder;
 
     public DataInitializer(UserRepository userRepository,
@@ -58,6 +61,9 @@ public class DataInitializer implements CommandLineRunner {
                            SecurityIncidentRepository securityIncidentRepository,
                            StudentProfileRepository studentProfileRepository,
                            TeacherProfileRepository teacherProfileRepository,
+                           DepartmentRepository departmentRepository,
+                           CourseRepository courseRepository,
+                           BuildingRepository buildingRepository,
                            PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.noticeRepository = noticeRepository;
@@ -78,12 +84,18 @@ public class DataInitializer implements CommandLineRunner {
         this.securityIncidentRepository = securityIncidentRepository;
         this.studentProfileRepository = studentProfileRepository;
         this.teacherProfileRepository = teacherProfileRepository;
+        this.departmentRepository = departmentRepository;
+        this.courseRepository = courseRepository;
+        this.buildingRepository = buildingRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
     @Override
     public void run(String... args) throws Exception {
         logger.info("Initializing UIU Smart Campus seed data...");
+
+        // 0. Seed Master Data (Phase 2)
+        seedMasterData();
 
         // 1. Seed core users
         seedUser("admin-demo", "demo-admin-pass", "Dr. Mahmudul Hasan (Admin)", "EMP-ADMIN-01", "Administration", Role.ROLE_ADMIN);
@@ -118,6 +130,9 @@ public class DataInitializer implements CommandLineRunner {
         seedClassroom("Room 412 (Multimedia)", 70, 4, true, 4.2, "UIU Main Campus", "Multimedia");
         seedClassroom("Room 301 (Auditorium)", 250, 3, true, 18.5, "UIU Main Campus", "Auditorium");
         seedClassroom("Room 608 (Seminar)", 45, 6, false, 0.2, "UIU Main Campus", "Seminar");
+
+        // 4.5 Backfill relationships for Phase 2
+        backfillLegacyRelationships();
 
         // 5. Seed demo class enrollments
         seedEnrollments();
@@ -189,6 +204,101 @@ public class DataInitializer implements CommandLineRunner {
         seedSecurityData();
 
         logger.info("Seed data initialization completed successfully!");
+    }
+
+    private void seedMasterData() {
+        // Departments
+        seedDepartment("CSE", "Computer Science & Engineering");
+        seedDepartment("EEE", "Electrical & Electronic Engineering");
+        seedDepartment("BBA", "Business Administration");
+        seedDepartment("ADMIN", "Administration");
+        seedDepartment("SEC", "Campus Security & Safety");
+        seedDepartment("REG", "Registrar");
+        seedDepartment("SA", "Student Affairs");
+
+        // Buildings
+        if (!buildingRepository.existsByCode("UIU-MAIN")) {
+            buildingRepository.save(new Building("UIU-MAIN", "UIU Main Campus", 6, "Main Academic Building"));
+        }
+
+        // Courses
+        Department cseDept = departmentRepository.findByCode("CSE").orElse(null);
+        if (cseDept != null) {
+            seedCourse("CSE 2211", "Advanced Object Oriented Programming", cseDept, 3);
+            seedCourse("CSE 3312", "Database Systems", cseDept, 3);
+        }
+    }
+
+    private void seedDepartment(String code, String name) {
+        if (!departmentRepository.existsByCode(code)) {
+            departmentRepository.save(new Department(code, name));
+        }
+    }
+
+    private void seedCourse(String code, String name, Department dept, int credits) {
+        if (!courseRepository.existsByCourseCode(code)) {
+            courseRepository.save(new Course(code, name, dept, credits));
+        }
+    }
+
+    private void backfillLegacyRelationships() {
+        // 1. Backfill Users -> Department
+        userRepository.findAll().forEach(user -> {
+            if (user.getDepartmentRef() == null && user.getDepartment() != null) {
+                departmentRepository.findByName(user.getDepartment()).ifPresent(dept -> {
+                    user.setDepartmentRef(dept);
+                    userRepository.save(user);
+                });
+            }
+        });
+
+        // 2. Backfill Classroom -> Building
+        Building mainBuilding = buildingRepository.findByCode("UIU-MAIN").orElse(null);
+        if (mainBuilding != null) {
+            classroomRepository.findAll().forEach(room -> {
+                if (room.getBuildingRef() == null && "UIU Main Campus".equals(room.getBuilding())) {
+                    room.setBuildingRef(mainBuilding);
+                    classroomRepository.save(room);
+                }
+            });
+        }
+
+        // 3. Backfill TeachingSchedule -> Course & Classroom
+        teachingScheduleRepository.findAll().forEach(schedule -> {
+            boolean updated = false;
+            if (schedule.getCourseRef() == null && schedule.getCourseCode() != null) {
+                courseRepository.findByCourseCode(schedule.getCourseCode()).ifPresent(course -> {
+                    schedule.setCourseRef(course);
+                });
+                updated = true;
+            }
+            if (schedule.getClassroomRef() == null && schedule.getRoomNumber() != null) {
+                classroomRepository.findByRoomNumber(schedule.getRoomNumber()).ifPresent(room -> {
+                    schedule.setClassroomRef(room);
+                });
+                updated = true;
+            }
+            if (updated) {
+                teachingScheduleRepository.save(schedule);
+            }
+        });
+
+        // 4. Backfill LabEquipment -> Classroom
+        labEquipmentRepository.findAll().forEach(eq -> {
+            if (eq.getHomeClassroom() == null && eq.getLabLocation() != null) {
+                if (eq.getLabLocation().contains("524")) {
+                    classroomRepository.findByRoomNumber("Room 524 (CSE Lab 4)").ifPresent(room -> {
+                        eq.setHomeClassroom(room);
+                        labEquipmentRepository.save(eq);
+                    });
+                } else if (eq.getLabLocation().contains("412")) {
+                    classroomRepository.findByRoomNumber("Room 412 (Multimedia)").ifPresent(room -> {
+                        eq.setHomeClassroom(room);
+                        labEquipmentRepository.save(eq);
+                    });
+                }
+            }
+        });
     }
 
     private void seedEnrollments() {

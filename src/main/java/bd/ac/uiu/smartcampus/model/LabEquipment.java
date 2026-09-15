@@ -20,6 +20,10 @@ public class LabEquipment {
     @Column(name = "lab_location", nullable = false, length = 100)
     private String labLocation; // e.g. "Lab 524 - IoT & Embedded Systems", "Lab 412 - Hardware Lab"
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "home_classroom_id")
+    private Classroom homeClassroom;
+
     @Column(name = "total_quantity", nullable = false)
     private int totalQuantity = 1;
 
@@ -128,5 +132,13 @@ public class LabEquipment {
 
     public void setActive(boolean active) {
         this.active = active;
+    }
+
+    public Classroom getHomeClassroom() {
+        return homeClassroom;
+    }
+
+    public void setHomeClassroom(Classroom homeClassroom) {
+        this.homeClassroom = homeClassroom;
     }
 }
