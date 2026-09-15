@@ -68,4 +68,13 @@ public interface ClassEnrollmentRepository extends JpaRepository<ClassEnrollment
     @Query("SELECT DISTINCT e.courseCode, e.sectionName FROM ClassEnrollment e " +
            "WHERE e.teacher.email = :teacherEmail AND e.active = true")
     List<Object[]> findDistinctCoursesByTeacherEmail(@Param("teacherEmail") String teacherEmail);
+
+    @Query("SELECT COUNT(DISTINCT e.student.id) FROM ClassEnrollment e " +
+           "WHERE e.teacher.email = :teacherEmail AND e.active = true")
+    long countDistinctActiveStudentsByTeacherEmail(@Param("teacherEmail") String teacherEmail);
+
+    @Query("SELECT e.teacher.email, COUNT(DISTINCT e.student.id) FROM ClassEnrollment e " +
+           "WHERE e.teacher.email IN :teacherEmails AND e.active = true " +
+           "GROUP BY e.teacher.email")
+    List<Object[]> countDistinctActiveStudentsByTeacherEmails(@Param("teacherEmails") Collection<String> teacherEmails);
 }

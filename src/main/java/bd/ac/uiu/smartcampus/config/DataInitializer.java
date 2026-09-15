@@ -36,6 +36,7 @@ public class DataInitializer implements CommandLineRunner {
     private final EmergencyAlertRepository emergencyAlertRepository;
     private final SecurityIncidentRepository securityIncidentRepository;
     private final StudentProfileRepository studentProfileRepository;
+    private final TeacherProfileRepository teacherProfileRepository;
     private final PasswordEncoder passwordEncoder;
 
     public DataInitializer(UserRepository userRepository,
@@ -56,6 +57,7 @@ public class DataInitializer implements CommandLineRunner {
                            EmergencyAlertRepository emergencyAlertRepository,
                            SecurityIncidentRepository securityIncidentRepository,
                            StudentProfileRepository studentProfileRepository,
+                           TeacherProfileRepository teacherProfileRepository,
                            PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.noticeRepository = noticeRepository;
@@ -75,6 +77,7 @@ public class DataInitializer implements CommandLineRunner {
         this.emergencyAlertRepository = emergencyAlertRepository;
         this.securityIncidentRepository = securityIncidentRepository;
         this.studentProfileRepository = studentProfileRepository;
+        this.teacherProfileRepository = teacherProfileRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -99,6 +102,9 @@ public class DataInitializer implements CommandLineRunner {
 
         // 2.5 Seed student profiles if missing
         seedStudentProfiles();
+
+        // 2.6 Seed teacher profiles if missing
+        seedTeacherProfiles();
 
         // 3. Seed teaching schedules
         seedTeacherSchedule("teacher-demo", "CSE 2211", "Advanced Object Oriented Programming", "Section A", "Room 524", "Sunday", "10:30", "12:00");
@@ -441,6 +447,14 @@ public class DataInitializer implements CommandLineRunner {
         userRepository.findByRole(Role.ROLE_STUDENT).forEach(student -> {
             if (studentProfileRepository.findByUserId(student.getId()).isEmpty()) {
                 studentProfileRepository.save(new StudentProfile(student, 6)); // Default 6th semester
+            }
+        });
+    }
+
+    private void seedTeacherProfiles() {
+        userRepository.findByRole(Role.ROLE_TEACHER).forEach(teacher -> {
+            if (teacherProfileRepository.findByUserId(teacher.getId()).isEmpty()) {
+                teacherProfileRepository.save(new TeacherProfile(teacher, "Professor", "Room 524"));
             }
         });
     }

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   Activity, AlertTriangle, Bell, BookOpen, Bus, Building2, CalendarCheck, CalendarDays,
   Camera, Car, ChevronRight, ClipboardCheck, Cpu, DoorOpen, FileText, FileWarning,
-  GraduationCap, IdCard, KeyRound, LogOut, Mail, MapPin, MessageSquare, QrCode,
+  GraduationCap, IdCard, KeyRound, LogOut, Mail, MapPin, MessageSquare, Presentation, QrCode,
   RadioTower, Save, Search, ShieldCheck, Upload, UsersRound, Wrench, X
 } from 'lucide-react';
 import { api } from '../utils/api';
@@ -20,6 +20,7 @@ const dashboardConfig = {
       { key: 'overview',    label: 'Overview',          icon: Activity },
       { key: 'users',       label: 'Users',             icon: UsersRound },
       { key: 'students',    label: 'Students',          icon: GraduationCap },
+      { key: 'teachers',    label: 'Teachers',          icon: Presentation },
       { key: 'equipment',   label: 'Lab & Equipment',   icon: Cpu },
       { key: 'classrooms',  label: 'Smart Classrooms',  icon: Building2 },
       { key: 'transport',   label: 'Transport',         icon: Bus },
