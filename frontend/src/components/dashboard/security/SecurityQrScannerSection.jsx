@@ -13,11 +13,7 @@ export function SecurityQrScannerSection() {
   const [scanStatus, setScanStatus] = useState(null); // 'idle' | 'success' | 'error'
   const [errorMessage, setErrorMessage] = useState(null);
   const [busy, setBusy] = useState(false);
-  const [recentScans, setRecentScans] = useState([
-    { passCode: 'VIS-UIU-78219', name: 'Dr. Shamsul Alam', time: '10:30 AM', status: 'APPROVED' },
-    { passCode: 'VIS-UIU-33018', name: 'Anika Tabassum', time: '09:45 AM', status: 'CHECKED_IN' },
-    { passCode: 'VIS-UIU-11928', name: 'Mahbubur Rahman', time: '08:50 AM', status: 'CHECKED_OUT' },
-  ]);
+  const [recentScans, setRecentScans] = useState([]);
 
   const handleVerify = async (e) => {
     if (e) e.preventDefault();

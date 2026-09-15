@@ -350,6 +350,7 @@ export function SecurityIncidentsSection() {
                     <option value="INVESTIGATING">INVESTIGATING (CCTV / Interview)</option>
                     <option value="RESOLVED">RESOLVED (Action complete)</option>
                     <option value="ESCALATED">ESCALATED (Referred to Proctor / Police)</option>
+                    <option value="CLOSED">CLOSED (Finalized)</option>
                   </select>
                 </div>
               </div>

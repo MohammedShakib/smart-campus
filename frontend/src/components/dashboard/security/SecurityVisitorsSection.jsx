@@ -48,30 +48,6 @@ export function SecurityVisitorsSection() {
     loadVisitors();
   }, [searchQuery]);
 
-  const handleApproveReject = async (e) => {
-    e.preventDefault();
-    if (!selectedVisitor) return;
-    setActionBusy(true);
-    setActionFeedback(null);
-    try {
-      const endpoint = reviewAction === 'approve'
-        ? `/api/security/visitors/${selectedVisitor.id}/approve?remarks=${encodeURIComponent(adminRemarks)}`
-        : `/api/security/visitors/${selectedVisitor.id}/reject?remarks=${encodeURIComponent(adminRemarks)}`;
-
-      await api(endpoint, { method: 'POST' });
-      setActionFeedback({ type: 'success', text: `Visitor #${selectedVisitor.id} ${reviewAction === 'approve' ? 'approved' : 'rejected'} successfully!` });
-      setTimeout(() => {
-        setReviewModalOpen(false);
-        setActionFeedback(null);
-        loadVisitors();
-      }, 1000);
-    } catch (err) {
-      setActionFeedback({ type: 'error', text: err.message });
-    } finally {
-      setActionBusy(false);
-    }
-  };
-
   const handleCheckIn = async (passCodeOrId) => {
     try {
       const res = await api(`/api/security/visitors/checkin?passCodeOrId=${encodeURIComponent(passCodeOrId)}`, { method: 'POST' });
@@ -359,26 +335,7 @@ export function SecurityVisitorsSection() {
                       </td>
                       <td>
                         <div className="sec-actions-cell">
-                          {v.status === 'PENDING' && (
-                            <>
-                              <button
-                                type="button"
-                                className="sec-action-btn sec-action-btn--approve"
-                                onClick={() => { setSelectedVisitor(v); setReviewAction('approve'); setAdminRemarks('Approved by Security Desk.'); setReviewModalOpen(true); }}
-                                title="Approve Request"
-                              >
-                                <Check size={14} /> Approve
-                              </button>
-                              <button
-                                type="button"
-                                className="sec-action-btn sec-action-btn--reject"
-                                onClick={() => { setSelectedVisitor(v); setReviewAction('reject'); setAdminRemarks('Invalid host or denied entry.'); setReviewModalOpen(true); }}
-                                title="Reject Request"
-                              >
-                                <X size={14} /> Reject
-                              </button>
-                            </>
-                          )}
+                          {/* Removed Approve/Reject actions since Admin handles it */}
 
                           {v.status === 'APPROVED' && (
                             <button

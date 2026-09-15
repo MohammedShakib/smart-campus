@@ -134,12 +134,12 @@ export function SecurityOverviewSection({ data, reload, setActiveSection }) {
           </div>
         </div>
 
-        <div className="sec-kpi-card" onClick={() => setActiveSection('visitors')} style={{ cursor: 'pointer' }}>
-          <div className="sec-kpi-icon sec-kpi-icon--amber"><Clock size={22} /></div>
+        <div className="sec-kpi-card" onClick={() => setActiveSection('gate-history')} style={{ cursor: 'pointer' }}>
+          <div className="sec-kpi-icon sec-kpi-icon--blue"><DoorOpen size={22} /></div>
           <div className="sec-kpi-details">
-            <span>Pending Approvals</span>
-            <strong>{summary.pendingVisitorsCount || 0}</strong>
-            <small className="clickable-text">Review requests →</small>
+            <span>Gate Entries Today</span>
+            <strong>{summary.gateEntriesToday || 0}</strong>
+            <small>{summary.gateDeniedToday || 0} denied attempts</small>
           </div>
         </div>
 

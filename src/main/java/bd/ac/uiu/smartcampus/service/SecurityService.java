@@ -9,6 +9,10 @@ import bd.ac.uiu.smartcampus.repository.CampusVisitorRepository;
 import bd.ac.uiu.smartcampus.repository.EmergencyAlertRepository;
 import bd.ac.uiu.smartcampus.repository.ParkingZoneRepository;
 import bd.ac.uiu.smartcampus.repository.SecurityIncidentRepository;
+import bd.ac.uiu.smartcampus.repository.GateAccessLogRepository;
+import bd.ac.uiu.smartcampus.repository.UserRepository;
+import bd.ac.uiu.smartcampus.model.GateAccessLog;
+import bd.ac.uiu.smartcampus.model.User;
 import bd.ac.uiu.smartcampus.syllabus.collections.AdminActionStackService;
 import bd.ac.uiu.smartcampus.syllabus.collections.UniqueAttendeeSetService;
 import bd.ac.uiu.smartcampus.syllabus.fileio.CampusLogFileWriter;
@@ -27,6 +31,8 @@ public class SecurityService {
     private final ParkingZoneRepository parkingZoneRepository;
     private final EmergencyAlertRepository emergencyAlertRepository;
     private final SecurityIncidentRepository incidentRepository;
+    private final GateAccessLogRepository gateAccessLogRepository;
+    private final UserRepository userRepository;
     private final UniqueAttendeeSetService attendeeSetService;
     private final CampusLogFileWriter logFileWriter;
     private final AdminActionStackService actionStackService;
@@ -35,6 +41,8 @@ public class SecurityService {
                            ParkingZoneRepository parkingZoneRepository,
                            EmergencyAlertRepository emergencyAlertRepository,
                            SecurityIncidentRepository incidentRepository,
+                           GateAccessLogRepository gateAccessLogRepository,
+                           UserRepository userRepository,
                            UniqueAttendeeSetService attendeeSetService,
                            CampusLogFileWriter logFileWriter,
                            AdminActionStackService actionStackService) {
@@ -42,6 +50,8 @@ public class SecurityService {
         this.parkingZoneRepository = parkingZoneRepository;
         this.emergencyAlertRepository = emergencyAlertRepository;
         this.incidentRepository = incidentRepository;
+        this.gateAccessLogRepository = gateAccessLogRepository;
+        this.userRepository = userRepository;
         this.attendeeSetService = attendeeSetService;
         this.logFileWriter = logFileWriter;
         this.actionStackService = actionStackService;
@@ -64,6 +74,12 @@ public class SecurityService {
         List<EmergencyAlert> activeAlerts = emergencyAlertRepository.findByActiveTrueOrderByBroadcastTimeDesc();
         List<SecurityIncident> openIncidents = incidentRepository.findByStatusOrderByReportedAtDesc("OPEN");
 
+        LocalDateTime startOfDay = today.atStartOfDay();
+        LocalDateTime endOfDay = today.atTime(23, 59, 59);
+        long gateEntriesToday = gateAccessLogRepository.countByTimestampBetweenAndAccessTypeAndResult(startOfDay, endOfDay, "ENTRY", "ALLOWED");
+        long gateExitsToday = gateAccessLogRepository.countByTimestampBetweenAndAccessTypeAndResult(startOfDay, endOfDay, "EXIT", "ALLOWED");
+        long gateDeniedToday = gateAccessLogRepository.countByTimestampBetweenAndResult(startOfDay, endOfDay, "DENIED");
+
         summary.put("todayVisitorsCount", todayVisitors);
         summary.put("pendingVisitorsCount", pendingVisitors);
         summary.put("onCampusVisitorsCount", onCampusVisitors);
@@ -74,6 +90,9 @@ public class SecurityService {
         summary.put("activeEmergencyAlerts", activeAlerts);
         summary.put("hasActiveEmergency", !activeAlerts.isEmpty());
         summary.put("openIncidentsCount", openIncidents.size());
+        summary.put("gateEntriesToday", gateEntriesToday);
+        summary.put("gateExitsToday", gateExitsToday);
+        summary.put("gateDeniedToday", gateDeniedToday);
         summary.put("recentVisitors", allVisitors.stream().limit(10).toList());
         summary.put("recentIncidents", incidentRepository.findTop50ByOrderByReportedAtDesc().stream().limit(5).toList());
 
@@ -229,6 +248,52 @@ public class SecurityService {
         return visitorRepository.searchVisitors(query.trim());
     }
 
+    // ─── GATE ACCESS MANAGEMENT ─────────────────────────────────
+    public List<GateAccessLog> getGateHistory() {
+        return gateAccessLogRepository.findTop100ByOrderByTimestampDesc();
+    }
+
+    @Transactional
+    public GateAccessLog recordGateAccess(String identifier, String accessType, String gateName, String officer) {
+        User user = userRepository.findByEmail(identifier)
+                .orElseGet(() -> userRepository.findByStudentOrEmpId(identifier)
+                .orElseThrow(() -> new IllegalArgumentException("Unknown identifier: " + identifier)));
+
+        if (!user.isActive()) {
+            GateAccessLog log = new GateAccessLog(user, identifier, user.getRole().name(), accessType, gateName, officer, "DENIED", "User is inactive");
+            gateAccessLogRepository.save(log);
+            throw new IllegalStateException("User account is disabled.");
+        }
+
+        Optional<GateAccessLog> lastLogOpt = gateAccessLogRepository.findFirstByUserOrderByTimestampDesc(user);
+        if (lastLogOpt.isPresent()) {
+            GateAccessLog lastLog = lastLogOpt.get();
+            if ("ALLOWED".equals(lastLog.getResult())) {
+                if ("ENTRY".equals(accessType) && "ENTRY".equals(lastLog.getAccessType())) {
+                    GateAccessLog log = new GateAccessLog(user, identifier, user.getRole().name(), accessType, gateName, officer, "DENIED", "Duplicate ENTRY. Already inside.");
+                    gateAccessLogRepository.save(log);
+                    throw new IllegalStateException("Duplicate ENTRY. User is already inside.");
+                }
+                if ("EXIT".equals(accessType) && "EXIT".equals(lastLog.getAccessType())) {
+                    GateAccessLog log = new GateAccessLog(user, identifier, user.getRole().name(), accessType, gateName, officer, "DENIED", "Duplicate EXIT. Already outside.");
+                    gateAccessLogRepository.save(log);
+                    throw new IllegalStateException("Duplicate EXIT. User is already outside.");
+                }
+            }
+        } else {
+            // First time logic
+            if ("EXIT".equals(accessType)) {
+                GateAccessLog log = new GateAccessLog(user, identifier, user.getRole().name(), accessType, gateName, officer, "DENIED", "Invalid EXIT. No prior ENTRY found.");
+                gateAccessLogRepository.save(log);
+                throw new IllegalStateException("Invalid EXIT. User has no prior ENTRY record.");
+            }
+        }
+
+        GateAccessLog log = new GateAccessLog(user, identifier, user.getRole().name(), accessType, gateName, officer, "ALLOWED", "Access Granted");
+        logFileWriter.appendAuditLog("GATE_" + accessType, "User " + user.getFullName() + " granted " + accessType + " at " + gateName + " by " + officer);
+        return gateAccessLogRepository.save(log);
+    }
+
     // ─── PARKING MANAGEMENT ─────────────────────────────────────
     public List<ParkingZone> getAllParkingZones() {
         return parkingZoneRepository.findAll();
@@ -358,15 +423,35 @@ public class SecurityService {
         SecurityIncident incident = incidentRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Incident not found with ID: " + id));
 
-        incident.setStatus(status);
+        String currentStatus = incident.getStatus();
+        String newStatus = status != null ? status.toUpperCase() : "";
+
+        // Valid statuses: OPEN, INVESTIGATING, RESOLVED, CLOSED, ESCALATED
+        Set<String> validStatuses = Set.of("OPEN", "INVESTIGATING", "RESOLVED", "CLOSED", "ESCALATED");
+        if (!validStatuses.contains(newStatus)) {
+            throw new IllegalArgumentException("Invalid incident status: " + newStatus);
+        }
+
+        // State transition constraints
+        if ("CLOSED".equals(currentStatus)) {
+            throw new IllegalStateException("Cannot update a closed incident.");
+        }
+        if ("RESOLVED".equals(currentStatus) && !"CLOSED".equals(newStatus)) {
+            throw new IllegalStateException("Resolved incident can only be CLOSED.");
+        }
+        if ("OPEN".equals(currentStatus) && "CLOSED".equals(newStatus)) {
+            throw new IllegalStateException("Cannot close an OPEN incident directly.");
+        }
+
+        incident.setStatus(newStatus);
         if (actionTaken != null && !actionTaken.isBlank()) {
             incident.setActionTaken(actionTaken);
         }
-        if ("RESOLVED".equalsIgnoreCase(status)) {
+        if ("RESOLVED".equals(newStatus)) {
             incident.setResolvedAt(LocalDateTime.now());
         }
 
-        logFileWriter.appendAuditLog("SECURITY_INCIDENT_UPDATED", "Incident #" + id + " updated to " + status + " by " + officer);
+        logFileWriter.appendAuditLog("SECURITY_INCIDENT_UPDATED", "Incident #" + id + " updated to " + newStatus + " by " + officer);
         return incidentRepository.save(incident);
     }
 

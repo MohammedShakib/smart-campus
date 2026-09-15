@@ -55,23 +55,7 @@ public class SecurityApiController {
         return ApiResponse.ok(dto.isWalkIn() ? "Walk-in visitor logged & checked in!" : "Visitor request created successfully!", created);
     }
 
-    @PostMapping("/visitors/{id}/approve")
-    public ApiResponse<CampusVisitor> approveVisitor(@PathVariable Long id,
-                                                     @RequestParam(required = false, defaultValue = "") String remarks,
-                                                     @AuthenticationPrincipal CustomUserDetails userDetails) {
-        String officer = userDetails != null ? userDetails.getFullName() : "Security Officer";
-        CampusVisitor approved = securityService.approveVisitor(id, officer, remarks);
-        return ApiResponse.ok("Visitor #" + id + " has been approved.", approved);
-    }
-
-    @PostMapping("/visitors/{id}/reject")
-    public ApiResponse<CampusVisitor> rejectVisitor(@PathVariable Long id,
-                                                    @RequestParam(required = false, defaultValue = "") String remarks,
-                                                    @AuthenticationPrincipal CustomUserDetails userDetails) {
-        String officer = userDetails != null ? userDetails.getFullName() : "Security Officer";
-        CampusVisitor rejected = securityService.rejectVisitor(id, officer, remarks);
-        return ApiResponse.ok("Visitor #" + id + " has been rejected.", rejected);
-    }
+    // Removed approve/reject as Security focuses on gate execution and Admin handles approvals.
 
     @GetMapping("/visitors/verify")
     public ApiResponse<CampusVisitor> verifyPass(@RequestParam String passCode) {
@@ -93,6 +77,20 @@ public class SecurityApiController {
         String officer = userDetails != null ? userDetails.getFullName() : "Gate Security Post";
         CampusVisitor checkedOut = securityService.confirmExit(passCodeOrId, officer);
         return ApiResponse.ok("Exit Confirmed: Visitor " + checkedOut.getVisitorName() + " checked out. Pass closed.", checkedOut);
+    }
+
+    // ─── GATE ACCESS MANAGEMENT ─────────────────────────────────
+    @GetMapping("/gate/history")
+    public ApiResponse<List<bd.ac.uiu.smartcampus.model.GateAccessLog>> getGateHistory() {
+        return ApiResponse.ok("Gate history fetched", securityService.getGateHistory());
+    }
+
+    @PostMapping("/gate/terminal")
+    public ApiResponse<bd.ac.uiu.smartcampus.model.GateAccessLog> recordGateAccess(@RequestBody GateAccessDto dto,
+                                                                                   @AuthenticationPrincipal CustomUserDetails userDetails) {
+        String officer = userDetails != null ? userDetails.getFullName() : "Security Officer";
+        bd.ac.uiu.smartcampus.model.GateAccessLog log = securityService.recordGateAccess(dto.getIdentifier(), dto.getAccessType(), dto.getGateName(), officer);
+        return ApiResponse.ok(dto.getAccessType() + " successful for " + log.getUser().getFullName(), log);
     }
 
     // ─── PARKING MANAGEMENT ─────────────────────────────────────
