@@ -20,6 +20,10 @@ public interface ClassEnrollmentRepository extends JpaRepository<ClassEnrollment
 
     List<ClassEnrollment> findByStudentInAndActiveTrue(Collection<User> students);
 
+    boolean existsByStudent(User student);
+
+    boolean existsByTeacherEmail(String teacherEmail);
+
     @Query("SELECT e.student.id, COUNT(e) FROM ClassEnrollment e " +
            "WHERE e.student.id IN :studentIds AND e.active = true " +
            "GROUP BY e.student.id")

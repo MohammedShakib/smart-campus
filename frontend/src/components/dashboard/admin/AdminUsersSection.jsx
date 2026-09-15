@@ -209,12 +209,15 @@ function UserForm({ user, onClose, onSuccess, onError }) {
           </div>
           <div>
             <label style={{ fontSize: '0.74rem', fontWeight: 700, color: 'var(--tx-muted)', textTransform: 'uppercase', marginBottom: '0.4rem', display: 'block' }}>Role *</label>
-            <select required disabled={!!user} value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})}>
+            <select required value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})}>
               <option value="ROLE_STUDENT">Student</option>
               <option value="ROLE_TEACHER">Teacher</option>
               <option value="ROLE_ADMIN">Admin</option>
               <option value="ROLE_SECURITY">Security</option>
             </select>
+          </div>
+          <div style={{ gridColumn: '1/-1', fontSize: '0.8rem', color: 'var(--tx-muted)' }}>
+            Note: Login Identifier and ID are immutable. Role changes for accounts with existing academic/operational data will be blocked by the backend to prevent data corruption.
           </div>
           <div>
             <label style={{ fontSize: '0.74rem', fontWeight: 700, color: 'var(--tx-muted)', textTransform: 'uppercase', marginBottom: '0.4rem', display: 'block' }}>Department</label>

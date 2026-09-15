@@ -14,6 +14,8 @@ public interface TeachingScheduleRepository extends JpaRepository<TeachingSchedu
     boolean existsByTeacherEmailAndCourseCodeAndSectionNameAndDayOfWeek(String teacherEmail, String courseCode, String sectionName, String dayOfWeek);
     List<TeachingSchedule> findByDayOfWeek(String dayOfWeek);
 
+    boolean existsByTeacherEmail(String teacherEmail);
+
     @org.springframework.data.jpa.repository.Query("SELECT s.teacherEmail, COUNT(DISTINCT CONCAT(s.courseCode, '-', s.sectionName)) FROM TeachingSchedule s " +
            "WHERE s.teacherEmail IN :teacherEmails " +
            "GROUP BY s.teacherEmail")

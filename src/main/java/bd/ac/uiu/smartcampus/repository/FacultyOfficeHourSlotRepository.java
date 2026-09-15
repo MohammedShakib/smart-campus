@@ -33,4 +33,8 @@ public interface FacultyOfficeHourSlotRepository extends JpaRepository<FacultyOf
             String teacherEmail, LocalDate minDate);
 
     boolean existsByTeacherEmailAndSlotDateAndStartTime(String teacherEmail, LocalDate slotDate, java.time.LocalTime startTime);
+
+    boolean existsByTeacherEmail(String teacherEmail);
+
+    boolean existsByBookedStudentId(String bookedStudentId);
 }

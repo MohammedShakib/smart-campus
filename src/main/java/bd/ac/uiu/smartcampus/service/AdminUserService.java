@@ -22,13 +22,16 @@ public class AdminUserService {
     private final UserRepository userRepository;
     private final AdminActionLogRepository actionLogRepository;
     private final PasswordEncoder passwordEncoder;
+    private final RoleTransitionValidator roleTransitionValidator;
 
     public AdminUserService(UserRepository userRepository,
                             AdminActionLogRepository actionLogRepository,
-                            PasswordEncoder passwordEncoder) {
+                            PasswordEncoder passwordEncoder,
+                            RoleTransitionValidator roleTransitionValidator) {
         this.userRepository = userRepository;
         this.actionLogRepository = actionLogRepository;
         this.passwordEncoder = passwordEncoder;
+        this.roleTransitionValidator = roleTransitionValidator;
     }
 
     public List<AdminUserDto> searchUsers(String search, Role role, Boolean status) {
@@ -86,15 +89,26 @@ public class AdminUserService {
         String requestedStudentOrEmpId = blankToNull(request.getStudentOrEmpId());
 
         if (!Objects.equals(user.getEmail(), requestedLoginIdentifier)) {
-            throw new IllegalArgumentException("Login identifier cannot be changed in Phase 1.");
+            throw new IllegalArgumentException("Login identifier cannot be changed for existing accounts.");
         }
 
         if (!Objects.equals(user.getStudentOrEmpId(), requestedStudentOrEmpId)) {
-            throw new IllegalArgumentException("Student or Employee ID cannot be changed in Phase 1.");
+            throw new IllegalArgumentException("Student or Employee ID cannot be changed for existing accounts to preserve historical records.");
         }
 
         if (user.getRole() != request.getRole()) {
-            throw new IllegalArgumentException("Role cannot be changed in Phase 1.");
+            if (user.getEmail().equalsIgnoreCase(currentAdminEmail)) {
+                throw new IllegalArgumentException("You cannot demote your own admin account.");
+            }
+            if (user.getRole() == Role.ROLE_ADMIN && userRepository.countByRoleAndActiveTrue(Role.ROLE_ADMIN) <= 1) {
+                throw new IllegalArgumentException("At least one active admin account must remain. Cannot demote the last admin.");
+            }
+            
+            roleTransitionValidator.validateRoleChange(user, request.getRole());
+            
+            String oldRole = user.getRole().name();
+            user.setRole(request.getRole());
+            logAction(currentAdminEmail, "USER_ROLE_CHANGED", "Changed role from " + oldRole + " to " + request.getRole() + " for: " + user.getEmail());
         }
 
         user.setFullName(request.getFullName().trim());

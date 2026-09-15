@@ -19,6 +19,8 @@ public interface AttendanceSessionRepository extends JpaRepository<AttendanceSes
 
     Optional<AttendanceSession> findByTokenAndActiveTrue(String token);
 
+    boolean existsByTeacherEmail(String teacherEmail);
+
     Optional<AttendanceSession> findByTeachingScheduleAndTeacherEmailAndActiveTrue(
             TeachingSchedule teachingSchedule, String teacherEmail);
 
