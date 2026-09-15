@@ -233,6 +233,7 @@ public class TeacherApiController {
         return ApiResponse.ok("Room reserved", teacherService.reserveRoom(userDetails.getUsername(), request));
     }
 
+
     @GetMapping("/rooms/available")
     public ApiResponse<List<ClassroomDto>> availableRooms(@RequestParam String date,
                                                           @RequestParam String startTime,
@@ -243,7 +244,6 @@ public class TeacherApiController {
                         LocalDate.parse(date), LocalTime.parse(startTime), LocalTime.parse(endTime))
         );
     }
-
     // ─────────────────────────────────────────────────────────
     // ANNOUNCEMENTS
     // ─────────────────────────────────────────────────────────
@@ -260,27 +260,25 @@ public class TeacherApiController {
                 request.getContent().trim(),
                 "ACADEMIC",
                 "MEDIUM",
-                userDetails.getFullName()
+                userDetails.getFullName(),
+                bd.ac.uiu.smartcampus.model.NoticeAudience.STUDENTS,
+                bd.ac.uiu.smartcampus.model.NoticeStatus.PUBLISHED
         );
         CampusNotice savedNotice = noticeRepository.save(notice);
         
-        // Notify all teachers (except publisher, if we want, but simple is all)
-        List<User> teachers = userRepository.findByRole(Role.ROLE_TEACHER);
-        for (User teacher : teachers) {
-            notificationService.createNotification(
-                    teacher,
-                    NotificationType.ANNOUNCEMENT,
-                    "New academic announcement",
-                    savedNotice.getTitle(),
-                    "notices",
-                    savedNotice.getId().toString(),
-                    "ANNOUNCEMENT:" + savedNotice.getId() + ":" + teacher.getId()
-            );
-        }
+        notificationService.fanOutNotificationToRole(
+                Role.ROLE_STUDENT,
+                NotificationType.ANNOUNCEMENT,
+                "New academic announcement",
+                savedNotice.getTitle(),
+                "notices",
+                savedNotice.getId().toString(),
+                "ANNOUNCEMENT:" + savedNotice.getId()
+        );
         
         return ApiResponse.ok("Academic announcement published", savedNotice);
     }
-
+    
     // ─────────────────────────────────────────────────────────
     // EXCEPTION HANDLER
     // ─────────────────────────────────────────────────────────

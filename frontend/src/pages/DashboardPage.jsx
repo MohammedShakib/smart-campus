@@ -8,6 +8,7 @@ import {
 import { api } from '../utils/api';
 import { initials, prettyRole } from '../utils/helpers';
 import { ErrorState, LoadingState } from '../components/shared/SharedComponents';
+import { ActiveEmergencyBanner } from '../components/shared/ActiveEmergencyBanner';
 import { DashboardSection } from '../components/dashboard/DashboardSection';
 import smartCampusLogo from '../assets/smart-campus-logo.png';
 import '../styles/dashboard.css';
@@ -27,6 +28,7 @@ const dashboardConfig = {
       { key: 'equipment',   label: 'Lab & Equipment',   icon: Cpu },
       { key: 'classrooms',  label: 'Smart Classrooms',  icon: Building2 },
       { key: 'transport',   label: 'Transport',         icon: Bus },
+      { key: 'communication',label: 'Communication',    icon: RadioTower },
       { key: 'maintenance', label: 'Maintenance',       icon: Wrench },
       { key: 'audit',       label: 'Audit Stack',       icon: FileText },
     ]
@@ -207,7 +209,9 @@ export function DashboardPage() {
   }
 
   return (
-    <main className="dashboard-shell">
+    <>
+      <ActiveEmergencyBanner />
+      <main className="dashboard-shell">
       <aside className="sidebar">
         <div className="sidebar-brand">
           <img src={smartCampusLogo} alt="Smart Campus" className="dashboard-brand-logo" />
@@ -293,7 +297,8 @@ export function DashboardPage() {
           onPasswordFormChange={setPasswordForm}
         />
       )}
-    </main>
+      </main>
+    </>
   );
 }
 

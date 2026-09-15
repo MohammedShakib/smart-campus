@@ -37,7 +37,7 @@ public class ComplaintQueueService {
 
     @PostConstruct
     public void initQueueFromDatabase() {
-        List<MaintenanceComplaint> pendingList = repository.findByStatusOrderByReportedAtAsc("PENDING");
+        List<MaintenanceComplaint> pendingList = repository.findByStatusOrderByReportedAtAsc("OPEN");
         for (MaintenanceComplaint complaint : pendingList) {
             complaintQueue.offer(complaint);
         }

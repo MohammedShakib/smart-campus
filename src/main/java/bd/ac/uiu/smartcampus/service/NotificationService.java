@@ -82,6 +82,21 @@ public class NotificationService {
         notificationRepository.markAllAsReadByRecipient(user);
     }
 
+    @Transactional
+    public void fanOutNotificationToRole(Role role, NotificationType type, String title, String message, String targetSection, String referenceId, String eventKeyPrefix) {
+        List<User> users = role == null ? userRepository.findAll() : userRepository.findByRole(role);
+        for (User user : users) {
+            String eventKey = eventKeyPrefix + ":" + user.getId();
+            createNotification(user, type, title, message, targetSection, referenceId, eventKey);
+        }
+    }
+
+    @Transactional
+    public void fanOutEmergency(EmergencyAlert alert) {
+        String eventKeyPrefix = "EMERGENCY:" + alert.getId() + ":ACTIVE";
+        fanOutNotificationToRole(null, NotificationType.EMERGENCY, alert.getAlertTitle(), alert.getAlertMessage(), "emergency", alert.getId().toString(), eventKeyPrefix);
+    }
+
     // 5 minutes scheduler for Class Reminders
     @Scheduled(fixedRate = 300000)
     @Transactional

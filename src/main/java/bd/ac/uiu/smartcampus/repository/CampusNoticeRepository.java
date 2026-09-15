@@ -10,4 +10,5 @@ import java.util.List;
 public interface CampusNoticeRepository extends JpaRepository<CampusNotice, Long> {
     List<CampusNotice> findTop10ByOrderByPostedAtDesc();
     List<CampusNotice> findByCategoryOrderByPostedAtDesc(String category);
+    List<CampusNotice> findByAudienceInOrderByPostedAtDesc(List<bd.ac.uiu.smartcampus.model.NoticeAudience> audiences);
 }

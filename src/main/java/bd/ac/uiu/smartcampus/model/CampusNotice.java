@@ -29,6 +29,17 @@ public class CampusNotice {
     @Column(nullable = false)
     private LocalDateTime postedAt = LocalDateTime.now();
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 30)
+    private NoticeAudience audience = NoticeAudience.ALL;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 30)
+    private NoticeStatus status = NoticeStatus.PUBLISHED;
+
+    @Column
+    private LocalDateTime expiresAt;
+
     public CampusNotice() {
     }
 
@@ -39,6 +50,19 @@ public class CampusNotice {
         this.priority = priority;
         this.postedBy = postedBy;
         this.postedAt = LocalDateTime.now();
+        this.audience = NoticeAudience.ALL;
+        this.status = NoticeStatus.PUBLISHED;
+    }
+
+    public CampusNotice(String title, String content, String category, String priority, String postedBy, NoticeAudience audience, NoticeStatus status) {
+        this.title = title;
+        this.content = content;
+        this.category = category;
+        this.priority = priority;
+        this.postedBy = postedBy;
+        this.postedAt = LocalDateTime.now();
+        this.audience = audience;
+        this.status = status;
     }
 
     public Long getId() {
@@ -95,5 +119,29 @@ public class CampusNotice {
 
     public void setPostedAt(LocalDateTime postedAt) {
         this.postedAt = postedAt;
+    }
+
+    public NoticeAudience getAudience() {
+        return audience;
+    }
+
+    public void setAudience(NoticeAudience audience) {
+        this.audience = audience;
+    }
+
+    public NoticeStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(NoticeStatus status) {
+        this.status = status;
+    }
+
+    public LocalDateTime getExpiresAt() {
+        return expiresAt;
+    }
+
+    public void setExpiresAt(LocalDateTime expiresAt) {
+        this.expiresAt = expiresAt;
     }
 }

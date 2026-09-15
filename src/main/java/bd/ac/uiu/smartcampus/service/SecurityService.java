@@ -36,6 +36,7 @@ public class SecurityService {
     private final UniqueAttendeeSetService attendeeSetService;
     private final CampusLogFileWriter logFileWriter;
     private final AdminActionStackService actionStackService;
+    private final NotificationService notificationService;
 
     public SecurityService(CampusVisitorRepository visitorRepository,
                            ParkingZoneRepository parkingZoneRepository,
@@ -45,7 +46,8 @@ public class SecurityService {
                            UserRepository userRepository,
                            UniqueAttendeeSetService attendeeSetService,
                            CampusLogFileWriter logFileWriter,
-                           AdminActionStackService actionStackService) {
+                           AdminActionStackService actionStackService,
+                           NotificationService notificationService) {
         this.visitorRepository = visitorRepository;
         this.parkingZoneRepository = parkingZoneRepository;
         this.emergencyAlertRepository = emergencyAlertRepository;
@@ -55,6 +57,7 @@ public class SecurityService {
         this.attendeeSetService = attendeeSetService;
         this.logFileWriter = logFileWriter;
         this.actionStackService = actionStackService;
+        this.notificationService = notificationService;
     }
 
     // ─── DASHBOARD SUMMARY ──────────────────────────────────────
@@ -368,6 +371,9 @@ public class SecurityService {
         EmergencyAlert saved = emergencyAlertRepository.save(alert);
         logFileWriter.appendAuditLog("EMERGENCY_BROADCAST", "EMERGENCY BROADCAST ACTIVATED: [" + alert.getSeverity() + "] " + alert.getAlertTitle() + " by " + broadcastBy);
         actionStackService.recordAction(broadcastBy != null ? broadcastBy : "security-demo", "EMERGENCY_BROADCAST", "Broadcasted alert: " + alert.getAlertTitle());
+        
+        notificationService.fanOutEmergency(saved);
+        
         return saved;
     }
 

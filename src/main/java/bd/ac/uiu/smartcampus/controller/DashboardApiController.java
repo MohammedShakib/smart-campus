@@ -76,7 +76,7 @@ public class DashboardApiController {
         data.put("queueSize", complaintQueueService.getQueueSize());
         data.put("uniqueAttendeesCount", attendeeSetService.getUniqueCount());
         data.put("busLocations", busServerManager.getLatestBusLocations());
-        data.put("notices", noticeRepository.findTop10ByOrderByPostedAtDesc());
+        data.put("notices", noticeRepository.findByAudienceInOrderByPostedAtDesc(List.of(bd.ac.uiu.smartcampus.model.NoticeAudience.ALL, bd.ac.uiu.smartcampus.model.NoticeAudience.ADMIN)));
         return ApiResponse.ok("Admin dashboard data", data);
     }
 
@@ -84,7 +84,7 @@ public class DashboardApiController {
     public ApiResponse<Map<String, Object>> teacher(@AuthenticationPrincipal CustomUserDetails userDetails) {
         Map<String, Object> data = basePayload(userDetails, "teacher");
         String teacherEmail = userDetails != null ? userDetails.getUsername() : "teacher-demo";
-        data.put("notices", noticeRepository.findTop10ByOrderByPostedAtDesc());
+        data.put("notices", noticeRepository.findByAudienceInOrderByPostedAtDesc(List.of(bd.ac.uiu.smartcampus.model.NoticeAudience.ALL, bd.ac.uiu.smartcampus.model.NoticeAudience.TEACHERS)));
         data.put("classrooms", teacherDashboardService.getClassroomDtos());
         data.put("schedule", teacherDashboardService.getSchedulePayloads(teacherEmail));
         data.put("classes", teacherDashboardService.getTeacherClasses(teacherEmail));
@@ -98,7 +98,7 @@ public class DashboardApiController {
     public ApiResponse<Map<String, Object>> student(@AuthenticationPrincipal CustomUserDetails userDetails) {
         Map<String, Object> data = basePayload(userDetails, "student");
         String studentId = userDetails != null ? userDetails.getStudentOrEmpId() : "011211001";
-        data.put("notices", noticeRepository.findTop10ByOrderByPostedAtDesc());
+        data.put("notices", noticeRepository.findByAudienceInOrderByPostedAtDesc(List.of(bd.ac.uiu.smartcampus.model.NoticeAudience.ALL, bd.ac.uiu.smartcampus.model.NoticeAudience.STUDENTS)));
         data.put("busLocations", busServerManager.getLatestBusLocations());
         data.put("myComplaints", complaintRepository.findByStudentIdOrderByReportedAtDesc(studentId));
         return ApiResponse.ok("Student dashboard data", data);
@@ -109,7 +109,7 @@ public class DashboardApiController {
         Map<String, Object> data = basePayload(userDetails, "security");
         data.put("uniqueGatePassCount", attendeeSetService.getUniqueCount());
         data.put("busLocations", busServerManager.getLatestBusLocations());
-        data.put("notices", noticeRepository.findTop10ByOrderByPostedAtDesc());
+        data.put("notices", noticeRepository.findByAudienceInOrderByPostedAtDesc(List.of(bd.ac.uiu.smartcampus.model.NoticeAudience.ALL, bd.ac.uiu.smartcampus.model.NoticeAudience.SECURITY)));
         data.put("securitySummary", securityService.getDashboardSummary());
         return ApiResponse.ok("Security dashboard data", data);
     }

@@ -36,13 +36,19 @@ public class MaintenanceComplaint {
     private String description;
 
     @Column(nullable = false, length = 30)
-    private String status = "PENDING"; // PENDING, PROCESSING, RESOLVED
+    private String status = "OPEN"; // OPEN, ASSIGNED, IN_PROGRESS, RESOLVED, CLOSED
 
     @Column(length = 30)
     private String priority = "MEDIUM"; // HIGH, MEDIUM, LOW
 
     @Column(nullable = false)
     private LocalDateTime reportedAt = LocalDateTime.now();
+
+    @Column
+    private LocalDateTime resolvedAt;
+
+    @Column(columnDefinition = "TEXT")
+    private String resolutionNote;
 
     public MaintenanceComplaint() {
     }
@@ -57,7 +63,7 @@ public class MaintenanceComplaint {
         this.issueTitle = issueTitle;
         this.description = description;
         this.priority = priority;
-        this.status = "PENDING";
+        this.status = "OPEN";
         this.reportedAt = LocalDateTime.now();
     }
 
@@ -155,5 +161,21 @@ public class MaintenanceComplaint {
 
     public void setReportedAt(LocalDateTime reportedAt) {
         this.reportedAt = reportedAt;
+    }
+
+    public LocalDateTime getResolvedAt() {
+        return resolvedAt;
+    }
+
+    public void setResolvedAt(LocalDateTime resolvedAt) {
+        this.resolvedAt = resolvedAt;
+    }
+
+    public String getResolutionNote() {
+        return resolutionNote;
+    }
+
+    public void setResolutionNote(String resolutionNote) {
+        this.resolutionNote = resolutionNote;
     }
 }

@@ -1,6 +1,7 @@
 package bd.ac.uiu.smartcampus.controller;
 
 import bd.ac.uiu.smartcampus.dto.ApiResponse;
+import bd.ac.uiu.smartcampus.dto.ComplaintTransitionRequest;
 import bd.ac.uiu.smartcampus.model.*;
 import bd.ac.uiu.smartcampus.service.AdminCampusOperationsService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -168,5 +169,15 @@ public class AdminCampusOperationsController {
     public ApiResponse<LostFoundItem> resolveLostFoundItem(@PathVariable Long id, @RequestBody Map<String, String> payload, Authentication authentication) {
         String action = payload.get("action"); // RETURNED or CLOSE
         return ApiResponse.ok("Resolved lost item", service.resolveLostFoundItem(id, action, getAdminEmail(authentication)));
+    }
+    
+    // ----- COMPLAINTS -----
+    @PatchMapping("/complaints/{id}/status")
+    public ApiResponse<MaintenanceComplaint> updateComplaintStatus(
+            @PathVariable Long id,
+            @RequestBody ComplaintTransitionRequest request,
+            Authentication authentication) {
+        MaintenanceComplaint updated = service.updateComplaintStatus(id, request.getStatus(), request.getResolutionNote(), getAdminEmail(authentication));
+        return ApiResponse.ok("Updated complaint status", updated);
     }
 }

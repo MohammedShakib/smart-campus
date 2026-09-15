@@ -8,5 +8,6 @@ public enum NotificationType {
     ATTENDANCE,
     ABSENCE_EXCUSE,
     OFFICE_HOURS,
-    SYSTEM
+    SYSTEM,
+    EMERGENCY
 }

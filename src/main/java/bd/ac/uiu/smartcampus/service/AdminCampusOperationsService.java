@@ -57,6 +57,9 @@ public class AdminCampusOperationsService {
     @Autowired
     private bd.ac.uiu.smartcampus.repository.UserRepository userRepository;
 
+    @Autowired
+    private MaintenanceComplaintRepository complaintRepository;
+
     // ----- BUS -----
     public List<Bus> getAllBuses() {
         return busRepository.findAll();
@@ -189,6 +192,44 @@ public class AdminCampusOperationsService {
         zone.updateStatus();
         ParkingZone saved = parkingZoneRepository.save(zone);
         logAction(adminEmail, "PARKING_CREATED", "Created parking zone " + zone.getZoneCode());
+        return saved;
+    }
+
+    // ----- COMPLAINTS -----
+    public MaintenanceComplaint updateComplaintStatus(Long id, String status, String resolutionNote, String adminEmail) {
+        MaintenanceComplaint complaint = complaintRepository.findById(id).orElseThrow();
+        complaint.setStatus(status.toUpperCase(Locale.ROOT));
+        if (resolutionNote != null && !resolutionNote.isBlank()) {
+            complaint.setResolutionNote(resolutionNote);
+        }
+        if ("RESOLVED".equalsIgnoreCase(status) || "CLOSED".equalsIgnoreCase(status)) {
+            if (complaint.getResolvedAt() == null) {
+                complaint.setResolvedAt(LocalDateTime.now());
+            }
+        }
+        
+        MaintenanceComplaint saved = complaintRepository.save(complaint);
+        
+        // Notify reporter
+        if (complaint.getReporterId() != null) {
+            userRepository.findByStudentOrEmpId(complaint.getReporterId()).ifPresent(user -> {
+                String message = String.format("Your complaint \"%s\" in %s is now %s.", complaint.getIssueTitle(), complaint.getLocation(), status);
+                if (resolutionNote != null && !resolutionNote.isBlank()) {
+                    message += " Note: " + resolutionNote;
+                }
+                notificationService.createNotification(
+                        user,
+                        NotificationType.COMPLAINT_UPDATE,
+                        "Complaint Status Updated",
+                        message,
+                        "reportIssue",
+                        complaint.getId().toString(),
+                        "COMPLAINT_UPDATE:" + complaint.getId() + ":" + status
+                );
+            });
+        }
+        
+        logAction(adminEmail, "COMPLAINT_UPDATED", "Updated complaint " + id + " to " + status);
         return saved;
     }
 
