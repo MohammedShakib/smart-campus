@@ -7,6 +7,7 @@ import bd.ac.uiu.smartcampus.model.Department;
 import bd.ac.uiu.smartcampus.repository.AdminActionLogRepository;
 import bd.ac.uiu.smartcampus.repository.CourseRepository;
 import bd.ac.uiu.smartcampus.repository.DepartmentRepository;
+import bd.ac.uiu.smartcampus.repository.TeachingScheduleRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,11 +23,16 @@ public class CourseService {
     private final CourseRepository courseRepository;
     private final DepartmentRepository departmentRepository;
     private final AdminActionLogRepository actionLogRepository;
+    private final TeachingScheduleRepository teachingScheduleRepository;
 
-    public CourseService(CourseRepository courseRepository, DepartmentRepository departmentRepository, AdminActionLogRepository actionLogRepository) {
+    public CourseService(CourseRepository courseRepository,
+                         DepartmentRepository departmentRepository,
+                         AdminActionLogRepository actionLogRepository,
+                         TeachingScheduleRepository teachingScheduleRepository) {
         this.courseRepository = courseRepository;
         this.departmentRepository = departmentRepository;
         this.actionLogRepository = actionLogRepository;
+        this.teachingScheduleRepository = teachingScheduleRepository;
     }
 
     public List<CourseDto> getAllCourses() {
@@ -37,7 +43,10 @@ public class CourseService {
 
     @Transactional
     public CourseDto createCourse(CourseDto request, String adminEmail) {
-        if (courseRepository.existsByCourseCode(request.getCourseCode())) {
+        String courseCode = require(request.getCourseCode(), "Course code is required.").toUpperCase();
+        String courseName = require(request.getCourseName(), "Course name is required.");
+        validateCreditHours(request.getCreditHours());
+        if (courseRepository.existsByCourseCode(courseCode)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Course code already exists.");
         }
         
@@ -47,7 +56,7 @@ public class CourseService {
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Department not found"));
         }
         
-        Course course = new Course(request.getCourseCode(), request.getCourseName(), dept, request.getCreditHours());
+        Course course = new Course(courseCode, courseName, dept, request.getCreditHours());
         course.setActive(request.isActive());
         
         Course saved = courseRepository.save(course);
@@ -65,10 +74,13 @@ public class CourseService {
     public CourseDto updateCourse(Long id, CourseDto request, String adminEmail) {
         Course course = courseRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Course not found"));
-                
-        if (!course.getCourseCode().equals(request.getCourseCode()) && courseRepository.existsByCourseCode(request.getCourseCode())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Course code already exists.");
+
+        String requestedCode = require(request.getCourseCode(), "Course code is required.").toUpperCase();
+        if (!course.getCourseCode().equalsIgnoreCase(requestedCode)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Course code cannot be changed after creation.");
         }
+        String courseName = require(request.getCourseName(), "Course name is required.");
+        validateCreditHours(request.getCreditHours());
         
         Department dept = null;
         if (request.getDepartmentId() != null) {
@@ -76,14 +88,18 @@ public class CourseService {
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Department not found"));
         }
         
-        course.setCourseCode(request.getCourseCode());
-        course.setCourseName(request.getCourseName());
+        course.setCourseName(courseName);
         course.setCreditHours(request.getCreditHours());
         course.setDepartment(dept);
         course.setActive(request.isActive());
         course.setUpdatedAt(LocalDateTime.now());
         
         Course saved = courseRepository.save(course);
+        teachingScheduleRepository.findByCourseCode(saved.getCourseCode()).forEach(schedule -> {
+            schedule.setCourseRef(saved);
+            schedule.setCourseTitle(saved.getCourseName());
+            teachingScheduleRepository.save(schedule);
+        });
         
         actionLogRepository.save(new AdminActionLog(
             adminEmail,
@@ -110,5 +126,18 @@ public class CourseService {
         ));
         
         return new CourseDto(saved);
+    }
+
+    private String require(String value, String message) {
+        if (value == null || value.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, message);
+        }
+        return value.trim();
+    }
+
+    private void validateCreditHours(int creditHours) {
+        if (creditHours <= 0 || creditHours > 6) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Credit hours must be between 1 and 6.");
+        }
     }
 }

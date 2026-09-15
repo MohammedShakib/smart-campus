@@ -7,7 +7,7 @@ public class CourseDto {
     private String courseCode;
     private String courseName;
     private int creditHours;
-    private boolean active;
+    private boolean active = true;
     private String departmentCode;
     private String departmentName;
     private Long departmentId;

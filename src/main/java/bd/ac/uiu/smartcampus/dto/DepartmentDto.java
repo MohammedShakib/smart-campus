@@ -6,7 +6,7 @@ public class DepartmentDto {
     private Long id;
     private String code;
     private String name;
-    private boolean active;
+    private boolean active = true;
 
     public DepartmentDto() {}
 

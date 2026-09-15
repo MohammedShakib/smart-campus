@@ -22,6 +22,9 @@ public class Classroom implements Comparable<Classroom> {
     @Column(nullable = false)
     private boolean occupied;
 
+    @Column(nullable = false, columnDefinition = "bit(1) default b'1'")
+    private boolean active = true;
+
     @Column(nullable = false)
     private double powerKW;
 
@@ -92,6 +95,14 @@ public class Classroom implements Comparable<Classroom> {
 
     public void setOccupied(boolean occupied) {
         this.occupied = occupied;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
     }
 
     public double getPowerKW() {

@@ -5,6 +5,7 @@ import bd.ac.uiu.smartcampus.model.AdminActionLog;
 import bd.ac.uiu.smartcampus.model.Building;
 import bd.ac.uiu.smartcampus.repository.AdminActionLogRepository;
 import bd.ac.uiu.smartcampus.repository.BuildingRepository;
+import bd.ac.uiu.smartcampus.repository.ClassroomRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,10 +19,14 @@ public class BuildingService {
 
     private final BuildingRepository buildingRepository;
     private final AdminActionLogRepository actionLogRepository;
+    private final ClassroomRepository classroomRepository;
 
-    public BuildingService(BuildingRepository buildingRepository, AdminActionLogRepository actionLogRepository) {
+    public BuildingService(BuildingRepository buildingRepository,
+                           AdminActionLogRepository actionLogRepository,
+                           ClassroomRepository classroomRepository) {
         this.buildingRepository = buildingRepository;
         this.actionLogRepository = actionLogRepository;
+        this.classroomRepository = classroomRepository;
     }
 
     public List<BuildingDto> getAllBuildings() {
@@ -32,11 +37,14 @@ public class BuildingService {
 
     @Transactional
     public BuildingDto createBuilding(BuildingDto request, String adminEmail) {
-        if (buildingRepository.existsByCode(request.getCode())) {
+        String code = require(request.getCode(), "Building code is required.").toUpperCase();
+        String name = require(request.getName(), "Building name is required.");
+        validateFloors(request.getNumberOfFloors());
+        if (buildingRepository.existsByCode(code)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Building code already exists.");
         }
         
-        Building building = new Building(request.getCode(), request.getName(), request.getNumberOfFloors(), request.getDescription());
+        Building building = new Building(code, name, request.getNumberOfFloors(), cleanOptional(request.getDescription()));
         building.setActive(request.isActive());
         
         Building saved = buildingRepository.save(building);
@@ -54,15 +62,20 @@ public class BuildingService {
     public BuildingDto updateBuilding(Long id, BuildingDto request, String adminEmail) {
         Building building = buildingRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Building not found"));
-                
-        if (!building.getCode().equals(request.getCode()) && buildingRepository.existsByCode(request.getCode())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Building code already exists.");
+
+        String requestedCode = require(request.getCode(), "Building code is required.").toUpperCase();
+        if (!building.getCode().equalsIgnoreCase(requestedCode)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Building code cannot be changed after creation.");
+        }
+        String name = require(request.getName(), "Building name is required.");
+        validateFloors(request.getNumberOfFloors());
+        if (classroomRepository.existsByBuildingRefAndFloorGreaterThan(building, request.getNumberOfFloors())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Building floors cannot be lower than existing classroom floors.");
         }
         
-        building.setCode(request.getCode());
-        building.setName(request.getName());
+        building.setName(name);
         building.setNumberOfFloors(request.getNumberOfFloors());
-        building.setDescription(request.getDescription());
+        building.setDescription(cleanOptional(request.getDescription()));
         building.setActive(request.isActive());
         
         Building saved = buildingRepository.save(building);
@@ -91,5 +104,22 @@ public class BuildingService {
         ));
         
         return new BuildingDto(saved);
+    }
+
+    private String require(String value, String message) {
+        if (value == null || value.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, message);
+        }
+        return value.trim();
+    }
+
+    private String cleanOptional(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
+    }
+
+    private void validateFloors(int floors) {
+        if (floors <= 0 || floors > 100) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Number of floors must be between 1 and 100.");
+        }
     }
 }

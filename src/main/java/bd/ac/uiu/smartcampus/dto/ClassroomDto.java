@@ -24,6 +24,7 @@ public class ClassroomDto {
         this.capacity = entity.getCapacity();
         this.floor = entity.getFloor();
         this.occupied = entity.isOccupied();
+        this.active = entity.isActive();
         this.powerKW = entity.getPowerKW();
         this.roomType = entity.getRoomType();
         this.building = entity.getBuilding();

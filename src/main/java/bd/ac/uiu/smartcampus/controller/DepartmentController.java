@@ -2,10 +2,12 @@ package bd.ac.uiu.smartcampus.controller;
 
 import bd.ac.uiu.smartcampus.dto.DepartmentDto;
 import bd.ac.uiu.smartcampus.service.DepartmentService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Map;
@@ -38,6 +40,10 @@ public class DepartmentController {
 
     @PatchMapping("/{id}/status")
     public ResponseEntity<DepartmentDto> toggleStatus(@PathVariable Long id, @RequestBody Map<String, Boolean> payload, Authentication authentication) {
-        return ResponseEntity.ok(departmentService.toggleStatus(id, payload.get("active"), authentication.getName()));
+        Boolean active = payload.get("active");
+        if (active == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "active is required.");
+        }
+        return ResponseEntity.ok(departmentService.toggleStatus(id, active, authentication.getName()));
     }
 }

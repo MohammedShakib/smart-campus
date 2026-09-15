@@ -11,7 +11,11 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Component
 public class DataInitializer implements CommandLineRunner {
@@ -149,6 +153,9 @@ public class DataInitializer implements CommandLineRunner {
         // 9. Seed Lab & Hardware Equipment
         seedLabEquipment();
 
+        // 9.5 Backfill equipment added after the first relationship pass
+        backfillLegacyRelationships();
+
         // 10. Seed Faculty Office Hour slots
         seedOfficeHourSlots();
 
@@ -267,16 +274,18 @@ public class DataInitializer implements CommandLineRunner {
         teachingScheduleRepository.findAll().forEach(schedule -> {
             boolean updated = false;
             if (schedule.getCourseRef() == null && schedule.getCourseCode() != null) {
-                courseRepository.findByCourseCode(schedule.getCourseCode()).ifPresent(course -> {
-                    schedule.setCourseRef(course);
-                });
-                updated = true;
+                Optional<Course> course = courseRepository.findByCourseCode(schedule.getCourseCode());
+                if (course.isPresent()) {
+                    schedule.setCourseRef(course.get());
+                    updated = true;
+                }
             }
             if (schedule.getClassroomRef() == null && schedule.getRoomNumber() != null) {
-                classroomRepository.findByRoomNumber(schedule.getRoomNumber()).ifPresent(room -> {
-                    schedule.setClassroomRef(room);
-                });
-                updated = true;
+                Optional<Classroom> room = resolveClassroom(schedule.getRoomNumber());
+                if (room.isPresent()) {
+                    schedule.setClassroomRef(room.get());
+                    updated = true;
+                }
             }
             if (updated) {
                 teachingScheduleRepository.save(schedule);
@@ -286,19 +295,35 @@ public class DataInitializer implements CommandLineRunner {
         // 4. Backfill LabEquipment -> Classroom
         labEquipmentRepository.findAll().forEach(eq -> {
             if (eq.getHomeClassroom() == null && eq.getLabLocation() != null) {
-                if (eq.getLabLocation().contains("524")) {
-                    classroomRepository.findByRoomNumber("Room 524 (CSE Lab 4)").ifPresent(room -> {
-                        eq.setHomeClassroom(room);
-                        labEquipmentRepository.save(eq);
-                    });
-                } else if (eq.getLabLocation().contains("412")) {
-                    classroomRepository.findByRoomNumber("Room 412 (Multimedia)").ifPresent(room -> {
-                        eq.setHomeClassroom(room);
-                        labEquipmentRepository.save(eq);
-                    });
-                }
+                resolveClassroom(eq.getLabLocation()).ifPresent(room -> {
+                    eq.setHomeClassroom(room);
+                    labEquipmentRepository.save(eq);
+                });
             }
         });
+    }
+
+    private Optional<Classroom> resolveClassroom(String location) {
+        if (location == null || location.isBlank()) {
+            return Optional.empty();
+        }
+        Optional<Classroom> exact = classroomRepository.findByRoomNumber(location.trim());
+        if (exact.isPresent()) {
+            return exact;
+        }
+        String roomToken = extractRoomToken(location);
+        if (roomToken == null) {
+            return Optional.empty();
+        }
+        List<Classroom> matches = classroomRepository.findAll().stream()
+                .filter(room -> roomToken.equals(extractRoomToken(room.getRoomNumber())))
+                .toList();
+        return matches.size() == 1 ? Optional.of(matches.get(0)) : Optional.empty();
+    }
+
+    private String extractRoomToken(String value) {
+        Matcher matcher = Pattern.compile("\\b(\\d{3,})\\b").matcher(value);
+        return matcher.find() ? matcher.group(1) : null;
     }
 
     private void seedEnrollments() {

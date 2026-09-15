@@ -49,8 +49,8 @@ public class TeacherApiController {
     // ─────────────────────────────────────────────────────────
 
     @GetMapping("/schedule")
-    public ApiResponse<List<TeachingSchedule>> schedule(@AuthenticationPrincipal CustomUserDetails userDetails) {
-        return ApiResponse.ok("Teacher schedule", teacherService.getSchedule(userDetails.getUsername()));
+    public ApiResponse<List<Map<String, Object>>> schedule(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        return ApiResponse.ok("Teacher schedule", teacherService.getSchedulePayloads(userDetails.getUsername()));
     }
 
     @GetMapping("/classes")
@@ -59,15 +59,15 @@ public class TeacherApiController {
     }
 
     @PostMapping("/classes/{id}/start")
-    public ApiResponse<ClassSession> startClass(@PathVariable Long id,
-                                                @AuthenticationPrincipal CustomUserDetails userDetails) {
-        return ApiResponse.ok("Class started", teacherService.startClass(id, userDetails.getUsername()));
+    public ApiResponse<Map<String, Object>> startClass(@PathVariable Long id,
+                                                       @AuthenticationPrincipal CustomUserDetails userDetails) {
+        return ApiResponse.ok("Class started", teacherService.classSessionPayload(teacherService.startClass(id, userDetails.getUsername())));
     }
 
     @PostMapping("/classes/{id}/end")
-    public ApiResponse<ClassSession> endClass(@PathVariable Long id,
-                                              @AuthenticationPrincipal CustomUserDetails userDetails) {
-        return ApiResponse.ok("Class ended", teacherService.endClass(id, userDetails.getUsername()));
+    public ApiResponse<Map<String, Object>> endClass(@PathVariable Long id,
+                                                     @AuthenticationPrincipal CustomUserDetails userDetails) {
+        return ApiResponse.ok("Class ended", teacherService.classSessionPayload(teacherService.endClass(id, userDetails.getUsername())));
     }
 
     // ─────────────────────────────────────────────────────────
@@ -223,7 +223,7 @@ public class TeacherApiController {
     // ─────────────────────────────────────────────────────────
 
     @GetMapping("/reservations")
-    public ApiResponse<List<RoomReservation>> reservations(@AuthenticationPrincipal CustomUserDetails userDetails) {
+    public ApiResponse<List<Map<String, Object>>> reservations(@AuthenticationPrincipal CustomUserDetails userDetails) {
         return ApiResponse.ok("Teacher reservations", teacherService.getReservations(userDetails.getUsername()));
     }
 
@@ -234,9 +234,9 @@ public class TeacherApiController {
     }
 
     @GetMapping("/rooms/available")
-    public ApiResponse<List<Classroom>> availableRooms(@RequestParam String date,
-                                                       @RequestParam String startTime,
-                                                       @RequestParam String endTime) {
+    public ApiResponse<List<ClassroomDto>> availableRooms(@RequestParam String date,
+                                                          @RequestParam String startTime,
+                                                          @RequestParam String endTime) {
         return ApiResponse.ok(
                 "Available classrooms",
                 teacherService.availableRooms(

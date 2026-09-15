@@ -7,7 +7,7 @@ public class BuildingDto {
     private String code;
     private String name;
     private int numberOfFloors;
-    private boolean active;
+    private boolean active = true;
     private String description;
 
     public BuildingDto() {}

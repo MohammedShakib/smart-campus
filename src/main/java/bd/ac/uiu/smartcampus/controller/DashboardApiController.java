@@ -85,12 +85,12 @@ public class DashboardApiController {
         Map<String, Object> data = basePayload(userDetails, "teacher");
         String teacherEmail = userDetails != null ? userDetails.getUsername() : "teacher-demo";
         data.put("notices", noticeRepository.findTop10ByOrderByPostedAtDesc());
-        data.put("classrooms", teacherDashboardService.getClassrooms());
-        data.put("schedule", teacherDashboardService.getSchedule(teacherEmail));
+        data.put("classrooms", teacherDashboardService.getClassroomDtos());
+        data.put("schedule", teacherDashboardService.getSchedulePayloads(teacherEmail));
         data.put("classes", teacherDashboardService.getTeacherClasses(teacherEmail));
         data.put("attendanceSessions", teacherDashboardService.getAttendanceSessions(teacherEmail));
         data.put("reservations", teacherDashboardService.getReservations(teacherEmail));
-        teacherDashboardService.getNextClass(teacherEmail).ifPresent(next -> data.put("nextClass", next));
+        teacherDashboardService.getNextClassPayload(teacherEmail).ifPresent(next -> data.put("nextClass", next));
         return ApiResponse.ok("Faculty dashboard data", data);
     }
 

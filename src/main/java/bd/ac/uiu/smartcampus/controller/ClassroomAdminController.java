@@ -2,12 +2,15 @@ package bd.ac.uiu.smartcampus.controller;
 
 import bd.ac.uiu.smartcampus.dto.ClassroomDto;
 import bd.ac.uiu.smartcampus.service.ClassroomAdminService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/admin/classrooms")
@@ -33,5 +36,14 @@ public class ClassroomAdminController {
     @PutMapping("/{id}")
     public ResponseEntity<ClassroomDto> updateClassroom(@PathVariable Long id, @RequestBody ClassroomDto request, Authentication authentication) {
         return ResponseEntity.ok(classroomAdminService.updateClassroom(id, request, authentication.getName()));
+    }
+
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<ClassroomDto> toggleStatus(@PathVariable Long id, @RequestBody Map<String, Boolean> payload, Authentication authentication) {
+        Boolean active = payload.get("active");
+        if (active == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "active is required.");
+        }
+        return ResponseEntity.ok(classroomAdminService.toggleStatus(id, active, authentication.getName()));
     }
 }

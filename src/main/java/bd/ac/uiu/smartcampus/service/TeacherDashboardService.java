@@ -57,8 +57,18 @@ public class TeacherDashboardService {
         return scheduleRepository.findByTeacherEmailOrderByDayOfWeekAscStartTimeAsc(teacherEmail);
     }
 
+    public List<Map<String, Object>> getSchedulePayloads(String teacherEmail) {
+        return getSchedule(teacherEmail).stream()
+                .map(this::schedulePayload)
+                .collect(Collectors.toList());
+    }
+
     public Optional<TeachingSchedule> getNextClass(String teacherEmail) {
         return getSchedule(teacherEmail).stream().findFirst();
+    }
+
+    public Optional<Map<String, Object>> getNextClassPayload(String teacherEmail) {
+        return getNextClass(teacherEmail).map(this::schedulePayload);
     }
 
     public List<Map<String, Object>> getTeacherClasses(String teacherEmail) {
@@ -73,11 +83,11 @@ public class TeacherDashboardService {
             Classroom room = roomMap.getOrDefault(normalizeRoom(schedule.getRoomNumber()), null);
             Optional<ClassSession> session = classSessionRepository.findByTeachingScheduleAndSessionDate(schedule, today);
             Map<String, Object> item = new LinkedHashMap<>();
-            item.put("schedule", schedule);
+            item.put("schedule", schedulePayload(schedule));
             item.put("status", session.map(ClassSession::getStatus).orElse(ClassStatus.SCHEDULED));
-            session.ifPresent(value -> item.put("session", value));
+            session.ifPresent(value -> item.put("session", classSessionPayload(value)));
             if (room != null) {
-                item.put("room", room);
+                item.put("room", new ClassroomDto(room));
             }
             classes.add(item);
         }
@@ -398,10 +408,10 @@ public class TeacherDashboardService {
     public Map<String, Object> attendancePayload(AttendanceSession session) {
         Map<String, Object> payload = new LinkedHashMap<>();
         List<AttendanceRecord> records = recordRepository.findByAttendanceSessionOrderByCheckedInAtAsc(session);
-        payload.put("session", session);
-        payload.put("classSession", session.getClassSession());
-        payload.put("schedule", session.getTeachingSchedule());
-        payload.put("records", records);
+        payload.put("session", attendanceSessionPayload(session));
+        payload.put("classSession", session.getClassSession() == null ? null : classSessionPayload(session.getClassSession()));
+        payload.put("schedule", schedulePayload(session.getTeachingSchedule()));
+        payload.put("records", records.stream().map(this::attendanceRecordPayload).collect(Collectors.toList()));
         payload.put("presentCount", recordRepository.countByAttendanceSessionAndStatus(session, AttendanceStatus.PRESENT));
         payload.put("lateCount", recordRepository.countByAttendanceSessionAndStatus(session, AttendanceStatus.LATE));
         payload.put("absentCount", recordRepository.countByAttendanceSessionAndStatus(session, AttendanceStatus.ABSENT));
@@ -499,16 +509,22 @@ public class TeacherDashboardService {
     // ROOM RESERVATIONS
     // ─────────────────────────────────────────────────────────
 
-    public List<RoomReservation> getReservations(String teacherEmail) {
-        return reservationRepository.findByTeacherEmailOrderByReservationDateDescStartTimeDesc(teacherEmail);
+    public List<Map<String, Object>> getReservations(String teacherEmail) {
+        return reservationRepository.findByTeacherEmailOrderByReservationDateDescStartTimeDesc(teacherEmail)
+                .stream()
+                .map(this::reservationPayload)
+                .collect(Collectors.toList());
     }
 
     @Transactional
     public RoomReservation reserveRoom(String teacherEmail, RoomReservationRequest request) {
         String roomNumber = required(request.getRoomNumber(), "Room is required.");
         String purpose = required(request.getPurpose(), "Purpose is required.");
-        classroomRepository.findByRoomNumber(roomNumber)
+        Classroom room = classroomRepository.findByRoomNumber(roomNumber)
                 .orElseThrow(() -> new IllegalArgumentException("Classroom not found."));
+        if (!room.isActive()) {
+            throw new IllegalArgumentException("Classroom is inactive.");
+        }
         LocalDate date = LocalDate.parse(required(request.getReservationDate(), "Date is required."));
         LocalTime start = LocalTime.parse(required(request.getStartTime(), "Start time is required."));
         LocalTime end = LocalTime.parse(required(request.getEndTime(), "End time is required."));
@@ -539,14 +555,22 @@ public class TeacherDashboardService {
     }
 
     public List<Classroom> getClassrooms() {
-        return classroomRepository.findAllByOrderByFloorAscRoomNumberAsc();
+        return classroomRepository.findAllByOrderByFloorAscRoomNumberAsc().stream()
+                .filter(Classroom::isActive)
+                .collect(Collectors.toList());
     }
 
-    public List<Classroom> availableRooms(LocalDate date, LocalTime start, LocalTime end) {
-        List<Classroom> available = new ArrayList<>();
+    public List<ClassroomDto> getClassroomDtos() {
+        return getClassrooms().stream()
+                .map(ClassroomDto::new)
+                .collect(Collectors.toList());
+    }
+
+    public List<ClassroomDto> availableRooms(LocalDate date, LocalTime start, LocalTime end) {
+        List<ClassroomDto> available = new ArrayList<>();
         for (Classroom room : getClassrooms()) {
             if (reservationRepository.findConflicts(room.getRoomNumber(), date, start, end).isEmpty()) {
-                available.add(room);
+                available.add(new ClassroomDto(room));
             }
         }
         return available;
@@ -605,6 +629,87 @@ public class TeacherDashboardService {
             throw new IllegalArgumentException(message);
         }
         return value.trim();
+    }
+
+    public Map<String, Object> classSessionPayload(ClassSession session) {
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("id", session.getId());
+        payload.put("sessionDate", session.getSessionDate());
+        payload.put("status", session.getStatus());
+        payload.put("startedAt", session.getStartedAt());
+        payload.put("endedAt", session.getEndedAt());
+        payload.put("startedByTeacherId", session.getStartedByTeacherId());
+        if (session.getTeachingSchedule() != null) {
+            payload.put("teachingScheduleId", session.getTeachingSchedule().getId());
+        }
+        return payload;
+    }
+
+    private Map<String, Object> attendanceSessionPayload(AttendanceSession session) {
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("id", session.getId());
+        payload.put("teacherEmail", session.getTeacherEmail());
+        payload.put("sessionDate", session.getSessionDate());
+        payload.put("token", session.getToken());
+        payload.put("startedAt", session.getStartedAt());
+        payload.put("endedAt", session.getEndedAt());
+        payload.put("active", session.isActive());
+        if (session.getTeachingSchedule() != null) {
+            payload.put("teachingScheduleId", session.getTeachingSchedule().getId());
+        }
+        if (session.getClassSession() != null) {
+            payload.put("classSessionId", session.getClassSession().getId());
+        }
+        return payload;
+    }
+
+    private Map<String, Object> attendanceRecordPayload(AttendanceRecord record) {
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("id", record.getId());
+        payload.put("studentId", record.getStudentId());
+        payload.put("studentName", record.getStudentName());
+        payload.put("status", record.getStatus());
+        payload.put("checkedInAt", record.getCheckedInAt());
+        return payload;
+    }
+
+    private Map<String, Object> reservationPayload(RoomReservation reservation) {
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("id", reservation.getId());
+        payload.put("teacherEmail", reservation.getTeacherEmail());
+        payload.put("roomNumber", reservation.getRoomNumber());
+        payload.put("reservationDate", reservation.getReservationDate());
+        payload.put("startTime", reservation.getStartTime());
+        payload.put("endTime", reservation.getEndTime());
+        payload.put("purpose", reservation.getPurpose());
+        payload.put("status", reservation.getStatus());
+        payload.put("createdAt", reservation.getCreatedAt());
+        return payload;
+    }
+
+    private Map<String, Object> schedulePayload(TeachingSchedule schedule) {
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("id", schedule.getId());
+        payload.put("teacherEmail", schedule.getTeacherEmail());
+        payload.put("courseCode", schedule.getCourseCode());
+        payload.put("courseTitle", schedule.getCourseTitle());
+        payload.put("sectionName", schedule.getSectionName());
+        payload.put("roomNumber", schedule.getRoomNumber());
+        payload.put("dayOfWeek", schedule.getDayOfWeek());
+        payload.put("startTime", schedule.getStartTime());
+        payload.put("endTime", schedule.getEndTime());
+        payload.put("status", schedule.getStatus());
+        payload.put("startedAt", schedule.getStartedAt());
+        payload.put("endedAt", schedule.getEndedAt());
+        if (schedule.getCourseRef() != null) {
+            payload.put("courseId", schedule.getCourseRef().getId());
+            payload.put("courseName", schedule.getCourseRef().getCourseName());
+        }
+        if (schedule.getClassroomRef() != null) {
+            payload.put("classroomId", schedule.getClassroomRef().getId());
+            payload.put("classroomName", schedule.getClassroomRef().getRoomNumber());
+        }
+        return payload;
     }
 
     private String normalizeRoom(String roomNumber) {
