@@ -8,9 +8,11 @@ import bd.ac.uiu.smartcampus.model.Role;
 import bd.ac.uiu.smartcampus.model.User;
 import bd.ac.uiu.smartcampus.repository.AdminActionLogRepository;
 import bd.ac.uiu.smartcampus.repository.UserRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Objects;
@@ -46,7 +48,7 @@ public class AdminUserService {
     public AdminUserDto getUserById(Long id) {
         return userRepository.findById(id)
                 .map(AdminUserDto::new)
-                .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found with id: " + id));
     }
 
     @Transactional
@@ -55,11 +57,11 @@ public class AdminUserService {
         String studentOrEmpId = blankToNull(request.getStudentOrEmpId());
 
         if (userRepository.existsByEmailIgnoreCase(loginIdentifier)) {
-            throw new IllegalArgumentException("Login identifier already exists: " + loginIdentifier);
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Login identifier already exists: " + loginIdentifier);
         }
         if (studentOrEmpId != null) {
             if (userRepository.existsByStudentOrEmpId(studentOrEmpId)) {
-                throw new IllegalArgumentException("Student or Employee ID already exists: " + studentOrEmpId);
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Student or Employee ID already exists: " + studentOrEmpId);
             }
         }
 
@@ -83,25 +85,25 @@ public class AdminUserService {
     @Transactional
     public AdminUserDto updateUser(Long id, AdminUserUpdateRequest request, String currentAdminEmail) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found with id: " + id));
 
         String requestedLoginIdentifier = request.getEmail().trim();
         String requestedStudentOrEmpId = blankToNull(request.getStudentOrEmpId());
 
         if (!Objects.equals(user.getEmail(), requestedLoginIdentifier)) {
-            throw new IllegalArgumentException("Login identifier cannot be changed for existing accounts.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Login identifier cannot be changed for existing accounts.");
         }
 
         if (!Objects.equals(user.getStudentOrEmpId(), requestedStudentOrEmpId)) {
-            throw new IllegalArgumentException("Student or Employee ID cannot be changed for existing accounts to preserve historical records.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Student or Employee ID cannot be changed for existing accounts to preserve historical records.");
         }
 
         if (user.getRole() != request.getRole()) {
             if (user.getEmail().equalsIgnoreCase(currentAdminEmail)) {
-                throw new IllegalArgumentException("You cannot demote your own admin account.");
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "You cannot demote your own admin account.");
             }
-            if (user.getRole() == Role.ROLE_ADMIN && userRepository.countByRoleAndActiveTrue(Role.ROLE_ADMIN) <= 1) {
-                throw new IllegalArgumentException("At least one active admin account must remain. Cannot demote the last admin.");
+            if (user.isActive() && user.getRole() == Role.ROLE_ADMIN && userRepository.countByRoleAndActiveTrue(Role.ROLE_ADMIN) <= 1) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "At least one active admin account must remain. Cannot demote the last admin.");
             }
             
             roleTransitionValidator.validateRoleChange(user, request.getRole());
@@ -111,12 +113,19 @@ public class AdminUserService {
             logAction(currentAdminEmail, "USER_ROLE_CHANGED", "Changed role from " + oldRole + " to " + request.getRole() + " for: " + user.getEmail());
         }
 
-        user.setFullName(request.getFullName().trim());
-        user.setDepartment(blankToNull(request.getDepartment()));
+        String requestedFullName = request.getFullName().trim();
+        String requestedDepartment = blankToNull(request.getDepartment());
+        boolean profileChanged = !Objects.equals(user.getFullName(), requestedFullName)
+                || !Objects.equals(user.getDepartment(), requestedDepartment);
+
+        user.setFullName(requestedFullName);
+        user.setDepartment(requestedDepartment);
 
         User savedUser = userRepository.save(user);
 
-        logAction(currentAdminEmail, "USER_UPDATED", "Updated safe profile fields for: " + savedUser.getEmail());
+        if (profileChanged) {
+            logAction(currentAdminEmail, "USER_UPDATED", "Updated safe profile fields for: " + savedUser.getEmail());
+        }
 
         return new AdminUserDto(savedUser);
     }
@@ -124,13 +133,17 @@ public class AdminUserService {
     @Transactional
     public void toggleUserStatus(Long id, boolean active, String currentAdminEmail) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found with id: " + id));
 
         if (!active && user.getEmail().equalsIgnoreCase(currentAdminEmail)) {
-            throw new IllegalArgumentException("You cannot disable your own account.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "You cannot disable your own account.");
         }
-        if (!active && user.getRole() == Role.ROLE_ADMIN && userRepository.countByRoleAndActiveTrue(Role.ROLE_ADMIN) <= 1) {
-            throw new IllegalArgumentException("At least one active admin account must remain.");
+        if (!active && user.isActive() && user.getRole() == Role.ROLE_ADMIN && userRepository.countByRoleAndActiveTrue(Role.ROLE_ADMIN) <= 1) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "At least one active admin account must remain.");
+        }
+
+        if (user.isActive() == active) {
+            return;
         }
 
         user.setActive(active);

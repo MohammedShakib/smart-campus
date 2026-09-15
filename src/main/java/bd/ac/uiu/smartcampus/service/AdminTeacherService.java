@@ -97,12 +97,11 @@ public class AdminTeacherService {
         long activeCount = userRepository.countByRoleAndActiveTrue(Role.ROLE_TEACHER);
         long disabled = total - activeCount;
 
-        // Calculate how many teachers have active enrollments (or schedules)
         long teachersWithClasses = 0;
         List<User> activeTeachers = userRepository.findByRoleAndActiveTrue(Role.ROLE_TEACHER);
         if (!activeTeachers.isEmpty()) {
             List<String> emails = activeTeachers.stream().map(User::getEmail).collect(Collectors.toList());
-            teachersWithClasses = scheduleRepository.countDistinctClassesByTeacherEmails(emails).size();
+            teachersWithClasses = scheduleRepository.countTeachersWithClassesByTeacherEmails(emails);
         }
 
         Map<String, Object> summary = new HashMap<>();
@@ -121,30 +120,12 @@ public class AdminTeacherService {
         String designation = profile != null ? profile.getDesignation() : null;
         String officeRoom = profile != null ? profile.getOfficeRoom() : null;
 
-        List<Object[]> distinctCourses = enrollmentRepository.findDistinctCoursesByTeacherEmail(email);
-        List<AdminTeacherDetailDto.TeachingAssignmentInfo> teachingAssignments = distinctCourses.stream()
-                .map(row -> new AdminTeacherDetailDto.TeachingAssignmentInfo(
-                        (String) row[0], "Course", (String) row[1] // We don't fetch courseTitle easily here without Schedule, let's fetch it from Schedule
-                )).collect(Collectors.toList());
-
         List<TeachingSchedule> fullSchedules = scheduleRepository.findByTeacherEmailOrderByDayOfWeekAscStartTimeAsc(email);
         List<AdminTeacherDetailDto.ScheduleInfo> schedules = fullSchedules.stream()
                 .map(s -> new AdminTeacherDetailDto.ScheduleInfo(
                         s.getDayOfWeek(), s.getStartTime(), s.getEndTime(), s.getRoomNumber(), s.getCourseCode()
                 )).collect(Collectors.toList());
 
-        // Update course titles in assignments if present in schedules
-        for (AdminTeacherDetailDto.TeachingAssignmentInfo assignment : teachingAssignments) {
-            fullSchedules.stream()
-                    .filter(s -> s.getCourseCode().equals(assignment.getCourseCode()) && s.getSectionName().equals(assignment.getSectionName()))
-                    .findFirst()
-                    .ifPresent(s -> {
-                        // Reflectively update course title for this quick assignment (or use another mapper strategy)
-                        // Actually better to just map from schedules distinctively
-                    });
-        }
-
-        // Let's rebuild distinct courses from schedules for richer info
         Map<String, AdminTeacherDetailDto.TeachingAssignmentInfo> assignmentMap = new LinkedHashMap<>();
         for (TeachingSchedule s : fullSchedules) {
             String key = s.getCourseCode() + "|" + s.getSectionName();
@@ -152,7 +133,7 @@ public class AdminTeacherService {
                     s.getCourseCode(), s.getCourseTitle(), s.getSectionName()
             ));
         }
-        teachingAssignments = new ArrayList<>(assignmentMap.values());
+        List<AdminTeacherDetailDto.TeachingAssignmentInfo> teachingAssignments = new ArrayList<>(assignmentMap.values());
 
         long uniqueStudentCount = enrollmentRepository.countDistinctActiveStudentsByTeacherEmail(email);
 

@@ -21,6 +21,12 @@ public interface LostFoundItemRepository extends JpaRepository<LostFoundItem, Lo
 
     List<LostFoundItem> findByReporterIdOrderByCreatedAtDesc(String reporterId);
 
+    boolean existsByReporterId(String reporterId);
+
+    boolean existsByReporterEmail(String reporterEmail);
+
+    boolean existsByClaimedByStudentId(String claimedByStudentId);
+
     @Query("SELECT i FROM LostFoundItem i WHERE " +
            "(:category IS NULL OR i.category = :category) AND " +
            "(:type IS NULL OR i.type = :type) AND " +

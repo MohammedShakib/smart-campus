@@ -20,4 +20,8 @@ public interface TeachingScheduleRepository extends JpaRepository<TeachingSchedu
            "WHERE s.teacherEmail IN :teacherEmails " +
            "GROUP BY s.teacherEmail")
     List<Object[]> countDistinctClassesByTeacherEmails(@org.springframework.data.repository.query.Param("teacherEmails") java.util.Collection<String> teacherEmails);
+
+    @org.springframework.data.jpa.repository.Query("SELECT COUNT(DISTINCT s.teacherEmail) FROM TeachingSchedule s " +
+           "WHERE s.teacherEmail IN :teacherEmails")
+    long countTeachersWithClassesByTeacherEmails(@org.springframework.data.repository.query.Param("teacherEmails") java.util.Collection<String> teacherEmails);
 }

@@ -33,25 +33,16 @@ public class AdminUserController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getUserById(@PathVariable Long id) {
-        try {
-            return ResponseEntity.ok(adminUserService.getUserById(id));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("success", false, "message", e.getMessage()));
-        }
+    public ResponseEntity<AdminUserDto> getUserById(@PathVariable Long id) {
+        return ResponseEntity.ok(adminUserService.getUserById(id));
     }
 
     @PostMapping
     public ResponseEntity<?> createUser(
             @Valid @RequestBody AdminUserCreateRequest request,
             Authentication authentication) {
-        try {
-            AdminUserDto createdUser = adminUserService.createUser(request, authentication.getName());
-            return ResponseEntity.ok(Map.of("success", true, "message", "User created successfully", "data", createdUser));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
-        }
+        AdminUserDto createdUser = adminUserService.createUser(request, authentication.getName());
+        return ResponseEntity.ok(Map.of("success", true, "message", "User created successfully", "data", createdUser));
     }
 
     @PutMapping("/{id}")
@@ -59,12 +50,8 @@ public class AdminUserController {
             @PathVariable Long id,
             @Valid @RequestBody AdminUserUpdateRequest request,
             Authentication authentication) {
-        try {
-            AdminUserDto updatedUser = adminUserService.updateUser(id, request, authentication.getName());
-            return ResponseEntity.ok(Map.of("success", true, "message", "User updated successfully", "data", updatedUser));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
-        }
+        AdminUserDto updatedUser = adminUserService.updateUser(id, request, authentication.getName());
+        return ResponseEntity.ok(Map.of("success", true, "message", "User updated successfully", "data", updatedUser));
     }
 
     @PatchMapping("/{id}/status")
@@ -75,11 +62,7 @@ public class AdminUserController {
         if (!request.containsKey("active") || request.get("active") == null) {
             return ResponseEntity.badRequest().body(Map.of("success", false, "message", "Missing 'active' field"));
         }
-        try {
-            adminUserService.toggleUserStatus(id, request.get("active"), authentication.getName());
-            return ResponseEntity.ok(Map.of("success", true, "message", "User status updated successfully"));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
-        }
+        adminUserService.toggleUserStatus(id, request.get("active"), authentication.getName());
+        return ResponseEntity.ok(Map.of("success", true, "message", "User status updated successfully"));
     }
 }

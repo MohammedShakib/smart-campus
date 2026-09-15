@@ -14,6 +14,8 @@ import java.util.List;
 public interface RoomReservationRepository extends JpaRepository<RoomReservation, Long> {
     List<RoomReservation> findByTeacherEmailOrderByReservationDateDescStartTimeDesc(String teacherEmail);
 
+    boolean existsByTeacherEmail(String teacherEmail);
+
     @Query("""
            SELECT r FROM RoomReservation r
            WHERE r.roomNumber = :roomNumber

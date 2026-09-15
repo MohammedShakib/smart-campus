@@ -24,6 +24,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByStudentOrEmpId(@Param("studentOrEmpId") String studentOrEmpId);
 
     List<User> findByRole(Role role);
+    List<User> findByRoleAndActiveTrue(Role role);
     long countByRole(Role role);
     long countByActiveTrue();
     long countByRoleAndActiveTrue(Role role);

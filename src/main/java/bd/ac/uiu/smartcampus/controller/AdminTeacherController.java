@@ -5,7 +5,6 @@ import bd.ac.uiu.smartcampus.dto.AdminTeacherDto;
 import bd.ac.uiu.smartcampus.dto.AdminTeacherUpdateRequest;
 import bd.ac.uiu.smartcampus.service.AdminTeacherService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,7 +13,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/admin/teachers")
-@PreAuthorize("hasRole('ROLE_ADMIN')")
 public class AdminTeacherController {
 
     private final AdminTeacherService adminTeacherService;
@@ -54,7 +52,7 @@ public class AdminTeacherController {
         return ResponseEntity.ok(adminTeacherService.updateTeacherProfile(id, request, authentication.getName()));
     }
 
-    @PostMapping("/{id}/status")
+    @PatchMapping("/{id}/status")
     public ResponseEntity<Void> toggleTeacherStatus(
             @PathVariable Long id,
             @RequestParam boolean active,

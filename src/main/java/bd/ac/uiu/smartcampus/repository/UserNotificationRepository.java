@@ -18,6 +18,8 @@ public interface UserNotificationRepository extends JpaRepository<UserNotificati
     List<UserNotification> findByRecipientAndReadFalseOrderByCreatedAtDesc(User recipient);
     
     long countByRecipientAndReadFalse(User recipient);
+
+    boolean existsByRecipient(User recipient);
     
     boolean existsByRecipientAndEventKey(User recipient, String eventKey);
     

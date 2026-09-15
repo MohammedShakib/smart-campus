@@ -20,4 +20,10 @@ public interface AbsenceExcuseRepository extends JpaRepository<AbsenceExcuse, Lo
     Optional<AbsenceExcuse> findByStudentIdAndCourseCodeAndAbsenceDate(String studentId, String courseCode, LocalDate absenceDate);
 
     boolean existsByStudentIdAndCourseCodeAndAbsenceDate(String studentId, String courseCode, LocalDate absenceDate);
+
+    boolean existsByStudentId(String studentId);
+
+    boolean existsByStudentEmail(String studentEmail);
+
+    boolean existsByTeacherEmail(String teacherEmail);
 }

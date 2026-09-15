@@ -11,5 +11,8 @@ public interface MaintenanceComplaintRepository extends JpaRepository<Maintenanc
     List<MaintenanceComplaint> findByStatusOrderByReportedAtAsc(String status);
     List<MaintenanceComplaint> findByStudentIdOrderByReportedAtDesc(String studentId);
     List<MaintenanceComplaint> findByReporterIdAndReporterRoleOrderByReportedAtDesc(String reporterId, String reporterRole);
+    boolean existsByStudentId(String studentId);
+    boolean existsByReporterId(String reporterId);
+    boolean existsByReporterIdAndReporterRole(String reporterId, String reporterRole);
     long countByStatus(String status);
 }
