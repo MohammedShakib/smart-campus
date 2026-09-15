@@ -22,6 +22,7 @@ import { StudentLabEquipmentSection } from './student/StudentLabEquipmentSection
 import { StudentOfficeHoursSection } from './student/StudentOfficeHoursSection';
 import { AdminEquipmentSection } from './admin/AdminEquipmentSection';
 import { AdminUsersSection } from './admin/AdminUsersSection';
+import { AdminStudentsSection } from './admin/AdminStudentsSection';
 import { SecurityOverviewSection } from './security/SecurityOverviewSection';
 import { SecurityVisitorsSection } from './security/SecurityVisitorsSection';
 import { SecurityQrScannerSection } from './security/SecurityQrScannerSection';
@@ -78,6 +79,7 @@ export function DashboardSection({
 
   if (role === 'admin') {
     if (section === 'users') return <AdminUsersSection />;
+    if (section === 'students') return <AdminStudentsSection />;
     if (section === 'equipment') return <AdminEquipmentSection />;
     if (section === 'classrooms') return <ClassroomsSection classrooms={sampleClassrooms()} />;
     if (section === 'transport') return <TransportSection data={data} />;

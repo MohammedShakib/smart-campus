@@ -35,6 +35,7 @@ public class DataInitializer implements CommandLineRunner {
     private final ParkingZoneRepository parkingZoneRepository;
     private final EmergencyAlertRepository emergencyAlertRepository;
     private final SecurityIncidentRepository securityIncidentRepository;
+    private final StudentProfileRepository studentProfileRepository;
     private final PasswordEncoder passwordEncoder;
 
     public DataInitializer(UserRepository userRepository,
@@ -54,6 +55,7 @@ public class DataInitializer implements CommandLineRunner {
                            ParkingZoneRepository parkingZoneRepository,
                            EmergencyAlertRepository emergencyAlertRepository,
                            SecurityIncidentRepository securityIncidentRepository,
+                           StudentProfileRepository studentProfileRepository,
                            PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.noticeRepository = noticeRepository;
@@ -72,6 +74,7 @@ public class DataInitializer implements CommandLineRunner {
         this.parkingZoneRepository = parkingZoneRepository;
         this.emergencyAlertRepository = emergencyAlertRepository;
         this.securityIncidentRepository = securityIncidentRepository;
+        this.studentProfileRepository = studentProfileRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -93,6 +96,9 @@ public class DataInitializer implements CommandLineRunner {
         seedUser("student-rafi", "demo-student-pass", "Rafi Islam", "011221006", "Computer Science & Engineering", Role.ROLE_STUDENT);
         seedUser("student-tanha", "demo-student-pass", "Tanha Begum", "011221007", "Computer Science & Engineering", Role.ROLE_STUDENT);
         seedUser("student-sabbir", "demo-student-pass", "Sabbir Khan", "011221008", "Computer Science & Engineering", Role.ROLE_STUDENT);
+
+        // 2.5 Seed student profiles if missing
+        seedStudentProfiles();
 
         // 3. Seed teaching schedules
         seedTeacherSchedule("teacher-demo", "CSE 2211", "Advanced Object Oriented Programming", "Section A", "Room 524", "Sunday", "10:30", "12:00");
@@ -429,6 +435,14 @@ public class DataInitializer implements CommandLineRunner {
             userRepository.save(user);
             logger.info("Created default user: {} [{}]", email, role);
         }
+    }
+
+    private void seedStudentProfiles() {
+        userRepository.findByRole(Role.ROLE_STUDENT).forEach(student -> {
+            if (studentProfileRepository.findByUserId(student.getId()).isEmpty()) {
+                studentProfileRepository.save(new StudentProfile(student, 6)); // Default 6th semester
+            }
+        });
     }
 
     private void seedTeacherSchedule(String teacherEmail, String courseCode, String courseTitle,

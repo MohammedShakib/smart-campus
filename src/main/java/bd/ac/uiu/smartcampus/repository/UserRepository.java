@@ -28,6 +28,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
     long countByActiveTrue();
     long countByRoleAndActiveTrue(Role role);
 
+    @Query("SELECT DISTINCT u.department FROM User u " +
+           "WHERE u.role = :role AND u.department IS NOT NULL AND u.department <> '' " +
+           "ORDER BY u.department")
+    List<String> findDistinctDepartmentsByRole(@Param("role") Role role);
+
     @Query("SELECT u FROM User u WHERE " +
            "(:role IS NULL OR u.role = :role) AND " +
            "(:status IS NULL OR u.active = :status) AND " +

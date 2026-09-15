@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.List;
 
 @Repository
@@ -16,6 +17,17 @@ public interface ClassEnrollmentRepository extends JpaRepository<ClassEnrollment
      * All active enrollments for a student.
      */
     List<ClassEnrollment> findByStudentAndActiveTrue(User student);
+
+    List<ClassEnrollment> findByStudentInAndActiveTrue(Collection<User> students);
+
+    @Query("SELECT e.student.id, COUNT(e) FROM ClassEnrollment e " +
+           "WHERE e.student.id IN :studentIds AND e.active = true " +
+           "GROUP BY e.student.id")
+    List<Object[]> countActiveEnrollmentsByStudentIds(@Param("studentIds") Collection<Long> studentIds);
+
+    @Query("SELECT COUNT(DISTINCT e.student.id) FROM ClassEnrollment e " +
+           "WHERE e.student.role = :role AND e.active = true")
+    long countDistinctActiveStudentsByRole(@Param("role") bd.ac.uiu.smartcampus.model.Role role);
 
     /**
      * All active enrollments for a teacher in a specific course/section.
