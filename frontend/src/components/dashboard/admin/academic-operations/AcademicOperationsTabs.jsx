@@ -1,66 +1,57 @@
 import React, { useState } from 'react';
+import { CalendarDays, RadioTower, ClipboardCheck, CalendarCheck } from 'lucide-react';
 import ScheduleManagement from './ScheduleManagement';
 import ActiveClassMonitoring from './ActiveClassMonitoring';
 import AdminAttendanceMonitoring from './AdminAttendanceMonitoring';
 import AdminReservationManagement from './AdminReservationManagement';
 
-const AcademicOperationsTabs = () => {
-    const [activeTab, setActiveTab] = useState('schedule');
+const TABS = [
+  { id: 'schedule', label: 'Class Schedules', icon: CalendarDays },
+  { id: 'active-classes', label: 'Live Active Classes', icon: RadioTower, live: true },
+  { id: 'attendance', label: 'Attendance Telemetry', icon: ClipboardCheck },
+  { id: 'reservations', label: 'Room Reservations', icon: CalendarCheck }
+];
 
-    const renderTab = () => {
-        switch (activeTab) {
-            case 'schedule':
-                return <ScheduleManagement />;
-            case 'active-classes':
-                return <ActiveClassMonitoring />;
-            case 'attendance':
-                return <AdminAttendanceMonitoring />;
-            case 'reservations':
-                return <AdminReservationManagement />;
-            default:
-                return <ScheduleManagement />;
-        }
-    };
+export default function AcademicOperationsTabs() {
+  const [activeTab, setActiveTab] = useState('schedule');
 
-    return (
-        <div className="dashboard-section fade-in">
-            <div className="section-header">
-                <h2>Academic Operations</h2>
-                <p>Manage schedules, monitor live classes, review attendance and classroom reservations.</p>
-            </div>
+  const renderTab = () => {
+    switch (activeTab) {
+      case 'schedule':
+        return <ScheduleManagement />;
+      case 'active-classes':
+        return <ActiveClassMonitoring />;
+      case 'attendance':
+        return <AdminAttendanceMonitoring />;
+      case 'reservations':
+        return <AdminReservationManagement />;
+      default:
+        return <ScheduleManagement />;
+    }
+  };
 
-            <div className="tab-navigation">
-                <button 
-                    className={`tab-button ${activeTab === 'schedule' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('schedule')}
-                >
-                    Schedule
-                </button>
-                <button 
-                    className={`tab-button ${activeTab === 'active-classes' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('active-classes')}
-                >
-                    Active Classes
-                </button>
-                <button 
-                    className={`tab-button ${activeTab === 'attendance' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('attendance')}
-                >
-                    Attendance
-                </button>
-                <button 
-                    className={`tab-button ${activeTab === 'reservations' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('reservations')}
-                >
-                    Reservations
-                </button>
-            </div>
+  return (
+    <div className="academic-operations-page fade-in">
+      <div className="academic-tabs" role="tablist" aria-label="Academic Operations Navigation">
+        {TABS.map(({ id, label, icon: Icon, live }) => (
+          <button
+            key={id}
+            type="button"
+            className={`academic-tab${activeTab === id ? ' is-active' : ''}`}
+            onClick={() => setActiveTab(id)}
+            role="tab"
+            aria-selected={activeTab === id}
+          >
+            <Icon size={16} />
+            <span>{label}</span>
+            {live && <span className="tab-live-pulse" title="Live stream available" />}
+          </button>
+        ))}
+      </div>
 
-            <div className="tab-content">
-                {renderTab()}
-            </div>
-        </div>
-    );
-};
-
-export default AcademicOperationsTabs;
+      <div className="tab-content-wrapper">
+        {renderTab()}
+      </div>
+    </div>
+  );
+}

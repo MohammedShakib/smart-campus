@@ -1,188 +1,657 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { api, postAction } from '../../../utils/api';
-import { ErrorState, LoadingState, ActionButton, Panel, Table } from '../../shared/SharedComponents';
-import { Wrench, CheckCircle, Clock, Save } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import {
+  Wrench,
+  Clock,
+  CheckCircle2,
+  AlertTriangle,
+  PlayCircle,
+  Search,
+  RefreshCw,
+  X,
+  Save,
+  MapPin,
+  User,
+  Tag,
+  Calendar,
+  MessageSquare,
+  ShieldAlert,
+  ArrowRight,
+  Filter,
+  Check,
+  XCircle
+} from 'lucide-react';
+import { api } from '../../../utils/api';
+import { Panel, EmptyState } from '../../shared/SharedComponents';
+
+const dataOf = (payload) => Array.isArray(payload) ? payload : (payload?.data || []);
 
 export function AdminMaintenanceSection({ data, reload }) {
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
-    const [complaints, setComplaints] = useState([]);
-    const [selectedComplaint, setSelectedComplaint] = useState(null);
-    const [status, setStatus] = useState('');
-    const [resolutionNote, setResolutionNote] = useState('');
+  const [complaints, setComplaints] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState(null);
 
-    const loadData = useCallback(() => {
-        setLoading(true);
-        // We can just use the queue data from admin dashboard payload, but let's assume we want a full list
-        // If data.queuedComplaints exists, we can use it, but let's fetch from an API if needed.
-        // Actually, the admin dashboard API doesn't return all complaints, it returns queuedComplaints.
-        // So we will just use data.queuedComplaints for now.
-        setComplaints(data?.queuedComplaints || []);
-        setLoading(false);
-    }, [data]);
+  // Filters
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('ALL');
+  const [priorityFilter, setPriorityFilter] = useState('ALL');
+  const [categoryFilter, setCategoryFilter] = useState('ALL');
 
-    useEffect(() => {
-        loadData();
-    }, [loadData]);
+  // Modal State
+  const [selectedComplaint, setSelectedComplaint] = useState(null);
+  const [editStatus, setEditStatus] = useState('');
+  const [editNote, setEditNote] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [toastMessage, setToastMessage] = useState(null);
 
-    const handleProcessNext = () => {
-        postAction('/api/campus/complaint/process-next')
-            .then(() => reload())
-            .catch(err => setError(err.message));
-    };
+  const loadData = useCallback(async (isManual = false) => {
+    if (isManual) setRefreshing(true);
+    try {
+      const res = await api('/api/admin/campus-operations/complaints');
+      setComplaints(dataOf(res));
+      setError(null);
+    } catch (err) {
+      // Fallback to data.queuedComplaints if available
+      if (data?.queuedComplaints) {
+        setComplaints(data.queuedComplaints);
+      } else {
+        setError(err.message || 'Failed to load maintenance complaints.');
+      }
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, [data]);
 
-    const handleUpdateStatus = (e) => {
-        e.preventDefault();
-        if (!selectedComplaint) return;
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
-        api(`/api/admin/campus-operations/complaints/${selectedComplaint.id}/status`, {
-            method: 'PATCH',
-            body: JSON.stringify({ status, resolutionNote })
+  const handleProcessNext = async () => {
+    setSubmitting(true);
+    try {
+      const res = await api('/api/campus/complaint/process-next', { method: 'POST' });
+      setToastMessage({
+        type: 'success',
+        text: res.message || 'Dequeued and processed next ticket in FIFO queue.'
+      });
+      loadData();
+      if (reload) reload();
+    } catch (err) {
+      setToastMessage({
+        type: 'error',
+        text: err.message || 'Failed to process next queue item.'
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleUpdateStatus = async (e) => {
+    e.preventDefault();
+    if (!selectedComplaint) return;
+    setSubmitting(true);
+
+    try {
+      await api(`/api/admin/campus-operations/complaints/${selectedComplaint.id}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          status: editStatus,
+          resolutionNote: editNote
         })
-            .then(() => {
-                setSelectedComplaint(null);
-                setResolutionNote('');
-                reload();
-            })
-            .catch(err => setError(err.message));
-    };
+      });
+      setToastMessage({
+        type: 'success',
+        text: `Complaint #${selectedComplaint.id} updated to ${editStatus}.`
+      });
+      setSelectedComplaint(null);
+      setEditNote('');
+      loadData();
+      if (reload) reload();
+    } catch (err) {
+      setToastMessage({
+        type: 'error',
+        text: err.message || 'Failed to update complaint status.'
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
-    if (loading) return <LoadingState text="Loading maintenance..." />;
-    if (error) return <ErrorState title="Maintenance Error" message={error} onRetry={loadData} />;
+  const openUpdateModal = (c) => {
+    setSelectedComplaint(c);
+    setEditStatus(c.status || 'OPEN');
+    setEditNote(c.resolutionNote || '');
+  };
 
-    return (
-        <div className="space-y-6">
-            <h1 className="text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
-                <Wrench className="w-8 h-8 text-orange-600 dark:text-orange-400" />
-                Maintenance & Complaints
-            </h1>
+  // Metrics
+  const totalCount = complaints.length;
+  const queuePendingCount = complaints.filter(c => c.status === 'OPEN' || c.status === 'PENDING').length;
+  const inProgressCount = complaints.filter(c => c.status === 'IN_PROGRESS' || c.status === 'ASSIGNED').length;
+  const resolvedCount = complaints.filter(c => c.status === 'RESOLVED' || c.status === 'CLOSED').length;
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow border border-gray-100 dark:border-slate-700 flex items-center gap-4">
-                    <div className="p-3 bg-orange-100 dark:bg-orange-900/30 rounded-lg text-orange-600 dark:text-orange-400">
-                        <Clock className="w-6 h-6" />
-                    </div>
-                    <div>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">Queue Size</p>
-                        <p className="text-2xl font-bold text-gray-800 dark:text-white">{data?.queueSize || 0}</p>
-                    </div>
-                </div>
-                <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow border border-gray-100 dark:border-slate-700 flex items-center justify-between">
-                    <div>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">FIFO Processing</p>
-                        <p className="text-lg font-bold text-gray-800 dark:text-white">Process Next Ticket</p>
-                    </div>
-                    <button
-                        onClick={handleProcessNext}
-                        disabled={data?.queueSize === 0}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50"
-                    >
-                        Dequeue Next
-                    </button>
-                </div>
-            </div>
+  const categories = useMemo(() => {
+    const set = new Set();
+    complaints.forEach(c => { if (c.category) set.add(c.category); });
+    return Array.from(set);
+  }, [complaints]);
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2 space-y-6">
-                    <Panel title="Pending Complaints (FIFO Queue)">
-                        {complaints.length === 0 ? (
-                            <div className="text-center py-8 text-gray-500">Queue is empty.</div>
-                        ) : (
-                            <div className="space-y-4">
-                                {complaints.map((c, index) => (
-                                    <div key={c.id} className="p-4 border rounded-lg bg-gray-50 dark:bg-slate-700 dark:border-slate-600 flex justify-between items-start">
-                                        <div>
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <span className="bg-gray-200 dark:bg-slate-600 px-2 py-0.5 rounded text-xs font-mono">#{index + 1}</span>
-                                                <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                                                    c.priority === 'HIGH' ? 'bg-red-100 text-red-700' :
-                                                    c.priority === 'MEDIUM' ? 'bg-orange-100 text-orange-700' :
-                                                    'bg-green-100 text-green-700'
-                                                }`}>
-                                                    {c.priority}
-                                                </span>
-                                                <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
-                                                    {c.status}
-                                                </span>
-                                            </div>
-                                            <h3 className="font-semibold text-gray-800 dark:text-white">{c.issueTitle}</h3>
-                                            <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{c.issueDescription}</p>
-                                            <div className="text-xs text-gray-500 mt-2 space-x-4">
-                                                <span>Location: {c.location}</span>
-                                                <span>Reported by: {c.reporterName}</span>
-                                            </div>
-                                        </div>
-                                        <button
-                                            onClick={() => { setSelectedComplaint(c); setStatus(c.status); setResolutionNote(c.resolutionNote || ''); }}
-                                            className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                                        >
-                                            Update Status
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </Panel>
-                </div>
+  const filteredComplaints = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return complaints.filter(c => {
+      const matchSearch = !q ||
+        (c.issueTitle && c.issueTitle.toLowerCase().includes(q)) ||
+        (c.issueDescription && c.issueDescription.toLowerCase().includes(q)) ||
+        (c.location && c.location.toLowerCase().includes(q)) ||
+        (c.reporterName && c.reporterName.toLowerCase().includes(q)) ||
+        (c.reporterId && c.reporterId.toLowerCase().includes(q));
 
-                <div className="lg:col-span-1">
-                    {selectedComplaint ? (
-                        <Panel title="Update Complaint">
-                            <form onSubmit={handleUpdateStatus} className="space-y-4">
-                                <div>
-                                    <h4 className="font-medium text-gray-800 dark:text-white">{selectedComplaint.issueTitle}</h4>
-                                    <p className="text-xs text-gray-500 mt-1">Location: {selectedComplaint.location}</p>
-                                </div>
-                                
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
-                                    <select
-                                        value={status}
-                                        onChange={e => setStatus(e.target.value)}
-                                        className="w-full border rounded p-2 bg-gray-50 dark:bg-slate-700 dark:border-slate-600 dark:text-white"
-                                    >
-                                        <option value="OPEN">Open</option>
-                                        <option value="ASSIGNED">Assigned</option>
-                                        <option value="IN_PROGRESS">In Progress</option>
-                                        <option value="RESOLVED">Resolved</option>
-                                        <option value="CLOSED">Closed</option>
-                                    </select>
-                                </div>
+      const matchStatus = statusFilter === 'ALL' || c.status === statusFilter;
+      const matchPriority = priorityFilter === 'ALL' || c.priority === priorityFilter;
+      const matchCategory = categoryFilter === 'ALL' || c.category === categoryFilter;
 
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Resolution Note</label>
-                                    <textarea
-                                        value={resolutionNote}
-                                        onChange={e => setResolutionNote(e.target.value)}
-                                        className="w-full border rounded p-2 bg-gray-50 dark:bg-slate-700 dark:border-slate-600 dark:text-white h-24"
-                                        placeholder="Add notes for the reporter..."
-                                    />
-                                </div>
+      return matchSearch && matchStatus && matchPriority && matchCategory;
+    });
+  }, [complaints, search, statusFilter, priorityFilter, categoryFilter]);
 
-                                <div className="flex gap-2 justify-end">
-                                    <button
-                                        type="button"
-                                        onClick={() => setSelectedComplaint(null)}
-                                        className="px-4 py-2 border rounded-lg text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-slate-600 dark:border-slate-600"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-2"
-                                    >
-                                        <Save className="w-4 h-4" /> Save
-                                    </button>
-                                </div>
-                            </form>
-                        </Panel>
-                    ) : (
-                        <div className="bg-gray-50 dark:bg-slate-800 border border-dashed border-gray-300 dark:border-slate-600 rounded-xl p-8 text-center text-gray-500">
-                            Select a complaint to update its status.
-                        </div>
-                    )}
-                </div>
-            </div>
+  const getPriorityBadge = (p) => {
+    switch (p) {
+      case 'HIGH':
+      case 'URGENT':
+        return <span className="cell-chip chip-priority-high">{p}</span>;
+      case 'MEDIUM':
+        return <span className="cell-chip chip-priority-medium">MEDIUM</span>;
+      case 'LOW':
+        return <span className="cell-chip chip-priority-low">LOW</span>;
+      default:
+        return <span className="cell-chip chip-status-pending">{p || 'NORMAL'}</span>;
+    }
+  };
+
+  const getStatusBadge = (s) => {
+    switch (s) {
+      case 'OPEN':
+      case 'PENDING':
+        return <span className="cell-chip chip-priority-medium">QUEUED</span>;
+      case 'ASSIGNED':
+      case 'IN_PROGRESS':
+        return <span className="cell-chip chip-status-progress">{s.replace('_', ' ')}</span>;
+      case 'RESOLVED':
+        return <span className="cell-chip chip-status-success">RESOLVED</span>;
+      case 'CLOSED':
+        return <span className="cell-chip chip-status-pending">CLOSED</span>;
+      default:
+        return <span className="cell-chip chip-status-pending">{s}</span>;
+    }
+  };
+
+  return (
+    <div className="campus-management-subview" style={{ display: 'grid', gap: '1.25rem' }}>
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div
+          className={`status-badge ${toastMessage.type === 'error' ? 'badge--critical' : 'badge--occupied'}`}
+          style={{
+            position: 'fixed',
+            bottom: '24px',
+            right: '24px',
+            zIndex: 9999,
+            padding: '0.85rem 1.25rem',
+            borderRadius: '12px',
+            boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.6rem',
+            fontSize: '0.88rem',
+            fontWeight: '600'
+          }}
+        >
+          {toastMessage.type === 'error' ? <XCircle size={18} /> : <CheckCircle2 size={18} />}
+          <span>{toastMessage.text}</span>
+          <button
+            onClick={() => setToastMessage(null)}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', marginLeft: '0.5rem', color: 'inherit' }}
+          >
+            <X size={14} />
+          </button>
         </div>
-    );
+      )}
+
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
+        <div>
+          <div className="breadcrumb">
+            <span>Administration</span> &gt; <span className="breadcrumb-active">Maintenance & Facility Tickets</span>
+          </div>
+          <h2 style={{ fontSize: '1.45rem', fontWeight: '800', color: 'var(--tx-primary)', margin: '0.2rem 0' }}>
+            Facility Maintenance & Complaints
+          </h2>
+          <p style={{ margin: 0, fontSize: '0.86rem', color: 'var(--tx-secondary)' }}>
+            Real-time FIFO queue dispatcher, technician assignment, priority tracking, and resolution history.
+          </p>
+        </div>
+
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          <button
+            type="button"
+            className="primary-btn"
+            onClick={handleProcessNext}
+            disabled={queuePendingCount === 0 || submitting}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.45rem',
+              background: queuePendingCount > 0 ? '#4f46e5' : '#94a3b8',
+              borderColor: queuePendingCount > 0 ? '#4f46e5' : '#94a3b8'
+            }}
+          >
+            <PlayCircle size={16} />
+            <span>Dequeue Next (FIFO)</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Metric Cards */}
+      <div className="metric-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
+        <div className="stat-card">
+          <div className="stat-card-icon" style={{ background: 'rgba(99,102,241,0.1)', color: '#4f46e5' }}>
+            <Wrench size={22} />
+          </div>
+          <div className="stat-card-copy">
+            <span className="stat-label">Total Logged Tickets</span>
+            <strong className="stat-value">{totalCount}</strong>
+          </div>
+        </div>
+
+        <div className="stat-card">
+          <div className="stat-card-icon" style={{ background: 'rgba(245,158,11,0.1)', color: '#d97706' }}>
+            <Clock size={22} />
+          </div>
+          <div className="stat-card-copy">
+            <span className="stat-label">FIFO Pending Queue</span>
+            <strong className="stat-value" style={{ color: '#d97706' }}>{queuePendingCount}</strong>
+          </div>
+        </div>
+
+        <div className="stat-card">
+          <div className="stat-card-icon" style={{ background: 'rgba(59,130,246,0.1)', color: '#2563eb' }}>
+            <PlayCircle size={22} />
+          </div>
+          <div className="stat-card-copy">
+            <span className="stat-label">In Progress / Assigned</span>
+            <strong className="stat-value" style={{ color: '#2563eb' }}>{inProgressCount}</strong>
+          </div>
+        </div>
+
+        <div className="stat-card">
+          <div className="stat-card-icon" style={{ background: 'rgba(16,185,129,0.1)', color: '#059669' }}>
+            <CheckCircle2 size={22} />
+          </div>
+          <div className="stat-card-copy">
+            <span className="stat-label">Resolved & Closed</span>
+            <strong className="stat-value" style={{ color: '#059669' }}>{resolvedCount}</strong>
+          </div>
+        </div>
+      </div>
+
+      {/* Table Panel */}
+      <Panel
+        title="Complaints & Dispatch Roster"
+        action={
+          <button
+            type="button"
+            className="ghost-btn"
+            onClick={() => loadData(true)}
+            disabled={refreshing}
+            style={{ fontSize: '0.8rem', padding: '0.35rem 0.75rem' }}
+          >
+            <RefreshCw size={14} className={refreshing ? 'spin-icon' : ''} />
+            <span>Refresh</span>
+          </button>
+        }
+      >
+        {/* Search & Filter Toolbar */}
+        <div style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: '0.75rem',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: '1rem',
+          padding: '0.75rem',
+          background: '#f8fafc',
+          borderRadius: '12px',
+          border: '1px solid var(--border)'
+        }}>
+          <div style={{ position: 'relative', flex: '1 1 240px' }}>
+            <Search size={15} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--tx-muted)' }} />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search issue title, description, location, or reporter..."
+              style={{
+                width: '100%',
+                paddingLeft: '32px',
+                paddingRight: '10px',
+                height: '36px',
+                borderRadius: '8px',
+                border: '1px solid var(--border)',
+                background: '#fff',
+                fontSize: '0.82rem'
+              }}
+            />
+          </div>
+
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              style={{ height: '36px', borderRadius: '8px', border: '1px solid var(--border)', padding: '0 0.65rem', background: '#fff', fontSize: '0.82rem' }}
+            >
+              <option value="ALL">All Statuses</option>
+              <option value="OPEN">Open (Queued)</option>
+              <option value="ASSIGNED">Assigned</option>
+              <option value="IN_PROGRESS">In Progress</option>
+              <option value="RESOLVED">Resolved</option>
+              <option value="CLOSED">Closed</option>
+            </select>
+
+            <select
+              value={priorityFilter}
+              onChange={(e) => setPriorityFilter(e.target.value)}
+              style={{ height: '36px', borderRadius: '8px', border: '1px solid var(--border)', padding: '0 0.65rem', background: '#fff', fontSize: '0.82rem' }}
+            >
+              <option value="ALL">All Priorities</option>
+              <option value="HIGH">High Priority</option>
+              <option value="MEDIUM">Medium Priority</option>
+              <option value="LOW">Low Priority</option>
+            </select>
+
+            {categories.length > 0 && (
+              <select
+                value={categoryFilter}
+                onChange={(e) => setCategoryFilter(e.target.value)}
+                style={{ height: '36px', borderRadius: '8px', border: '1px solid var(--border)', padding: '0 0.65rem', background: '#fff', fontSize: '0.82rem' }}
+              >
+                <option value="ALL">All Categories</option>
+                {categories.map(c => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            )}
+          </div>
+        </div>
+
+        {/* Complaints Table */}
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--tx-muted)' }}>
+            <RefreshCw size={24} className="spin-icon" style={{ marginBottom: '0.5rem' }} />
+            <div>Loading maintenance complaints...</div>
+          </div>
+        ) : error ? (
+          <div style={{ padding: '2rem', textAlign: 'center', color: '#b91c1c' }}>
+            <ShieldAlert size={28} style={{ marginBottom: '0.5rem' }} />
+            <div>{error}</div>
+            <button className="ghost-btn" onClick={() => loadData(true)} style={{ marginTop: '0.75rem' }}>Retry</button>
+          </div>
+        ) : filteredComplaints.length === 0 ? (
+          <EmptyState
+            icon={Wrench}
+            title="No Complaints Found"
+            message={search || statusFilter !== 'ALL' || priorityFilter !== 'ALL' ? "No tickets match your filter criteria." : "No maintenance complaints reported yet. Queue is empty."}
+          />
+        ) : (
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Ticket & Issue</th>
+                  <th>Location</th>
+                  <th>Reporter Info</th>
+                  <th>Priority</th>
+                  <th>Status & Notes</th>
+                  <th style={{ textAlign: 'right' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredComplaints.map((c, idx) => (
+                  <tr key={c.id}>
+                    {/* Ticket and Issue */}
+                    <td>
+                      <div style={{ maxWidth: '300px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.2rem' }}>
+                          <span style={{
+                            fontFamily: 'JetBrains Mono, monospace',
+                            fontSize: '0.72rem',
+                            fontWeight: '700',
+                            padding: '0.1rem 0.4rem',
+                            background: '#f1f5f9',
+                            borderRadius: '4px',
+                            color: '#475569'
+                          }}>
+                            #{c.id}
+                          </span>
+                          <span style={{ fontSize: '0.74rem', color: 'var(--tx-muted)', textTransform: 'uppercase', fontWeight: '600' }}>
+                            {c.category || 'General'}
+                          </span>
+                        </div>
+                        <strong style={{ display: 'block', fontSize: '0.88rem', color: 'var(--tx-primary)' }}>
+                          {c.issueTitle}
+                        </strong>
+                        <p style={{
+                          margin: '0.15rem 0 0',
+                          fontSize: '0.78rem',
+                          color: 'var(--tx-secondary)',
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden',
+                          lineHeight: 1.45
+                        }}>
+                          {c.issueDescription}
+                        </p>
+                      </div>
+                    </td>
+
+                    {/* Location */}
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.82rem', color: 'var(--tx-primary)' }}>
+                        <MapPin size={13} style={{ color: 'var(--tx-muted)' }} />
+                        <span>{c.location || 'Campus'}</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.74rem', color: 'var(--tx-muted)', marginTop: '0.2rem' }}>
+                        <Calendar size={11} />
+                        <span>{c.reportedAt ? new Date(c.reportedAt).toLocaleDateString() : 'Recent'}</span>
+                      </div>
+                    </td>
+
+                    {/* Reporter */}
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.82rem', fontWeight: '600', color: 'var(--tx-primary)' }}>
+                        <User size={13} style={{ color: 'var(--tx-muted)' }} />
+                        <span>{c.reporterName || 'Anonymous'}</span>
+                      </div>
+                      <div style={{ fontSize: '0.74rem', color: 'var(--tx-muted)', marginTop: '0.1rem' }}>
+                        {c.reporterId || c.reporterEmail}
+                      </div>
+                    </td>
+
+                    {/* Priority */}
+                    <td>
+                      {getPriorityBadge(c.priority)}
+                    </td>
+
+                    {/* Status & Resolution note */}
+                    <td>
+                      {getStatusBadge(c.status)}
+                      {c.resolutionNote && (
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.25rem',
+                          fontSize: '0.72rem',
+                          color: 'var(--tx-muted)',
+                          marginTop: '0.25rem',
+                          maxWidth: '180px',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
+                        }} title={c.resolutionNote}>
+                          <MessageSquare size={10} />
+                          <span>{c.resolutionNote}</span>
+                        </div>
+                      )}
+                    </td>
+
+                    {/* Actions */}
+                    <td style={{ textAlign: 'right' }}>
+                      <button
+                        type="button"
+                        className="primary-btn"
+                        style={{
+                          fontSize: '0.75rem',
+                          padding: '0.32rem 0.7rem',
+                          minHeight: '28px'
+                        }}
+                        onClick={() => openUpdateModal(c)}
+                      >
+                        <span>Update Status</span>
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Panel>
+
+      {/* Update Status Modal */}
+      {selectedComplaint && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(15, 23, 42, 0.6)',
+          backdropFilter: 'blur(4px)',
+          display: 'grid',
+          placeItems: 'center',
+          zIndex: 1000,
+          padding: '1rem'
+        }}>
+          <div style={{
+            background: '#ffffff',
+            borderRadius: '16px',
+            maxWidth: '520px',
+            width: '100%',
+            padding: '1.75rem',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2)',
+            display: 'grid',
+            gap: '1.25rem'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div style={{
+                  width: '38px',
+                  height: '38px',
+                  borderRadius: '10px',
+                  background: 'rgba(99,102,241,0.1)',
+                  color: '#4f46e5',
+                  display: 'grid',
+                  placeItems: 'center'
+                }}>
+                  <Wrench size={20} />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '1.15rem', fontWeight: '800', color: 'var(--tx-primary)', margin: 0 }}>
+                    Update Ticket #{selectedComplaint.id}
+                  </h3>
+                  <span style={{ fontSize: '0.78rem', color: 'var(--tx-muted)' }}>
+                    {selectedComplaint.issueTitle} • {selectedComplaint.location}
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedComplaint(null)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--tx-muted)' }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdateStatus} style={{ display: 'grid', gap: '1rem' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: 'var(--tx-primary)', marginBottom: '0.35rem' }}>
+                  Progress Status *
+                </label>
+                <select
+                  value={editStatus}
+                  onChange={(e) => setEditStatus(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '0.55rem 0.8rem',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border)',
+                    background: '#fff',
+                    fontSize: '0.86rem'
+                  }}
+                >
+                  <option value="OPEN">Open (In Queue)</option>
+                  <option value="ASSIGNED">Assigned to Technician</option>
+                  <option value="IN_PROGRESS">In Progress / Fixing</option>
+                  <option value="RESOLVED">Resolved & Fixed</option>
+                  <option value="CLOSED">Closed / Archived</option>
+                </select>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: 'var(--tx-primary)', marginBottom: '0.35rem' }}>
+                  Resolution Notes / Action Taken
+                </label>
+                <textarea
+                  rows={4}
+                  value={editNote}
+                  onChange={(e) => setEditNote(e.target.value)}
+                  placeholder="e.g. Technician replaced the faulty projector lamp in Room 524. System tested and functional."
+                  style={{
+                    width: '100%',
+                    padding: '0.65rem 0.8rem',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border)',
+                    fontSize: '0.86rem',
+                    fontFamily: 'inherit',
+                    resize: 'vertical'
+                  }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+                <button
+                  type="button"
+                  className="ghost-btn"
+                  onClick={() => setSelectedComplaint(null)}
+                  disabled={submitting}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="primary-btn"
+                  disabled={submitting}
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+                >
+                  <Save size={14} />
+                  <span>{submitting ? 'Saving...' : 'Save & Update'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }

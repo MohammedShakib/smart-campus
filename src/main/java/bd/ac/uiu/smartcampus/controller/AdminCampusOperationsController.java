@@ -61,6 +61,11 @@ public class AdminCampusOperationsController {
         return ApiResponse.ok("Created route", service.createRoute(route, getAdminEmail(authentication)));
     }
 
+    @PutMapping("/routes/{id}")
+    public ApiResponse<BusRoute> updateRoute(@PathVariable Long id, @RequestBody BusRoute route, Authentication authentication) {
+        return ApiResponse.ok("Updated route", service.updateRoute(id, route, getAdminEmail(authentication)));
+    }
+
     @PatchMapping("/routes/{id}/assign")
     public ApiResponse<BusRoute> assignBus(@PathVariable Long id, @RequestBody Map<String, Long> payload, Authentication authentication) {
         Long busId = payload.get("busId");
@@ -132,6 +137,11 @@ public class AdminCampusOperationsController {
     public ApiResponse<CampusEvent> createEvent(@RequestBody CampusEvent event, Authentication authentication) {
         return ApiResponse.ok("Created event", service.createEvent(event, getAdminEmail(authentication)));
     }
+
+    @PutMapping("/events/{id}")
+    public ApiResponse<CampusEvent> updateEvent(@PathVariable Long id, @RequestBody CampusEvent event, Authentication authentication) {
+        return ApiResponse.ok("Updated event", service.updateEvent(id, event, getAdminEmail(authentication)));
+    }
     
     @PatchMapping("/events/{id}/status")
     public ApiResponse<CampusEvent> updateEventStatus(@PathVariable Long id, @RequestBody Map<String, String> payload, Authentication authentication) {
@@ -150,6 +160,11 @@ public class AdminCampusOperationsController {
         return ApiResponse.ok("Created menu item", service.createMenuItem(item, getAdminEmail(authentication)));
     }
 
+    @PutMapping("/cafeteria/{id}")
+    public ApiResponse<CafeteriaMenuItem> updateMenuItem(@PathVariable Long id, @RequestBody CafeteriaMenuItem item, Authentication authentication) {
+        return ApiResponse.ok("Updated menu item", service.updateMenuItem(id, item, getAdminEmail(authentication)));
+    }
+
     @PatchMapping("/cafeteria/{id}/availability")
     public ApiResponse<CafeteriaMenuItem> updateMenuAvailability(@PathVariable Long id, @RequestBody Map<String, Boolean> payload, Authentication authentication) {
         Boolean available = payload.get("available");
@@ -157,6 +172,36 @@ public class AdminCampusOperationsController {
             throw new IllegalArgumentException("available is required.");
         }
         return ApiResponse.ok("Updated menu availability", service.updateMenuItemAvailability(id, available, getAdminEmail(authentication)));
+    }
+
+    @DeleteMapping("/buses/{id}")
+    public ApiResponse<Void> deleteBus(@PathVariable Long id, Authentication authentication) {
+        service.deleteBus(id, getAdminEmail(authentication));
+        return ApiResponse.ok("Deleted bus", null);
+    }
+
+    @DeleteMapping("/routes/{id}")
+    public ApiResponse<Void> deleteRoute(@PathVariable Long id, Authentication authentication) {
+        service.deleteRoute(id, getAdminEmail(authentication));
+        return ApiResponse.ok("Deleted route", null);
+    }
+
+    @DeleteMapping("/parking/{id}")
+    public ApiResponse<Void> deleteParkingZone(@PathVariable Long id, Authentication authentication) {
+        service.deleteParkingZone(id, getAdminEmail(authentication));
+        return ApiResponse.ok("Deleted parking zone", null);
+    }
+
+    @DeleteMapping("/events/{id}")
+    public ApiResponse<Void> deleteEvent(@PathVariable Long id, Authentication authentication) {
+        service.deleteEvent(id, getAdminEmail(authentication));
+        return ApiResponse.ok("Deleted event", null);
+    }
+
+    @DeleteMapping("/cafeteria/{id}")
+    public ApiResponse<Void> deleteMenuItem(@PathVariable Long id, Authentication authentication) {
+        service.deleteMenuItem(id, getAdminEmail(authentication));
+        return ApiResponse.ok("Deleted menu item", null);
     }
 
     // ----- LOST & FOUND -----
@@ -172,6 +217,11 @@ public class AdminCampusOperationsController {
     }
     
     // ----- COMPLAINTS -----
+    @GetMapping("/complaints")
+    public ApiResponse<List<MaintenanceComplaint>> getAllComplaints() {
+        return ApiResponse.ok("Fetched complaints", service.getAllComplaints());
+    }
+
     @PatchMapping("/complaints/{id}/status")
     public ApiResponse<MaintenanceComplaint> updateComplaintStatus(
             @PathVariable Long id,

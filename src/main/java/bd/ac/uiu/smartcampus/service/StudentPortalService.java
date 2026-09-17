@@ -491,12 +491,20 @@ public class StudentPortalService {
 
     @Transactional(readOnly = true)
     public List<CampusEvent> getPublishedEvents() {
-        return eventRepository.findByEventDateGreaterThanEqualOrderByEventDateAsc(LocalDate.now());
+        return eventRepository.findAll().stream()
+                .filter(e -> "PUBLISHED".equalsIgnoreCase(e.getStatus()) || "COMPLETED".equalsIgnoreCase(e.getStatus()))
+                .sorted(Comparator.comparing(CampusEvent::getEventDate, Comparator.nullsLast(Comparator.naturalOrder()))
+                        .thenComparing(CampusEvent::getStartTime, Comparator.nullsLast(Comparator.naturalOrder())))
+                .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
     public List<CafeteriaMenuItem> getCafeteriaMenu() {
-        return cafeteriaMenuRepository.findAll();
+        return cafeteriaMenuRepository.findAll().stream()
+                .sorted(Comparator.comparing(CafeteriaMenuItem::isAvailable).reversed()
+                        .thenComparing(CafeteriaMenuItem::getCategory, Comparator.nullsLast(Comparator.naturalOrder()))
+                        .thenComparing(CafeteriaMenuItem::getName, Comparator.nullsLast(Comparator.naturalOrder())))
+                .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)

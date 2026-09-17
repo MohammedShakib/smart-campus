@@ -39,14 +39,25 @@ public class AdminScheduleService {
 
     public List<TeachingScheduleResponse> getAllSchedules() {
         return scheduleRepository.findAll().stream()
-                .map(TeachingScheduleResponse::fromEntity)
+                .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
 
     public TeachingScheduleResponse getScheduleById(Long id) {
         return scheduleRepository.findById(id)
-                .map(TeachingScheduleResponse::fromEntity)
+                .map(this::mapToResponse)
                 .orElseThrow(() -> new IllegalArgumentException("Schedule not found"));
+    }
+
+    private TeachingScheduleResponse mapToResponse(TeachingSchedule schedule) {
+        TeachingScheduleResponse response = TeachingScheduleResponse.fromEntity(schedule);
+        if (schedule.getTeacherEmail() != null) {
+            userRepository.findByEmail(schedule.getTeacherEmail()).ifPresent(user -> {
+                response.setTeacherId(user.getId());
+                response.setTeacherName(user.getFullName());
+            });
+        }
+        return response;
     }
 
     @Transactional
@@ -73,7 +84,7 @@ public class AdminScheduleService {
         schedule = scheduleRepository.save(schedule);
         auditLogRepository.save(new AdminActionLog(adminEmail, "SCHEDULE_CREATED", "Created schedule ID " + schedule.getId()));
 
-        return TeachingScheduleResponse.fromEntity(schedule);
+        return mapToResponse(schedule);
     }
 
     @Transactional
@@ -84,8 +95,6 @@ public class AdminScheduleService {
         Course course = resolveActiveCourse(request.getCourseId());
         User teacher = resolveActiveTeacher(request.getTeacherId());
         Classroom classroom = resolveActiveClassroom(request.getClassroomId());
-
-        validateHistoricalSafety(schedule, request, course, teacher, classroom);
 
         validateConflicts(request, id, teacher.getEmail());
 
@@ -103,7 +112,31 @@ public class AdminScheduleService {
         schedule = scheduleRepository.save(schedule);
         auditLogRepository.save(new AdminActionLog(adminEmail, "SCHEDULE_UPDATED", "Updated schedule ID " + schedule.getId()));
 
-        return TeachingScheduleResponse.fromEntity(schedule);
+        return mapToResponse(schedule);
+    }
+
+    @Transactional
+    public void deleteSchedule(Long id, String adminEmail) {
+        TeachingSchedule schedule = scheduleRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Schedule not found"));
+        if (attendanceSessionRepository.existsByTeachingScheduleId(id)) {
+            schedule.setStatus(ClassStatus.CANCELLED);
+            scheduleRepository.save(schedule);
+            auditLogRepository.save(new AdminActionLog(adminEmail, "SCHEDULE_CANCELLED", "Cancelled schedule ID " + id + " due to existing attendance records"));
+        } else {
+            scheduleRepository.delete(schedule);
+            auditLogRepository.save(new AdminActionLog(adminEmail, "SCHEDULE_DELETED", "Deleted schedule ID " + id));
+        }
+    }
+
+    @Transactional
+    public TeachingScheduleResponse updateScheduleStatus(Long id, ClassStatus status, String adminEmail) {
+        TeachingSchedule schedule = scheduleRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Schedule not found"));
+        schedule.setStatus(status);
+        schedule = scheduleRepository.save(schedule);
+        auditLogRepository.save(new AdminActionLog(adminEmail, "SCHEDULE_STATUS_CHANGED", "Changed status of schedule ID " + id + " to " + status));
+        return mapToResponse(schedule);
     }
 
     private void validateConflicts(TeachingScheduleRequest request, Long excludeId, String teacherEmail) {
@@ -113,15 +146,17 @@ public class AdminScheduleService {
         request.setSectionName(required(request.getSectionName(), "Section name is required."));
         request.setDayOfWeek(normalizeDay(request.getDayOfWeek()));
 
-        if (scheduleRepository.isDuplicateSchedule(request.getCourseId(), request.getSectionName(), request.getDayOfWeek(), request.getStartTime(), request.getEndTime(), excludeId)) {
+        Long effectiveExcludeId = excludeId != null ? excludeId : 0L;
+
+        if (scheduleRepository.isDuplicateSchedule(request.getCourseId(), request.getSectionName(), request.getDayOfWeek(), request.getStartTime(), request.getEndTime(), effectiveExcludeId)) {
             throw new IllegalArgumentException("Duplicate schedule slot exists for this course section");
         }
 
-        if (scheduleRepository.hasRoomConflict(request.getClassroomId(), request.getDayOfWeek(), request.getStartTime(), request.getEndTime(), excludeId)) {
+        if (scheduleRepository.hasRoomConflict(request.getClassroomId(), request.getDayOfWeek(), request.getStartTime(), request.getEndTime(), effectiveExcludeId)) {
             throw new IllegalArgumentException("Room is already booked during this time");
         }
 
-        if (scheduleRepository.hasTeacherConflict(teacherEmail, request.getDayOfWeek(), request.getStartTime(), request.getEndTime(), excludeId)) {
+        if (scheduleRepository.hasTeacherConflict(teacherEmail, request.getDayOfWeek(), request.getStartTime(), request.getEndTime(), effectiveExcludeId)) {
             throw new IllegalArgumentException("Teacher already has a class scheduled during this time");
         }
     }
