@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Bus, Car, UsersRound, CalendarDays, Utensils, Search } from 'lucide-react';
 import TransportManagement from './TransportManagement';
 import ParkingManagement from './ParkingManagement';
 import VisitorManagement from './VisitorManagement';
@@ -6,40 +7,51 @@ import EventManagement from './EventManagement';
 import CafeteriaManagement from './CafeteriaManagement';
 import LostFoundAdmin from './LostFoundAdmin';
 
-const CampusOperationsTabs = () => {
-    const [activeTab, setActiveTab] = useState('transport');
+const TABS = [
+  { id: 'transport', label: 'Transport Fleet', icon: Bus },
+  { id: 'parking', label: 'Parking Slots', icon: Car },
+  { id: 'visitors', label: 'Visitor Passes', icon: UsersRound },
+  { id: 'events', label: 'Campus Events', icon: CalendarDays },
+  { id: 'cafeteria', label: 'Cafeteria & Meals', icon: Utensils },
+  { id: 'lostfound', label: 'Lost & Found', icon: Search }
+];
 
-    const renderTabContent = () => {
-        switch (activeTab) {
-            case 'transport': return <TransportManagement />;
-            case 'parking': return <ParkingManagement />;
-            case 'visitors': return <VisitorManagement />;
-            case 'events': return <EventManagement />;
-            case 'cafeteria': return <CafeteriaManagement />;
-            case 'lostfound': return <LostFoundAdmin />;
-            default: return <TransportManagement />;
-        }
-    };
+export default function CampusOperationsTabs() {
+  const [activeTab, setActiveTab] = useState('transport');
 
-    return (
-        <div className="campus-operations-section fade-in">
-            <div className="section-header">
-                <h2>Campus Operations</h2>
-                <p>Manage transportation, parking, visitors, events, cafeteria services and lost & found.</p>
-            </div>
-            <div className="custom-tabs">
-                <button className={`tab-button ${activeTab === 'transport' ? 'active' : ''}`} onClick={() => setActiveTab('transport')}>Transport</button>
-                <button className={`tab-button ${activeTab === 'parking' ? 'active' : ''}`} onClick={() => setActiveTab('parking')}>Parking</button>
-                <button className={`tab-button ${activeTab === 'visitors' ? 'active' : ''}`} onClick={() => setActiveTab('visitors')}>Visitors</button>
-                <button className={`tab-button ${activeTab === 'events' ? 'active' : ''}`} onClick={() => setActiveTab('events')}>Events</button>
-                <button className={`tab-button ${activeTab === 'cafeteria' ? 'active' : ''}`} onClick={() => setActiveTab('cafeteria')}>Cafeteria</button>
-                <button className={`tab-button ${activeTab === 'lostfound' ? 'active' : ''}`} onClick={() => setActiveTab('lostfound')}>Lost & Found</button>
-            </div>
-            <div className="tab-content-container">
-                {renderTabContent()}
-            </div>
-        </div>
-    );
-};
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'transport': return <TransportManagement />;
+      case 'parking': return <ParkingManagement />;
+      case 'visitors': return <VisitorManagement />;
+      case 'events': return <EventManagement />;
+      case 'cafeteria': return <CafeteriaManagement />;
+      case 'lostfound': return <LostFoundAdmin />;
+      default: return <TransportManagement />;
+    }
+  };
 
-export default CampusOperationsTabs;
+  return (
+    <div className="campus-operations-page fade-in">
+      <div className="academic-tabs" role="tablist" aria-label="Campus Operations Navigation">
+        {TABS.map(({ id, label, icon: Icon }) => (
+          <button
+            key={id}
+            type="button"
+            className={`academic-tab${activeTab === id ? ' is-active' : ''}`}
+            onClick={() => setActiveTab(id)}
+            role="tab"
+            aria-selected={activeTab === id}
+          >
+            <Icon size={16} />
+            <span>{label}</span>
+          </button>
+        ))}
+      </div>
+
+      <div className="tab-content-wrapper" style={{ marginTop: '1rem' }}>
+        {renderTabContent()}
+      </div>
+    </div>
+  );
+}

@@ -51,4 +51,10 @@ public class AdminCommunicationController {
         NoticeStatus status = NoticeStatus.valueOf(payload.get("status"));
         return ApiResponse.ok("Updated notice status", communicationService.updateNoticeStatus(id, status));
     }
+
+    @DeleteMapping("/notices/{id}")
+    public ApiResponse<Void> deleteNotice(@PathVariable Long id) {
+        communicationService.deleteNotice(id);
+        return ApiResponse.ok("Deleted notice", null);
+    }
 }

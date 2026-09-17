@@ -89,8 +89,25 @@ public class AdminCampusOperationsService {
         bus.setDriverName(updated.getDriverName());
         bus.setDriverPhone(updated.getDriverPhone());
         bus.setCapacity(updated.getCapacity());
+        if (updated.getOperationalStatus() != null && !updated.getOperationalStatus().isBlank()) {
+            bus.setOperationalStatus(normalizeBusStatus(updated.getOperationalStatus()));
+        }
+        if (updated.getBusCode() != null && !updated.getBusCode().isBlank() && !updated.getBusCode().equalsIgnoreCase(bus.getBusCode())) {
+            String newCode = updated.getBusCode().trim().toUpperCase(Locale.ROOT);
+            if (busRepository.findByBusCode(newCode).isPresent()) {
+                throw new IllegalArgumentException("Bus code already exists");
+            }
+            bus.setBusCode(newCode);
+        }
+        if (updated.getRegistrationNumber() != null && !updated.getRegistrationNumber().isBlank() && !updated.getRegistrationNumber().equalsIgnoreCase(bus.getRegistrationNumber())) {
+            String newReg = updated.getRegistrationNumber().trim().toUpperCase(Locale.ROOT);
+            if (busRepository.findByRegistrationNumber(newReg).isPresent()) {
+                throw new IllegalArgumentException("Registration number already exists");
+            }
+            bus.setRegistrationNumber(newReg);
+        }
         Bus saved = busRepository.save(bus);
-        logAction(adminEmail, "BUS_UPDATED", "Updated bus " + bus.getBusCode());
+        logAction(adminEmail, "BUS_UPDATED", "Updated bus " + bus.getBusCode() + " status: " + bus.getOperationalStatus());
         return saved;
     }
 
@@ -132,6 +149,39 @@ public class AdminCampusOperationsService {
         }
         BusRoute saved = busRouteRepository.save(route);
         logAction(adminEmail, "BUS_ROUTE_CREATED", "Created route " + route.getRouteCode());
+        return saved;
+    }
+
+    public BusRoute updateRoute(Long id, BusRoute updated, String adminEmail) {
+        BusRoute route = busRouteRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Route not found"));
+        if (updated.getName() != null && !updated.getName().isBlank()) {
+            route.setName(updated.getName().trim());
+        }
+        if (updated.getOrigin() != null && !updated.getOrigin().isBlank()) {
+            route.setOrigin(updated.getOrigin().trim());
+        }
+        if (updated.getDestination() != null && !updated.getDestination().isBlank()) {
+            route.setDestination(updated.getDestination().trim());
+        }
+        if (updated.getRouteCode() != null && !updated.getRouteCode().isBlank() && !updated.getRouteCode().equalsIgnoreCase(route.getRouteCode())) {
+            String newCode = updated.getRouteCode().trim().toUpperCase(Locale.ROOT);
+            if (busRouteRepository.findByRouteCode(newCode).isPresent()) {
+                throw new IllegalArgumentException("Route code already exists");
+            }
+            route.setRouteCode(newCode);
+        }
+        if (updated.getAssignedBus() != null && updated.getAssignedBus().getId() != null) {
+            Bus bus = busRepository.findById(updated.getAssignedBus().getId())
+                    .orElseThrow(() -> new IllegalArgumentException("Assigned bus not found"));
+            if (!bus.isActive()) {
+                throw new IllegalArgumentException("Cannot assign inactive bus");
+            }
+            route.setAssignedBus(bus);
+        } else if (updated.getAssignedBus() == null) {
+            route.setAssignedBus(null);
+        }
+        BusRoute saved = busRouteRepository.save(route);
+        logAction(adminEmail, "BUS_ROUTE_UPDATED", "Updated route " + route.getRouteCode());
         return saved;
     }
 
@@ -196,6 +246,10 @@ public class AdminCampusOperationsService {
     }
 
     // ----- COMPLAINTS -----
+    public List<MaintenanceComplaint> getAllComplaints() {
+        return complaintRepository.findAll();
+    }
+
     public MaintenanceComplaint updateComplaintStatus(Long id, String status, String resolutionNote, String adminEmail) {
         MaintenanceComplaint complaint = complaintRepository.findById(id).orElseThrow();
         complaint.setStatus(status.toUpperCase(Locale.ROOT));
@@ -302,8 +356,49 @@ public class AdminCampusOperationsService {
         return saved;
     }
     
+    public CampusEvent updateEvent(Long id, CampusEvent updated, String adminEmail) {
+        CampusEvent event = eventRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Event not found"));
+        if (updated.getTitle() != null && !updated.getTitle().isBlank()) {
+            event.setTitle(updated.getTitle().trim());
+        }
+        if (updated.getDescription() != null) {
+            event.setDescription(updated.getDescription().trim());
+        }
+        if (updated.getOrganizer() != null && !updated.getOrganizer().isBlank()) {
+            event.setOrganizer(updated.getOrganizer().trim());
+        }
+        if (updated.getLocation() != null && !updated.getLocation().isBlank()) {
+            event.setLocation(updated.getLocation().trim());
+        }
+        if (updated.getCapacity() != null) {
+            if (updated.getCapacity() < 0) {
+                throw new IllegalArgumentException("Capacity cannot be negative");
+            }
+            event.setCapacity(updated.getCapacity());
+        }
+        if (updated.getEventDate() != null) {
+            event.setEventDate(updated.getEventDate());
+        }
+        if (updated.getStartTime() != null) {
+            event.setStartTime(updated.getStartTime());
+        }
+        if (updated.getEndTime() != null) {
+            event.setEndTime(updated.getEndTime());
+        }
+        if (event.getStartTime() != null && event.getEndTime() != null && !event.getStartTime().isBefore(event.getEndTime())) {
+            throw new IllegalArgumentException("End time must be after start time");
+        }
+        if (updated.getStatus() != null && !updated.getStatus().isBlank()) {
+            event.setStatus(normalizeEventStatus(updated.getStatus()));
+        }
+        validateEventRoomConflict(event);
+        CampusEvent saved = eventRepository.save(event);
+        logAction(adminEmail, "EVENT_UPDATED", "Updated event " + event.getTitle());
+        return saved;
+    }
+
     public CampusEvent updateEventStatus(Long id, String status, String adminEmail) {
-        CampusEvent event = eventRepository.findById(id).orElseThrow();
+        CampusEvent event = eventRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Event not found"));
         event.setStatus(normalizeEventStatus(status));
         CampusEvent saved = eventRepository.save(event);
         logAction(adminEmail, "EVENT_UPDATED", "Updated event status to " + status);
@@ -329,8 +424,31 @@ public class AdminCampusOperationsService {
         return saved;
     }
 
+    public CafeteriaMenuItem updateMenuItem(Long id, CafeteriaMenuItem updated, String adminEmail) {
+        CafeteriaMenuItem item = menuRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Menu item not found"));
+        if (updated.getName() != null && !updated.getName().isBlank()) {
+            item.setName(updated.getName().trim());
+        }
+        if (updated.getCategory() != null && !updated.getCategory().isBlank()) {
+            item.setCategory(updated.getCategory().trim().toUpperCase(Locale.ROOT));
+        }
+        if (updated.getDescription() != null) {
+            item.setDescription(updated.getDescription().trim());
+        }
+        if (updated.getPrice() != null) {
+            if (updated.getPrice().compareTo(BigDecimal.ZERO) < 0) {
+                throw new IllegalArgumentException("Price cannot be negative");
+            }
+            item.setPrice(updated.getPrice());
+        }
+        item.setAvailable(updated.isAvailable());
+        CafeteriaMenuItem saved = menuRepository.save(item);
+        logAction(adminEmail, "CAFETERIA_ITEM_UPDATED", "Updated menu item " + item.getName() + " price=" + item.getPrice() + " avail=" + item.isAvailable());
+        return saved;
+    }
+
     public CafeteriaMenuItem updateMenuItemAvailability(Long id, boolean available, String adminEmail) {
-        CafeteriaMenuItem item = menuRepository.findById(id).orElseThrow();
+        CafeteriaMenuItem item = menuRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Menu item not found"));
         item.setAvailable(available);
         CafeteriaMenuItem saved = menuRepository.save(item);
         logAction(adminEmail, "CAFETERIA_ITEM_AVAILABILITY_CHANGED", "Changed availability of " + item.getName());
@@ -358,6 +476,36 @@ public class AdminCampusOperationsService {
         }
         item.setResolvedAt(LocalDateTime.now());
         return lostFoundRepository.save(item);
+    }
+
+    public void deleteBus(Long id, String adminEmail) {
+        Bus bus = busRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Bus not found"));
+        busRepository.delete(bus);
+        logAction(adminEmail, "BUS_DELETED", "Deleted bus " + bus.getBusCode());
+    }
+
+    public void deleteRoute(Long id, String adminEmail) {
+        BusRoute route = busRouteRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Route not found"));
+        busRouteRepository.delete(route);
+        logAction(adminEmail, "BUS_ROUTE_DELETED", "Deleted route " + route.getRouteCode());
+    }
+
+    public void deleteParkingZone(Long id, String adminEmail) {
+        ParkingZone zone = parkingZoneRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Parking zone not found"));
+        parkingZoneRepository.delete(zone);
+        logAction(adminEmail, "PARKING_DELETED", "Deleted parking zone " + zone.getZoneCode());
+    }
+
+    public void deleteEvent(Long id, String adminEmail) {
+        CampusEvent event = eventRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Event not found"));
+        eventRepository.delete(event);
+        logAction(adminEmail, "EVENT_DELETED", "Deleted event " + event.getTitle());
+    }
+
+    public void deleteMenuItem(Long id, String adminEmail) {
+        CafeteriaMenuItem item = menuRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Menu item not found"));
+        menuRepository.delete(item);
+        logAction(adminEmail, "CAFETERIA_ITEM_DELETED", "Deleted menu item " + item.getName());
     }
 
     private void logAction(String email, String actionType, String description) {

@@ -42,6 +42,14 @@ public class AdminCommunicationService {
         return savedNotice;
     }
 
+    @Transactional
+    public void deleteNotice(Long id) {
+        if (!noticeRepository.existsById(id)) {
+            throw new IllegalArgumentException("Notice not found");
+        }
+        noticeRepository.deleteById(id);
+    }
+
     private void fanOutNotice(CampusNotice notice) {
         Role targetRole = null;
         switch (notice.getAudience()) {

@@ -19,6 +19,7 @@ public class TeachingScheduleResponse {
 
     private Long courseId;
     private Long classroomId;
+    private Long teacherId;
     private String teacherName;
 
     public static TeachingScheduleResponse fromEntity(TeachingSchedule schedule) {
@@ -138,6 +139,14 @@ public class TeachingScheduleResponse {
 
     public void setClassroomId(Long classroomId) {
         this.classroomId = classroomId;
+    }
+
+    public Long getTeacherId() {
+        return teacherId;
+    }
+
+    public void setTeacherId(Long teacherId) {
+        this.teacherId = teacherId;
     }
 
     public String getTeacherName() {

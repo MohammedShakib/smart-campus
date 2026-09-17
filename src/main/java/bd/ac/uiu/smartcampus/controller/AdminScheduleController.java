@@ -42,4 +42,17 @@ public class AdminScheduleController {
     public ResponseEntity<ApiResponse<TeachingScheduleResponse>> updateSchedule(@PathVariable Long id, @Valid @RequestBody TeachingScheduleRequest request, Principal principal) {
         return ResponseEntity.ok(ApiResponse.ok("Updated schedule", scheduleService.updateSchedule(id, request, principal.getName())));
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteSchedule(@PathVariable Long id, Principal principal) {
+        scheduleService.deleteSchedule(id, principal.getName());
+        return ResponseEntity.ok(ApiResponse.ok("Deleted schedule", null));
+    }
+
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<ApiResponse<TeachingScheduleResponse>> updateScheduleStatus(@PathVariable Long id, @RequestBody java.util.Map<String, String> payload, Principal principal) {
+        String statusStr = payload.get("status");
+        bd.ac.uiu.smartcampus.model.ClassStatus status = bd.ac.uiu.smartcampus.model.ClassStatus.valueOf(statusStr);
+        return ResponseEntity.ok(ApiResponse.ok("Updated schedule status", scheduleService.updateScheduleStatus(id, status, principal.getName())));
+    }
 }
