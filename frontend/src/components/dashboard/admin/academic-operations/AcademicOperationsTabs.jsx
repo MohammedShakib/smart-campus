@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { CalendarDays, RadioTower, ClipboardCheck, CalendarCheck } from 'lucide-react';
+import { readUrlOption, writeUrlOption } from '../../../../utils/urlState';
 import ScheduleManagement from './ScheduleManagement';
 import ActiveClassMonitoring from './ActiveClassMonitoring';
 import AdminAttendanceMonitoring from './AdminAttendanceMonitoring';
@@ -13,7 +14,11 @@ const TABS = [
 ];
 
 export default function AcademicOperationsTabs() {
-  const [activeTab, setActiveTab] = useState('schedule');
+  const [activeTab, setActiveTab] = useState(() => readUrlOption('academicOpsTab', TABS.map(({ id }) => id), 'schedule'));
+
+  useEffect(() => {
+    writeUrlOption('academicOpsTab', activeTab, 'schedule');
+  }, [activeTab]);
 
   const renderTab = () => {
     switch (activeTab) {

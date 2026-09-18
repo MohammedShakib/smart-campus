@@ -19,12 +19,14 @@ import {
   Trash2
 } from 'lucide-react';
 import { api } from '../../../../utils/api';
+import { readUrlOption, writeUrlOption } from '../../../../utils/urlState';
 import { Panel, ActionButton, EmptyState, BusLocations } from '../../../shared/SharedComponents';
 
 const dataOf = (payload) => Array.isArray(payload) ? payload : (payload?.data || []);
+const TRANSPORT_TABS = ['buses', 'routes', 'tracking'];
 
 export default function TransportManagement() {
-  const [subTab, setSubTab] = useState('buses'); // buses, routes, tracking
+  const [subTab, setSubTab] = useState(() => readUrlOption('transportTab', TRANSPORT_TABS, 'buses'));
   const [buses, setBuses] = useState([]);
   const [routes, setRoutes] = useState([]);
   const [busLocations, setBusLocations] = useState({});
@@ -86,6 +88,10 @@ export default function TransportManagement() {
   useEffect(() => {
     fetchData();
   }, []);
+
+  useEffect(() => {
+    writeUrlOption('transportTab', subTab, 'buses');
+  }, [subTab]);
 
   useEffect(() => {
     let interval;

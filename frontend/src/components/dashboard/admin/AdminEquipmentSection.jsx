@@ -18,13 +18,16 @@ import {
   Box
 } from 'lucide-react';
 import { api } from '../../../utils/api';
+import { readUrlOption, writeUrlOption } from '../../../utils/urlState';
 import { SectionHeader, Panel, ErrorState, EmptyState } from '../../shared/SharedComponents';
+
+const EQUIPMENT_STATUS_FILTERS = ['ALL', 'PENDING', 'APPROVED', 'CHECKED_OUT', 'RETURNED', 'REJECTED'];
 
 export function AdminEquipmentSection() {
   const [bookings, setBookings] = useState([]);
   const [equipmentList, setEquipmentList] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filterStatus, setFilterStatus] = useState('ALL');
+  const [filterStatus, setFilterStatus] = useState(() => readUrlOption('equipmentStatus', EQUIPMENT_STATUS_FILTERS, 'ALL'));
   const [searchQuery, setSearchQuery] = useState('');
   
   // Review / Decline Modal
@@ -55,6 +58,10 @@ export function AdminEquipmentSection() {
   useEffect(() => {
     loadData();
   }, []);
+
+  useEffect(() => {
+    writeUrlOption('equipmentStatus', filterStatus, 'ALL');
+  }, [filterStatus]);
 
   const openReviewModal = (booking, status) => {
     setSelectedBooking(booking);

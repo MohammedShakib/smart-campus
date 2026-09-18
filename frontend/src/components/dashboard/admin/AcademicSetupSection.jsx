@@ -12,6 +12,7 @@ import {
   X
 } from 'lucide-react';
 import { api } from '../../../utils/api';
+import { readUrlOption, writeUrlOption } from '../../../utils/urlState';
 import { EmptyState, ErrorState, SectionHeader } from '../../shared/SharedComponents';
 
 const TABS = [
@@ -41,7 +42,7 @@ const EMPTY_FORMS = {
 const roomTypes = ['Theory', 'CSE Lab', 'Multimedia', 'Auditorium', 'Seminar', 'Lab'];
 
 export default function AcademicSetupSection() {
-  const [activeTab, setActiveTab] = useState('DEPARTMENTS');
+  const [activeTab, setActiveTab] = useState(() => readUrlOption('academicSetupTab', TABS.map(({ id }) => id), 'DEPARTMENTS'));
   const [data, setData] = useState({ departments: [], courses: [], buildings: [], rooms: [] });
   const [forms, setForms] = useState(EMPTY_FORMS);
   const [editing, setEditing] = useState({});
@@ -70,6 +71,10 @@ export default function AcademicSetupSection() {
   };
 
   useEffect(() => { loadData(); }, []);
+
+  useEffect(() => {
+    writeUrlOption('academicSetupTab', activeTab, 'DEPARTMENTS');
+  }, [activeTab]);
 
   const activeList = useMemo(() => {
     const query = filters.search.trim().toLowerCase();

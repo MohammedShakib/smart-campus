@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { api } from '../utils/api';
 import { initials, prettyRole } from '../utils/helpers';
+import { readUrlOption, writeUrlOption } from '../utils/urlState';
 import { ErrorState, LoadingState } from '../components/shared/SharedComponents';
 import { ActiveEmergencyBanner } from '../components/shared/ActiveEmergencyBanner';
 import { DashboardSection } from '../components/dashboard/DashboardSection';
@@ -87,7 +88,10 @@ const dashboardConfig = {
 export function DashboardPage() {
   const role = window.location.pathname.split('/').pop() || 'student';
   const config = dashboardConfig[role] || dashboardConfig.student;
-  const [activeSection, setActiveSection] = useState('overview');
+  const readSectionFromUrl = () => {
+    return readUrlOption('section', config.sections.map((section) => section.key), 'overview');
+  };
+  const [activeSection, setActiveSection] = useState(readSectionFromUrl);
   const [data, setData] = useState(null);
   const [telemetry, setTelemetry] = useState(null);
   const [auditLogs, setAuditLogs] = useState([]);
@@ -145,6 +149,15 @@ export function DashboardPage() {
       if (notifTimer) clearInterval(notifTimer);
     };
   }, [role, loadDashboard, loadAuditLogs, loadUnreadCount]);
+
+  useEffect(() => {
+    if (!config.sections.some((section) => section.key === activeSection)) {
+      setActiveSection('overview');
+      return;
+    }
+
+    writeUrlOption('section', activeSection, 'overview');
+  }, [activeSection, config.sections]);
 
   if (error) return <ErrorState error={error} />;
   if (!data || !telemetry) return <LoadingState />;

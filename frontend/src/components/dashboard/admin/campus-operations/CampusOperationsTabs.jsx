@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Bus, Car, UsersRound, CalendarDays, Utensils, Search } from 'lucide-react';
+import { readUrlOption, writeUrlOption } from '../../../../utils/urlState';
 import TransportManagement from './TransportManagement';
 import ParkingManagement from './ParkingManagement';
 import VisitorManagement from './VisitorManagement';
@@ -17,7 +18,11 @@ const TABS = [
 ];
 
 export default function CampusOperationsTabs() {
-  const [activeTab, setActiveTab] = useState('transport');
+  const [activeTab, setActiveTab] = useState(() => readUrlOption('campusOpsTab', TABS.map(({ id }) => id), 'transport'));
+
+  useEffect(() => {
+    writeUrlOption('campusOpsTab', activeTab, 'transport');
+  }, [activeTab]);
 
   const renderTabContent = () => {
     switch (activeTab) {
