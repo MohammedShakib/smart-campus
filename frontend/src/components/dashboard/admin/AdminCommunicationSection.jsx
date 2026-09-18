@@ -235,44 +235,48 @@ export function AdminCommunicationSection() {
       </div>
 
       {/* Metric Cards */}
-      <div className="metric-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
-        <div className="stat-card">
-          <div className="stat-card-icon" style={{ background: 'rgba(99,102,241,0.1)', color: '#4f46e5' }}>
-            <Radio size={22} />
+      <div className="metric-grid communication-metric-grid">
+        <div className="metric-card metric-card--accounts">
+          <div className="metric-card-head">
+            <span>Total Bulletins</span>
+            <span className="metric-icon"><Radio size={20} /></span>
           </div>
-          <div className="stat-card-copy">
-            <span className="stat-label">Total Bulletins</span>
-            <strong className="stat-value">{totalCount}</strong>
-          </div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-card-icon" style={{ background: 'rgba(16,185,129,0.1)', color: '#059669' }}>
-            <CheckCircle2 size={22} />
-          </div>
-          <div className="stat-card-copy">
-            <span className="stat-label">Live / Published</span>
-            <strong className="stat-value" style={{ color: '#059669' }}>{publishedCount}</strong>
+          <strong>{totalCount}</strong>
+          <div className="metric-card-foot">
+            <span>All announcements</span>
           </div>
         </div>
 
-        <div className="stat-card">
-          <div className="stat-card-icon" style={{ background: 'rgba(239,68,68,0.1)', color: '#dc2626' }}>
-            <AlertTriangle size={22} />
+        <div className="metric-card metric-card--found">
+          <div className="metric-card-head">
+            <span>Live / Published</span>
+            <span className="metric-icon"><CheckCircle2 size={20} /></span>
           </div>
-          <div className="stat-card-copy">
-            <span className="stat-label">High Priority</span>
-            <strong className="stat-value" style={{ color: '#dc2626' }}>{highPriorityCount}</strong>
+          <strong>{publishedCount}</strong>
+          <div className="metric-card-foot">
+            <span>Visible across portals</span>
           </div>
         </div>
 
-        <div className="stat-card">
-          <div className="stat-card-icon" style={{ background: 'rgba(59,130,246,0.1)', color: '#2563eb' }}>
-            <Users size={22} />
+        <div className="metric-card metric-card--lost">
+          <div className="metric-card-head">
+            <span>High Priority</span>
+            <span className="metric-icon"><AlertTriangle size={20} /></span>
           </div>
-          <div className="stat-card-copy">
-            <span className="stat-label">Campus-wide (All)</span>
-            <strong className="stat-value" style={{ color: '#2563eb' }}>{generalCount}</strong>
+          <strong>{highPriorityCount}</strong>
+          <div className="metric-card-foot">
+            <span>Urgent or high notices</span>
+          </div>
+        </div>
+
+        <div className="metric-card metric-card--resolved">
+          <div className="metric-card-head">
+            <span>Campus-wide</span>
+            <span className="metric-icon"><Users size={20} /></span>
+          </div>
+          <strong>{generalCount}</strong>
+          <div className="metric-card-foot">
+            <span>Audience set to everyone</span>
           </div>
         </div>
       </div>
@@ -294,43 +298,24 @@ export function AdminCommunicationSection() {
         }
       >
         {/* Search & Filters */}
-        <div style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: '0.75rem',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: '1rem',
-          padding: '0.75rem',
-          background: '#f8fafc',
-          borderRadius: '12px',
-          border: '1px solid var(--border)'
-        }}>
-          <div style={{ position: 'relative', flex: '1 1 240px' }}>
-            <Search size={15} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--tx-muted)' }} />
+        <div className="admin-toolbar communication-toolbar">
+          <div className="admin-toolbar-left">
+            <div className="admin-search communication-search">
+              <Search size={16} />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search notices by title, content or author..."
-              style={{
-                width: '100%',
-                paddingLeft: '32px',
-                paddingRight: '10px',
-                height: '36px',
-                borderRadius: '8px',
-                border: '1px solid var(--border)',
-                background: '#fff',
-                fontSize: '0.82rem'
-              }}
             />
+            </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <div className="admin-toolbar-right">
+            <div className="admin-filter-group">
             <select
               value={audienceFilter}
               onChange={(e) => setAudienceFilter(e.target.value)}
-              style={{ height: '36px', borderRadius: '8px', border: '1px solid var(--border)', padding: '0 0.65rem', background: '#fff', fontSize: '0.82rem' }}
             >
               <option value="ALL">All Audiences</option>
               <option value="STUDENTS">Students Only</option>
@@ -338,22 +323,24 @@ export function AdminCommunicationSection() {
               <option value="ADMIN">Admins Only</option>
               <option value="SECURITY">Security Only</option>
             </select>
+            </div>
 
+            <div className="admin-filter-group">
             <select
               value={priorityFilter}
               onChange={(e) => setPriorityFilter(e.target.value)}
-              style={{ height: '36px', borderRadius: '8px', border: '1px solid var(--border)', padding: '0 0.65rem', background: '#fff', fontSize: '0.82rem' }}
             >
               <option value="ALL">All Priorities</option>
               <option value="HIGH">High / Urgent</option>
               <option value="MEDIUM">Medium</option>
               <option value="LOW">Low</option>
             </select>
+            </div>
 
+            <div className="admin-filter-group">
             <select
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
-              style={{ height: '36px', borderRadius: '8px', border: '1px solid var(--border)', padding: '0 0.65rem', background: '#fff', fontSize: '0.82rem' }}
             >
               <option value="ALL">All Categories</option>
               <option value="GENERAL">General</option>
@@ -361,6 +348,7 @@ export function AdminCommunicationSection() {
               <option value="TRANSPORT">Transport</option>
               <option value="SECURITY">Security</option>
             </select>
+            </div>
           </div>
         </div>
 
@@ -383,8 +371,8 @@ export function AdminCommunicationSection() {
             message={search || audienceFilter !== 'ALL' || priorityFilter !== 'ALL' ? "No bulletins match your active filters." : "No notices published yet. Click 'Publish Notice' above to start."}
           />
         ) : (
-          <div className="table-wrap">
-            <table>
+          <div className="admin-table-wrap">
+            <table className="admin-table communication-table">
               <thead>
                 <tr>
                   <th>Announcement</th>

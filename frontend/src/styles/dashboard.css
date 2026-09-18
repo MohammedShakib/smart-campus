@@ -642,6 +642,24 @@
   color: var(--sky);
 }
 
+.metric-card--lost .metric-icon {
+  background: rgba(244,63,94,0.10);
+  border-color: rgba(244,63,94,0.24);
+  color: #e11d48;
+}
+
+.metric-card--found .metric-icon {
+  background: var(--emerald-soft);
+  border-color: var(--emerald-border);
+  color: var(--emerald);
+}
+
+.metric-card--resolved .metric-icon {
+  background: rgba(37,99,235,0.10);
+  border-color: rgba(37,99,235,0.22);
+  color: #2563eb;
+}
+
 .metric-card strong {
   display: block;
   margin-top: 0.48rem;
@@ -730,6 +748,14 @@
   font-size: 0.98rem;
   font-weight: 800;
   color: var(--tx-primary);
+}
+
+.panel-head-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 .panel-tag {
@@ -5066,6 +5092,147 @@
 
 .admin-table tr:hover {
   background: #fdfdfd;
+}
+
+.lostfound-metric-grid,
+.communication-metric-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.lostfound-toolbar,
+.communication-toolbar {
+  align-items: stretch;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: #f8fafc;
+}
+
+.lostfound-toolbar .admin-toolbar-left,
+.communication-toolbar .admin-toolbar-left {
+  flex: 1 1 420px;
+}
+
+.lostfound-toolbar .admin-toolbar-right,
+.communication-toolbar .admin-toolbar-right {
+  justify-content: flex-end;
+}
+
+.lostfound-search,
+.communication-search {
+  max-width: none;
+  width: 100%;
+}
+
+.lostfound-table {
+  table-layout: fixed;
+}
+
+.lostfound-table th:nth-child(1),
+.lostfound-table td:nth-child(1) {
+  width: 35%;
+}
+
+.lostfound-table th:nth-child(2),
+.lostfound-table td:nth-child(2) {
+  width: 12%;
+}
+
+.lostfound-table th:nth-child(3),
+.lostfound-table td:nth-child(3) {
+  width: 18%;
+}
+
+.lostfound-table th:nth-child(4),
+.lostfound-table td:nth-child(4) {
+  width: 14%;
+}
+
+.lostfound-table th:nth-child(5),
+.lostfound-table td:nth-child(5) {
+  width: 9%;
+}
+
+.lostfound-table th:nth-child(6),
+.lostfound-table td:nth-child(6) {
+  width: 12%;
+}
+
+.lostfound-table .primary-btn,
+.lostfound-table .ghost-btn {
+  min-height: 30px;
+  padding: 0.36rem 0.7rem;
+  border-radius: 10px;
+  font-size: 0.74rem;
+}
+
+.communication-table {
+  table-layout: fixed;
+}
+
+.communication-table th:nth-child(1),
+.communication-table td:nth-child(1) {
+  width: 34%;
+}
+
+.communication-table th:nth-child(2),
+.communication-table td:nth-child(2) {
+  width: 13%;
+}
+
+.communication-table th:nth-child(3),
+.communication-table td:nth-child(3) {
+  width: 16%;
+}
+
+.communication-table th:nth-child(4),
+.communication-table td:nth-child(4) {
+  width: 18%;
+}
+
+.communication-table th:nth-child(5),
+.communication-table td:nth-child(5) {
+  width: 9%;
+}
+
+.communication-table th:nth-child(6),
+.communication-table td:nth-child(6) {
+  width: 10%;
+}
+
+.communication-table .ghost-btn {
+  min-height: 30px;
+  padding: 0.36rem 0.65rem;
+  border-radius: 10px;
+  font-size: 0.74rem;
+}
+
+@media (max-width: 1100px) {
+  .lostfound-metric-grid,
+  .communication-metric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .lostfound-table,
+  .communication-table {
+    min-width: 980px;
+  }
+}
+
+@media (max-width: 680px) {
+  .lostfound-metric-grid,
+  .communication-metric-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .lostfound-toolbar .admin-toolbar-right,
+  .lostfound-toolbar .admin-filter-group,
+  .lostfound-toolbar .admin-filter-group select,
+  .communication-toolbar .admin-toolbar-right,
+  .communication-toolbar .admin-filter-group,
+  .communication-toolbar .admin-filter-group select {
+    width: 100%;
+  }
 }
 
 .admin-empty-state,

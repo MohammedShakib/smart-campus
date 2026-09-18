@@ -56,12 +56,15 @@ export function StatRow({ label, value, color = 'accent' }) {
   );
 }
 
-export function Panel({ title, tag, children }) {
+export function Panel({ title, tag, action, children }) {
   return (
     <section className="panel">
       <div className="panel-head">
         <h3>{title}</h3>
-        {tag && <span className={`panel-tag ${statusClass(tag)}`}>{tag}</span>}
+        <div className="panel-head-actions">
+          {tag && <span className={`panel-tag ${statusClass(tag)}`}>{tag}</span>}
+          {action}
+        </div>
       </div>
       {children}
     </section>

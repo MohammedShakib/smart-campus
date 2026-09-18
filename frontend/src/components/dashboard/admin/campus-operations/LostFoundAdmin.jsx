@@ -149,44 +149,48 @@ export default function LostFoundAdmin() {
       )}
 
       {/* Metric Cards */}
-      <div className="metric-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
-        <div className="stat-card">
-          <div className="stat-card-icon" style={{ background: 'rgba(99,102,241,0.1)', color: '#4f46e5' }}>
-            <Tag size={22} />
+      <div className="metric-grid lostfound-metric-grid">
+        <div className="metric-card metric-card--accounts">
+          <div className="metric-card-head">
+            <span>Total Reported</span>
+            <span className="metric-icon"><Tag size={20} /></span>
           </div>
-          <div className="stat-card-copy">
-            <span className="stat-label">Total Reported</span>
-            <strong className="stat-value">{totalCount}</strong>
-          </div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-card-icon" style={{ background: 'rgba(239,68,68,0.1)', color: '#dc2626' }}>
-            <AlertTriangle size={22} />
-          </div>
-          <div className="stat-card-copy">
-            <span className="stat-label">Lost (Open)</span>
-            <strong className="stat-value" style={{ color: '#dc2626' }}>{lostCount}</strong>
+          <strong>{totalCount}</strong>
+          <div className="metric-card-foot">
+            <span>All reports in the register</span>
           </div>
         </div>
 
-        <div className="stat-card">
-          <div className="stat-card-icon" style={{ background: 'rgba(16,185,129,0.1)', color: '#059669' }}>
-            <HelpCircle size={22} />
+        <div className="metric-card metric-card--lost">
+          <div className="metric-card-head">
+            <span>Lost Open</span>
+            <span className="metric-icon"><AlertTriangle size={20} /></span>
           </div>
-          <div className="stat-card-copy">
-            <span className="stat-label">Found (Awaiting Claim)</span>
-            <strong className="stat-value" style={{ color: '#059669' }}>{foundCount}</strong>
+          <strong>{lostCount}</strong>
+          <div className="metric-card-foot">
+            <span>Needs follow-up</span>
           </div>
         </div>
 
-        <div className="stat-card">
-          <div className="stat-card-icon" style={{ background: 'rgba(59,130,246,0.1)', color: '#2563eb' }}>
-            <CheckCircle2 size={22} />
+        <div className="metric-card metric-card--found">
+          <div className="metric-card-head">
+            <span>Found Awaiting Claim</span>
+            <span className="metric-icon"><HelpCircle size={20} /></span>
           </div>
-          <div className="stat-card-copy">
-            <span className="stat-label">Resolved & Returned</span>
-            <strong className="stat-value" style={{ color: '#2563eb' }}>{resolvedCount}</strong>
+          <strong>{foundCount}</strong>
+          <div className="metric-card-foot">
+            <span>Ready for owner match</span>
+          </div>
+        </div>
+
+        <div className="metric-card metric-card--resolved">
+          <div className="metric-card-head">
+            <span>Resolved & Returned</span>
+            <span className="metric-icon"><CheckCircle2 size={20} /></span>
+          </div>
+          <strong>{resolvedCount}</strong>
+          <div className="metric-card-foot">
+            <span>Closed records</span>
           </div>
         </div>
       </div>
@@ -208,73 +212,55 @@ export default function LostFoundAdmin() {
         }
       >
         {/* Filter & Search Bar */}
-        <div style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: '0.75rem',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: '1rem',
-          padding: '0.75rem',
-          background: '#f8fafc',
-          borderRadius: '12px',
-          border: '1px solid var(--border)'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: '1 1 240px' }}>
-            <div style={{ position: 'relative', width: '100%' }}>
-              <Search size={15} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--tx-muted)' }} />
+        <div className="admin-toolbar lostfound-toolbar">
+          <div className="admin-toolbar-left">
+            <div className="admin-search lostfound-search">
+              <Search size={16} />
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search item, location, reporter..."
-                style={{
-                  width: '100%',
-                  paddingLeft: '32px',
-                  paddingRight: '10px',
-                  height: '36px',
-                  borderRadius: '8px',
-                  border: '1px solid var(--border)',
-                  background: '#fff',
-                  fontSize: '0.82rem'
-                }}
               />
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <div className="admin-toolbar-right">
+            <div className="admin-filter-group">
             <select
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
-              style={{ height: '36px', borderRadius: '8px', border: '1px solid var(--border)', padding: '0 0.65rem', background: '#fff', fontSize: '0.82rem' }}
             >
               <option value="ALL">All Types</option>
               <option value="LOST">Lost Only</option>
               <option value="FOUND">Found Only</option>
             </select>
+            </div>
 
+            <div className="admin-filter-group">
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              style={{ height: '36px', borderRadius: '8px', border: '1px solid var(--border)', padding: '0 0.65rem', background: '#fff', fontSize: '0.82rem' }}
             >
               <option value="ALL">All Statuses</option>
               <option value="OPEN">Open</option>
               <option value="CLAIM_PENDING">Claim Pending</option>
               <option value="RESOLVED">Resolved</option>
             </select>
+            </div>
 
             {categories.length > 0 && (
+              <div className="admin-filter-group">
               <select
                 value={categoryFilter}
                 onChange={(e) => setCategoryFilter(e.target.value)}
-                style={{ height: '36px', borderRadius: '8px', border: '1px solid var(--border)', padding: '0 0.65rem', background: '#fff', fontSize: '0.82rem' }}
               >
                 <option value="ALL">All Categories</option>
                 {categories.map(c => (
                   <option key={c} value={c}>{c}</option>
                 ))}
               </select>
+              </div>
             )}
           </div>
         </div>
@@ -298,8 +284,8 @@ export default function LostFoundAdmin() {
             message={search || typeFilter !== 'ALL' || statusFilter !== 'ALL' ? "No reports match your selected filters." : "No lost or found items reported yet."}
           />
         ) : (
-          <div className="table-wrap">
-            <table>
+          <div className="admin-table-wrap">
+            <table className="admin-table lostfound-table">
               <thead>
                 <tr>
                   <th>Item Details</th>
