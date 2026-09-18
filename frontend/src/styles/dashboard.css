@@ -4357,12 +4357,13 @@
   cursor: pointer;
 }
 
-.row-disabled {
-  opacity: 0.6;
-}
-
 .row-disabled td {
   background-color: var(--bg-hover) !important;
+  color: var(--tx-muted);
+}
+
+.row-disabled .avatar {
+  opacity: 0.68;
 }
 
 .admin-students-table {
@@ -5001,6 +5002,45 @@
   font-size: 0.85rem;
 }
 
+.admin-directory-table {
+  table-layout: fixed;
+}
+
+.admin-directory-table th:nth-child(1),
+.admin-directory-table td:nth-child(1) {
+  width: 29%;
+}
+
+.admin-directory-table th:nth-child(2),
+.admin-directory-table td:nth-child(2) {
+  width: 22%;
+}
+
+.admin-directory-table th:nth-child(3),
+.admin-directory-table td:nth-child(3) {
+  width: 8%;
+}
+
+.admin-directory-table th:nth-child(4),
+.admin-directory-table td:nth-child(4) {
+  width: 10%;
+}
+
+.admin-directory-table th:nth-child(5),
+.admin-directory-table td:nth-child(5) {
+  width: 13%;
+}
+
+.admin-directory-table th:nth-child(6),
+.admin-directory-table td:nth-child(6) {
+  width: 10%;
+}
+
+.admin-directory-table th:nth-child(7),
+.admin-directory-table td:nth-child(7) {
+  width: 8%;
+}
+
 .admin-table th {
   background: #f8fafc;
   color: var(--tx-secondary);
@@ -5087,6 +5127,16 @@
 
 .status-active { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
 .status-disabled { background: #fef2f2; color: #e11d48; border: 1px solid #fecaca; }
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  min-width: 76px;
+  min-height: 22px;
+  white-space: nowrap;
+}
 
 .admin-form-grid {
   display: grid;

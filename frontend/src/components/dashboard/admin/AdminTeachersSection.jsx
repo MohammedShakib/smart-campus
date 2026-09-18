@@ -8,6 +8,7 @@ import {
   Ban,
   Eye,
   ShieldAlert,
+  Loader2,
   ArrowLeft,
   RefreshCw,
   Mail,
@@ -43,8 +44,8 @@ export function AdminTeachersSection() {
     return () => clearTimeout(timer);
   }, [search]);
 
-  const loadData = useCallback(async () => {
-    setLoading(true);
+  const loadData = useCallback(async ({ showLoading = true } = {}) => {
+    if (showLoading) setLoading(true);
     try {
       const params = new URLSearchParams();
       if (debouncedSearch) params.set('search', debouncedSearch);
@@ -65,7 +66,7 @@ export function AdminTeachersSection() {
     } catch (err) {
       setError(err.message);
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   }, [debouncedSearch, statusFilter, departmentFilter]);
 
@@ -112,7 +113,7 @@ export function AdminTeachersSection() {
     setMessage(null);
     try {
       await api(`/api/admin/teachers/${id}/status?active=${newStatus}`, { method: 'PATCH' });
-      await loadData();
+      await loadData({ showLoading: false });
       if (selectedTeacher?.id === id) {
         const detail = await api(`/api/admin/teachers/${id}`);
         setSelectedTeacher(detail);
@@ -186,7 +187,7 @@ export function AdminTeachersSection() {
             {(search || statusFilter || departmentFilter) && (
               <button type="button" className="ghost-btn" onClick={clearFilters}>Clear Filters</button>
             )}
-            <button className="icon-btn" onClick={loadData} title="Refresh" type="button">
+            <button className="icon-btn" onClick={() => loadData()} title="Refresh" type="button">
               <RefreshCw size={18} />
             </button>
           </div>
@@ -200,7 +201,7 @@ export function AdminTeachersSection() {
           <EmptyState title="No teachers found" message="Try changing the search or filter criteria." />
         ) : (
           <div className="admin-table-wrap">
-            <table className="admin-table">
+            <table className="admin-table admin-directory-table">
               <thead>
                 <tr>
                   <th>Teacher Info</th>
@@ -244,7 +245,7 @@ export function AdminTeachersSection() {
                           disabled={statusBusyId === teacher.id}
                           type="button"
                         >
-                          <ShieldAlert size={16} />
+                          {statusBusyId === teacher.id ? <Loader2 size={16} className="spin" /> : <ShieldAlert size={16} />}
                         </button>
                       </div>
                     </td>
@@ -360,7 +361,13 @@ function TeacherDetailView({ teacher, message, onBack, onToggleStatus, onMessage
                   <Settings2 size={16} /> Edit Profile
                 </button>
                 <button className={`secondary-btn ${teacher.active ? 'btn-danger' : 'btn-success'}`} onClick={onToggleStatus} disabled={statusBusy} type="button">
-                  {teacher.active ? <><Ban size={16} /> Disable Account</> : <><CheckCircle2 size={16} /> Enable Account</>}
+                  {statusBusy ? (
+                    <><Loader2 size={16} className="spin" /> Updating...</>
+                  ) : teacher.active ? (
+                    <><Ban size={16} /> Disable Account</>
+                  ) : (
+                    <><CheckCircle2 size={16} /> Enable Account</>
+                  )}
                 </button>
               </div>
             </div>

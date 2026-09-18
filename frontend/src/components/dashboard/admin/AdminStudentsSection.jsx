@@ -8,6 +8,7 @@ import {
   Ban,
   Eye,
   ShieldAlert,
+  Loader2,
   ArrowLeft,
   RefreshCw,
   Mail,
@@ -40,8 +41,8 @@ export function AdminStudentsSection() {
     return () => clearTimeout(timer);
   }, [search]);
 
-  const loadData = useCallback(async () => {
-    setLoading(true);
+  const loadData = useCallback(async ({ showLoading = true } = {}) => {
+    if (showLoading) setLoading(true);
     try {
       const params = new URLSearchParams();
       if (debouncedSearch) params.set('search', debouncedSearch);
@@ -62,7 +63,7 @@ export function AdminStudentsSection() {
     } catch (err) {
       setError(err.message);
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   }, [debouncedSearch, statusFilter, departmentFilter]);
 
@@ -109,7 +110,7 @@ export function AdminStudentsSection() {
     setMessage(null);
     try {
       await api(`/api/admin/students/${id}/status?active=${newStatus}`, { method: 'PATCH' });
-      await loadData();
+      await loadData({ showLoading: false });
       if (selectedStudent?.id === id) {
         const detail = await api(`/api/admin/students/${id}`);
         setSelectedStudent(detail);
@@ -183,7 +184,7 @@ export function AdminStudentsSection() {
             {(search || statusFilter || departmentFilter) && (
               <button type="button" className="ghost-btn" onClick={clearFilters}>Clear Filters</button>
             )}
-            <button className="icon-btn" onClick={loadData} title="Refresh" type="button">
+            <button className="icon-btn" onClick={() => loadData()} title="Refresh" type="button">
               <RefreshCw size={18} />
             </button>
           </div>
@@ -197,7 +198,7 @@ export function AdminStudentsSection() {
           <EmptyState title="No students found" message="Try changing the search or filter criteria." />
         ) : (
           <div className="admin-table-wrap">
-            <table className="admin-table">
+            <table className="admin-table admin-directory-table">
               <thead>
                 <tr>
                   <th>Student Info</th>
@@ -241,7 +242,7 @@ export function AdminStudentsSection() {
                           disabled={statusBusyId === student.id}
                           type="button"
                         >
-                          <ShieldAlert size={16} />
+                          {statusBusyId === student.id ? <Loader2 size={16} className="spin" /> : <ShieldAlert size={16} />}
                         </button>
                       </div>
                     </td>
@@ -362,7 +363,13 @@ function StudentDetailView({ student, message, onBack, onToggleStatus, onMessage
                   <Settings2 size={16} /> Edit Profile
                 </button>
                 <button className={`secondary-btn ${student.active ? 'btn-danger' : 'btn-success'}`} onClick={onToggleStatus} disabled={statusBusy} type="button">
-                  {student.active ? <><Ban size={16} /> Disable Account</> : <><CheckCircle2 size={16} /> Enable Account</>}
+                  {statusBusy ? (
+                    <><Loader2 size={16} className="spin" /> Updating...</>
+                  ) : student.active ? (
+                    <><Ban size={16} /> Disable Account</>
+                  ) : (
+                    <><CheckCircle2 size={16} /> Enable Account</>
+                  )}
                 </button>
               </div>
             </div>
