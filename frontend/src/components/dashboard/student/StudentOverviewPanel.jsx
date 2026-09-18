@@ -74,7 +74,7 @@ export function StudentOverviewPanel({ data, reload }) {
   const avgAttendance = totalClasses > 0 ? Math.round((totalPresent / totalClasses) * 100) : 100;
 
   return (
-    <div className="student-overview-stack" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+    <div className="student-page student-overview-stack">
       
       {emergencies.length > 0 && (
         <div className="emergency-banner" style={{ backgroundColor: 'var(--status-error)', color: 'white', padding: '1rem', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '1rem' }}>

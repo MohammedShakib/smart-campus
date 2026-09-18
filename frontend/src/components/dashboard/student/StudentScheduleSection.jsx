@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { SectionHeader, Table } from '../../shared/SharedComponents';
+import { SectionHeader } from '../../shared/SharedComponents';
 import { api } from '../../../utils/api';
-import { BookOpen, Calendar } from 'lucide-react';
+import { BookOpen, Calendar, Clock, MapPin, UserRound } from 'lucide-react';
 
 export function StudentScheduleSection() {
   const [schedule, setSchedule] = useState([]);
@@ -35,46 +35,58 @@ export function StudentScheduleSection() {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
-  const mapToRow = (item) => [
-    item.courseCode,
-    item.courseTitle,
-    item.sectionName,
-    item.teacherName || item.teacherEmail,
-    item.roomNumber,
-    item.dayOfWeek,
-    `${formatTime(item.startTime)} - ${formatTime(item.endTime)}`,
-    item.status === 'ACTIVE' ? 'IN PROGRESS' : item.status
-  ];
+  const renderClassCard = (item) => (
+    <article className="student-schedule-card" key={`${item.courseCode}-${item.sectionName}-${item.dayOfWeek}-${item.startTime}`}>
+      <div className="student-schedule-card-main">
+        <span className="course-code-tag">{item.courseCode}</span>
+        <div>
+          <h3>{item.courseTitle}</h3>
+          <p>{item.sectionName}</p>
+        </div>
+      </div>
+      <div className="student-schedule-meta">
+        <span><Calendar size={14} /> {item.dayOfWeek}</span>
+        <span><Clock size={14} /> {formatTime(item.startTime)} - {formatTime(item.endTime)}</span>
+        <span><MapPin size={14} /> {item.roomNumber}</span>
+        <span><UserRound size={14} /> {item.teacherName || item.teacherEmail}</span>
+      </div>
+      <span className={`student-schedule-status ${item.status === 'ACTIVE' ? 'is-active' : ''}`}>
+        {item.status === 'ACTIVE' ? 'In progress' : item.status}
+      </span>
+    </article>
+  );
 
   return (
-    <div>
+    <div className="student-page student-schedule-page">
       <SectionHeader title="Class Schedule" subtitle="Your enrolled classes for the semester." />
-      <div className="section-grid">
+      <div className="student-schedule-grid">
         <div className="panel">
-          <div className="panel-header">
+          <div className="panel-head">
             <h3>Today's Classes</h3>
             <span className="panel-tag">{todayClasses.length} classes</span>
           </div>
-          <div className="panel-body">
-            <Table
-              headers={['Code', 'Course', 'Section', 'Teacher', 'Room', 'Day', 'Time', 'Status']}
-              rows={todayClasses.map(mapToRow)}
-              empty="No classes scheduled today."
-            />
+          <div className="student-schedule-list">
+            {todayClasses.length ? todayClasses.map(renderClassCard) : (
+              <div className="student-empty-compact">
+                <BookOpen size={20} />
+                <span>No classes scheduled today.</span>
+              </div>
+            )}
           </div>
         </div>
 
         <div className="panel">
-          <div className="panel-header">
+          <div className="panel-head">
             <h3>All Upcoming Classes</h3>
             <span className="panel-tag">Weekly view</span>
           </div>
-          <div className="panel-body">
-            <Table
-              headers={['Code', 'Course', 'Section', 'Teacher', 'Room', 'Day', 'Time', 'Status']}
-              rows={otherClasses.map(mapToRow)}
-              empty="No other classes scheduled."
-            />
+          <div className="student-schedule-list student-schedule-list--scroll">
+            {otherClasses.length ? otherClasses.map(renderClassCard) : (
+              <div className="student-empty-compact">
+                <Calendar size={20} />
+                <span>No other classes scheduled.</span>
+              </div>
+            )}
           </div>
         </div>
       </div>

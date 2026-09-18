@@ -436,7 +436,7 @@ function ClassroomsSection({ classrooms }) {
 
 function ShuttleSection({ busLocations }) {
   return (
-    <div>
+    <div className="student-page student-shuttle-page">
       <SectionHeader title="Shuttle GPS Tracker" subtitle="Real-time bus locations transmitted via UIU TCP socket network." />
       <Panel title="Active Bus Routes" tag="Socket Feed">
         <BusLocations locations={busLocations} />
@@ -462,9 +462,9 @@ function NoticesSection({ notices }) {
 
 function TicketsSection({ data, reload }) {
   return (
-    <div>
+    <div className="student-page student-tickets-page">
       <SectionHeader title="Support Tickets" subtitle="Submit and track your maintenance requests through the FIFO queue." />
-      <div className="section-grid">
+      <div className="student-ticket-grid">
         <Panel title="Submit New Ticket" tag="FIFO Queue">
           <TicketForm data={data} reload={reload} />
         </Panel>

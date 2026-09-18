@@ -252,44 +252,48 @@ export function AdminMaintenanceSection({ data, reload }) {
       </div>
 
       {/* Metric Cards */}
-      <div className="metric-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
-        <div className="stat-card">
-          <div className="stat-card-icon" style={{ background: 'rgba(99,102,241,0.1)', color: '#4f46e5' }}>
-            <Wrench size={22} />
+      <div className="metric-grid maintenance-metric-grid">
+        <div className="metric-card metric-card--accounts">
+          <div className="metric-card-head">
+            <span>Total Logged Tickets</span>
+            <span className="metric-icon"><Wrench size={20} /></span>
           </div>
-          <div className="stat-card-copy">
-            <span className="stat-label">Total Logged Tickets</span>
-            <strong className="stat-value">{totalCount}</strong>
-          </div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-card-icon" style={{ background: 'rgba(245,158,11,0.1)', color: '#d97706' }}>
-            <Clock size={22} />
-          </div>
-          <div className="stat-card-copy">
-            <span className="stat-label">FIFO Pending Queue</span>
-            <strong className="stat-value" style={{ color: '#d97706' }}>{queuePendingCount}</strong>
+          <strong>{totalCount}</strong>
+          <div className="metric-card-foot">
+            <span>All facility reports</span>
           </div>
         </div>
 
-        <div className="stat-card">
-          <div className="stat-card-icon" style={{ background: 'rgba(59,130,246,0.1)', color: '#2563eb' }}>
-            <PlayCircle size={22} />
+        <div className="metric-card metric-card--power">
+          <div className="metric-card-head">
+            <span>FIFO Pending Queue</span>
+            <span className="metric-icon"><Clock size={20} /></span>
           </div>
-          <div className="stat-card-copy">
-            <span className="stat-label">In Progress / Assigned</span>
-            <strong className="stat-value" style={{ color: '#2563eb' }}>{inProgressCount}</strong>
+          <strong>{queuePendingCount}</strong>
+          <div className="metric-card-foot">
+            <span>Awaiting dispatch</span>
           </div>
         </div>
 
-        <div className="stat-card">
-          <div className="stat-card-icon" style={{ background: 'rgba(16,185,129,0.1)', color: '#059669' }}>
-            <CheckCircle2 size={22} />
+        <div className="metric-card metric-card--resolved">
+          <div className="metric-card-head">
+            <span>In Progress / Assigned</span>
+            <span className="metric-icon"><PlayCircle size={20} /></span>
           </div>
-          <div className="stat-card-copy">
-            <span className="stat-label">Resolved & Closed</span>
-            <strong className="stat-value" style={{ color: '#059669' }}>{resolvedCount}</strong>
+          <strong>{inProgressCount}</strong>
+          <div className="metric-card-foot">
+            <span>Technician activity</span>
+          </div>
+        </div>
+
+        <div className="metric-card metric-card--found">
+          <div className="metric-card-head">
+            <span>Resolved & Closed</span>
+            <span className="metric-icon"><CheckCircle2 size={20} /></span>
+          </div>
+          <strong>{resolvedCount}</strong>
+          <div className="metric-card-foot">
+            <span>Completed tickets</span>
           </div>
         </div>
       </div>
@@ -311,43 +315,24 @@ export function AdminMaintenanceSection({ data, reload }) {
         }
       >
         {/* Search & Filter Toolbar */}
-        <div style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: '0.75rem',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: '1rem',
-          padding: '0.75rem',
-          background: '#f8fafc',
-          borderRadius: '12px',
-          border: '1px solid var(--border)'
-        }}>
-          <div style={{ position: 'relative', flex: '1 1 240px' }}>
-            <Search size={15} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--tx-muted)' }} />
+        <div className="admin-toolbar maintenance-toolbar">
+          <div className="admin-toolbar-left">
+            <div className="admin-search maintenance-search">
+              <Search size={16} />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search issue title, description, location, or reporter..."
-              style={{
-                width: '100%',
-                paddingLeft: '32px',
-                paddingRight: '10px',
-                height: '36px',
-                borderRadius: '8px',
-                border: '1px solid var(--border)',
-                background: '#fff',
-                fontSize: '0.82rem'
-              }}
             />
+            </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <div className="admin-toolbar-right">
+            <div className="admin-filter-group">
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              style={{ height: '36px', borderRadius: '8px', border: '1px solid var(--border)', padding: '0 0.65rem', background: '#fff', fontSize: '0.82rem' }}
             >
               <option value="ALL">All Statuses</option>
               <option value="OPEN">Open (Queued)</option>
@@ -356,29 +341,32 @@ export function AdminMaintenanceSection({ data, reload }) {
               <option value="RESOLVED">Resolved</option>
               <option value="CLOSED">Closed</option>
             </select>
+            </div>
 
+            <div className="admin-filter-group">
             <select
               value={priorityFilter}
               onChange={(e) => setPriorityFilter(e.target.value)}
-              style={{ height: '36px', borderRadius: '8px', border: '1px solid var(--border)', padding: '0 0.65rem', background: '#fff', fontSize: '0.82rem' }}
             >
               <option value="ALL">All Priorities</option>
               <option value="HIGH">High Priority</option>
               <option value="MEDIUM">Medium Priority</option>
               <option value="LOW">Low Priority</option>
             </select>
+            </div>
 
             {categories.length > 0 && (
+              <div className="admin-filter-group">
               <select
                 value={categoryFilter}
                 onChange={(e) => setCategoryFilter(e.target.value)}
-                style={{ height: '36px', borderRadius: '8px', border: '1px solid var(--border)', padding: '0 0.65rem', background: '#fff', fontSize: '0.82rem' }}
               >
                 <option value="ALL">All Categories</option>
                 {categories.map(c => (
                   <option key={c} value={c}>{c}</option>
                 ))}
               </select>
+              </div>
             )}
           </div>
         </div>
@@ -402,8 +390,8 @@ export function AdminMaintenanceSection({ data, reload }) {
             message={search || statusFilter !== 'ALL' || priorityFilter !== 'ALL' ? "No tickets match your filter criteria." : "No maintenance complaints reported yet. Queue is empty."}
           />
         ) : (
-          <div className="table-wrap">
-            <table>
+          <div className="admin-table-wrap">
+            <table className="admin-table maintenance-table">
               <thead>
                 <tr>
                   <th>Ticket & Issue</th>

@@ -138,7 +138,7 @@ export function StudentEventsSection() {
   }
 
   return (
-    <div className="campus-subpage student-events-container">
+    <div className="student-page campus-subpage student-events-container">
       {/* Toast */}
       {toast && (
         <div

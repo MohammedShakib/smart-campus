@@ -144,7 +144,7 @@ export function StudentCafeteriaSection() {
   }
 
   return (
-    <div className="campus-subpage student-cafeteria-container">
+    <div className="student-page campus-subpage student-cafeteria-container">
       {/* Toast Notification */}
       {toast && (
         <div

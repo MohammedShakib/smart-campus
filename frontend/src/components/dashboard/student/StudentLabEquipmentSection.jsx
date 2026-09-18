@@ -113,7 +113,7 @@ export function StudentLabEquipmentSection() {
   };
 
   return (
-    <div className="equipment-portal-wrapper">
+    <div className="student-page equipment-portal-wrapper">
       <SectionHeader
         title="Hardware & Lab Equipment Booking Hub"
         subtitle="Reserve microcontrollers, sensors, oscilloscopes, and lab instruments from departmental labs for academic and research projects."

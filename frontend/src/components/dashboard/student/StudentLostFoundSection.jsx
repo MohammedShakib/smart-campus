@@ -232,7 +232,7 @@ export function StudentLostFoundSection() {
   });
 
   return (
-    <div className="lostfound-wrapper">
+    <div className="student-page lostfound-wrapper">
       <SectionHeader
         title="Digital Lost & Found Board"
         subtitle="Search found and lost items across campus buildings, filter by tags, and claim your belongings with secure ownership verification."

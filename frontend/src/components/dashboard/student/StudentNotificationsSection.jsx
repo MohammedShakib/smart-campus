@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { SectionHeader, Table, ActionButton } from '../../shared/SharedComponents';
+import { SectionHeader } from '../../shared/SharedComponents';
 import { api, postAction } from '../../../utils/api';
 import { Bell, Check, CheckCheck } from 'lucide-react';
 
@@ -37,44 +37,44 @@ export function StudentNotificationsSection() {
   if (loading && notifications.length === 0) return <div className="loading-spinner">Loading notifications...</div>;
 
   return (
-    <div>
+    <div className="student-page student-notifications-page">
       <SectionHeader title="My Notifications" subtitle="Important updates about your classes, requests, and campus alerts." />
-      <div className="section-grid">
-        <div className="panel">
-          <div className="panel-header">
+      <div className="student-single-panel">
+        <div className="panel student-notifications-panel">
+          <div className="panel-head student-panel-head">
             <h3>Recent Notifications</h3>
             <span className="panel-tag">{unreadCount} unread</span>
           </div>
-          <div className="action-row" style={{ padding: '0 1rem 1rem' }}>
-            <ActionButton label="Mark All Read" icon={CheckCheck} onClick={markAllRead} />
+          <div className="student-panel-toolbar">
+            <button className="ghost-btn" type="button" onClick={markAllRead} disabled={!notifications.length}>
+              <CheckCheck size={16} /> Mark all read
+            </button>
           </div>
-          <div className="panel-body" style={{ padding: 0 }}>
+          <div className="student-panel-body">
             {error && <div className="error-message" style={{ margin: '1rem' }}>{error}</div>}
             
             {notifications.length === 0 ? (
-              <div className="empty-state" style={{ padding: '2rem' }}>No notifications found.</div>
+              <div className="student-empty-state">
+                <Bell size={28} />
+                <h3>No notifications found</h3>
+                <p>Your class alerts, request updates, and campus notices will appear here.</p>
+              </div>
             ) : (
-              <ul className="notification-list" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+              <ul className="student-notification-list">
                 {notifications.map(n => (
-                  <li key={n.id} style={{
-                    padding: '1rem',
-                    borderBottom: '1px solid var(--border-light)',
-                    display: 'flex',
-                    gap: '1rem',
-                    backgroundColor: n.read ? 'transparent' : 'var(--bg-highlight)'
-                  }}>
-                    <div style={{ color: 'var(--brand-primary)' }}>
+                  <li key={n.id} className={`student-notification-item${n.read ? '' : ' is-unread'}`}>
+                    <div className="student-notification-icon">
                       <Bell size={20} />
                     </div>
-                    <div style={{ flex: 1 }}>
-                      <h4 style={{ margin: '0 0 0.25rem' }}>{n.title}</h4>
-                      <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-secondary)' }}>{n.message}</p>
-                      <small style={{ color: 'var(--text-tertiary)', display: 'block', marginTop: '0.5rem' }}>
+                    <div className="student-notification-copy">
+                      <h4>{n.title}</h4>
+                      <p>{n.message}</p>
+                      <small>
                         {new Date(n.createdAt).toLocaleString()}
                       </small>
                     </div>
                     {!n.read && (
-                      <button onClick={() => markRead(n.id)} className="ghost-btn" style={{ alignSelf: 'flex-start' }}>
+                      <button onClick={() => markRead(n.id)} className="ghost-btn student-notification-read">
                         <Check size={16} /> Read
                       </button>
                     )}

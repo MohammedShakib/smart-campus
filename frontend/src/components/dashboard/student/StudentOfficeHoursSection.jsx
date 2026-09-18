@@ -133,7 +133,7 @@ export function StudentOfficeHoursSection() {
   };
 
   return (
-    <div className="office-hours-wrapper">
+    <div className="student-page office-hours-wrapper">
       <SectionHeader
         title="Faculty Office Hours & Consultation Engine"
         subtitle="Reserve one-on-one consultation slots with faculty members. Powered by concurrency-safe locking and mandatory query pre-submission."
@@ -189,7 +189,7 @@ export function StudentOfficeHoursSection() {
                         <span className="slot-dept-tag">{slot.department || 'CSE Department'}</span>
                         <h4 className="slot-teacher-name">{slot.teacherName}</h4>
                       </div>
-                      <span className="badge badge--emerald">OPEN FOR BOOKING</span>
+                      <span className="badge badge--emerald">OPEN</span>
                     </div>
 
                     <div className="slot-meta-list">
@@ -213,7 +213,7 @@ export function StudentOfficeHoursSection() {
                         className="slot-book-btn"
                         onClick={() => openBookingModal(slot)}
                       >
-                        <MessageSquare size={14} /> Book with Query Pre-Submission
+                        <MessageSquare size={14} /> Book Consultation
                       </button>
                     </div>
                   </div>

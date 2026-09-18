@@ -184,7 +184,7 @@ export function StudentAttendanceSection() {
     : 100;
 
   return (
-    <div className="attendance-portal-wrapper">
+    <div className="student-page attendance-portal-wrapper">
       <SectionHeader
         title="Attendance & Absence Excuse Hub"
         subtitle="Track present and absent class dates per course, calculate attendance percentages, and submit official medical slips or leave requests."

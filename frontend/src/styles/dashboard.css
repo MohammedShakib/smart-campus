@@ -3167,6 +3167,492 @@
   color: var(--tx-secondary);
 }
 
+/* Student portal polish */
+.student-page {
+  width: min(100%, 1510px);
+  margin: 0 auto;
+}
+
+.student-overview-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.student-page .section-header {
+  margin-bottom: 1.35rem;
+}
+
+.student-page .section-header h2 {
+  font-size: 1.34rem;
+  line-height: 1.2;
+}
+
+.student-page .section-header p {
+  max-width: 860px;
+}
+
+.student-page .metric-grid {
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 1rem;
+}
+
+.student-page .metric-card {
+  min-width: 0;
+  min-height: 118px;
+}
+
+.student-page .metric-card strong {
+  word-break: break-word;
+}
+
+.student-page .section-grid {
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.62fr);
+}
+
+.student-page .panel {
+  border-radius: 14px;
+}
+
+.student-page .panel-head,
+.student-panel-head {
+  min-height: 48px;
+  padding-bottom: 0.8rem;
+}
+
+.student-page .table-wrap {
+  border-radius: 11px;
+  border: 1px solid var(--border);
+}
+
+.student-page .table-wrap table {
+  table-layout: fixed;
+  min-width: 0;
+}
+
+.student-page .table-wrap th,
+.student-page .table-wrap td,
+.student-page .custom-data-table th,
+.student-page .custom-data-table td {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  vertical-align: middle;
+}
+
+.student-page .tab-pill-bar,
+.student-page .academic-tabs {
+  gap: 0.45rem;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.student-page .tab-pill,
+.student-page .academic-tab,
+.student-page .category-pill {
+  white-space: nowrap;
+}
+
+.student-page .admin-toolbar {
+  flex-wrap: wrap;
+  border-radius: 14px;
+}
+
+.student-page .admin-search {
+  min-width: min(100%, 280px);
+}
+
+.student-schedule-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(420px, 0.72fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.student-schedule-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.student-schedule-list--scroll {
+  max-height: 420px;
+  overflow: auto;
+  padding-right: 0.2rem;
+}
+
+.student-schedule-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.75rem 1rem;
+  padding: 0.95rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.student-schedule-card-main {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.student-schedule-card-main h3 {
+  margin: 0;
+  color: var(--tx-primary);
+  font-size: 0.96rem;
+  line-height: 1.3;
+}
+
+.student-schedule-card-main p {
+  margin: 0.2rem 0 0;
+  color: var(--tx-secondary);
+  font-size: 0.82rem;
+}
+
+.student-schedule-meta {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem 0.75rem;
+}
+
+.student-schedule-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+  color: var(--tx-secondary);
+  font-size: 0.8rem;
+}
+
+.student-schedule-meta svg {
+  flex: 0 0 auto;
+  color: var(--accent-dark);
+}
+
+.student-schedule-status {
+  align-self: start;
+  padding: 0.24rem 0.58rem;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--border);
+  color: var(--tx-muted);
+  background: #f8fafc;
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.student-schedule-status.is-active {
+  color: var(--emerald);
+  background: var(--emerald-soft);
+  border-color: var(--emerald-border);
+}
+
+.student-empty-compact {
+  min-height: 76px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  color: var(--tx-muted);
+  background: #f8fafc;
+  font-size: 0.86rem;
+}
+
+.student-page .course-attendance-card,
+.student-page .slot-card,
+.student-page .equipment-card,
+.student-page .item-feed-card {
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.student-page .course-attendance-card:hover,
+.student-page .slot-card:hover,
+.student-page .equipment-card:hover,
+.student-page .item-feed-card:hover {
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+}
+
+.student-page .course-card-header {
+  align-items: flex-start;
+}
+
+.student-page .course-title-group {
+  min-width: 0;
+  flex: 1 1 320px;
+}
+
+.student-page .course-stats-group {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.student-page .session-breakdown-panel {
+  background: #f8fafc;
+  border-top-color: var(--border);
+}
+
+.student-page .course-progress-track {
+  background: #e2e8f0;
+}
+
+.student-page .custom-data-table {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.student-page .custom-data-table th {
+  background: #f8fafc;
+}
+
+.student-page .custom-data-table td {
+  border-bottom: 1px solid var(--border);
+}
+
+.equipment-grid,
+.items-feed-grid {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.student-page .slots-grid {
+  grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
+}
+
+.student-page .slot-card {
+  min-height: 242px;
+}
+
+.student-page .slot-card-header {
+  align-items: flex-start;
+}
+
+.student-page .slot-card-header .badge {
+  max-width: none;
+  text-align: center;
+  line-height: 1.25;
+  white-space: nowrap;
+  padding-inline: 0.55rem;
+}
+
+.student-page .slot-book-btn {
+  min-height: 42px;
+  white-space: nowrap;
+}
+
+.student-page .equipment-image-box,
+.student-page .item-thumbnail-wrapper {
+  background: #e2e8f0;
+}
+
+.student-page .equipment-image-box::after,
+.student-page .item-thumbnail-wrapper::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(15,23,42,0.12), rgba(15,23,42,0) 42%, rgba(15,23,42,0.24));
+  pointer-events: none;
+}
+
+.student-page .eq-name,
+.student-page .item-title {
+  line-height: 1.32;
+}
+
+.student-page .eq-specs,
+.student-page .item-description {
+  min-height: 58px;
+}
+
+.lostfound-controls {
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) auto auto;
+  align-items: stretch;
+}
+
+.lostfound-controls .primary-btn,
+.lostfound-controls .type-toggle-group {
+  min-height: 40px;
+}
+
+.type-toggle-group {
+  flex-wrap: wrap;
+}
+
+.student-cafeteria-container > div[style*="grid-template-columns"] {
+  min-width: 0;
+}
+
+.student-ticket-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(360px, 0.9fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.student-tickets-page .ticket-form {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.student-tickets-page .ticket-form select,
+.student-tickets-page .ticket-form textarea,
+.student-tickets-page .ticket-form .primary-btn {
+  grid-column: 1 / -1;
+}
+
+.student-shuttle-page .bus-list {
+  gap: 0.75rem;
+}
+
+.student-shuttle-page .bus-item {
+  align-items: center;
+  padding: 1rem;
+}
+
+.student-single-panel {
+  max-width: 920px;
+}
+
+.student-panel-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 1.25rem 1rem;
+}
+
+.student-panel-body {
+  padding: 0 1.25rem 1.25rem;
+}
+
+.student-empty-state {
+  min-height: 260px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 0.45rem;
+  border: 1px dashed var(--border);
+  border-radius: 14px;
+  background: #f8fafc;
+  color: var(--tx-muted);
+  text-align: center;
+}
+
+.student-empty-state h3 {
+  margin: 0;
+  color: var(--tx-primary);
+  font-size: 1rem;
+}
+
+.student-empty-state p {
+  margin: 0;
+  max-width: 360px;
+  font-size: 0.86rem;
+}
+
+.student-notification-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.student-notification-item {
+  display: flex;
+  gap: 0.9rem;
+  padding: 0.95rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.student-notification-item.is-unread {
+  border-color: var(--accent-border);
+  background: var(--accent-soft);
+}
+
+.student-notification-icon {
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  color: var(--accent-dark);
+  background: #ffffff;
+  border: 1px solid var(--border);
+}
+
+.student-notification-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.student-notification-copy h4 {
+  margin: 0 0 0.25rem;
+  color: var(--tx-primary);
+  font-size: 0.92rem;
+}
+
+.student-notification-copy p {
+  margin: 0;
+  color: var(--tx-secondary);
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+
+.student-notification-copy small {
+  display: block;
+  margin-top: 0.45rem;
+  color: var(--tx-muted);
+  font-size: 0.74rem;
+}
+
+.student-notification-read {
+  align-self: flex-start;
+}
+
+@media (max-width: 1180px) {
+  .student-page .section-grid,
+  .student-schedule-grid,
+  .student-ticket-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .lostfound-controls {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .student-page .metric-grid,
+  .metric-grid--student {
+    grid-template-columns: 1fr;
+  }
+
+  .student-page .course-card-header,
+  .student-page .course-title-group,
+  .student-page .course-stats-group,
+  .student-notification-item {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .student-schedule-card,
+  .student-schedule-meta,
+  .student-tickets-page .ticket-form {
+    grid-template-columns: 1fr;
+  }
+
+  .student-schedule-status {
+    width: fit-content;
+  }
+}
+
 /* ─────────────────────────────────────────────────────────
    SECURITY EXPERIENCE STYLES
 ───────────────────────────────────────────────────────── */
@@ -5095,12 +5581,14 @@
 }
 
 .lostfound-metric-grid,
-.communication-metric-grid {
+.communication-metric-grid,
+.maintenance-metric-grid {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .lostfound-toolbar,
-.communication-toolbar {
+.communication-toolbar,
+.maintenance-toolbar {
   align-items: stretch;
   padding: 0.75rem;
   border: 1px solid var(--border);
@@ -5109,17 +5597,20 @@
 }
 
 .lostfound-toolbar .admin-toolbar-left,
-.communication-toolbar .admin-toolbar-left {
+.communication-toolbar .admin-toolbar-left,
+.maintenance-toolbar .admin-toolbar-left {
   flex: 1 1 420px;
 }
 
 .lostfound-toolbar .admin-toolbar-right,
-.communication-toolbar .admin-toolbar-right {
+.communication-toolbar .admin-toolbar-right,
+.maintenance-toolbar .admin-toolbar-right {
   justify-content: flex-end;
 }
 
 .lostfound-search,
-.communication-search {
+.communication-search,
+.maintenance-search {
   max-width: none;
   width: 100%;
 }
@@ -5207,21 +5698,65 @@
   font-size: 0.74rem;
 }
 
+.maintenance-table {
+  table-layout: fixed;
+}
+
+.maintenance-table th:nth-child(1),
+.maintenance-table td:nth-child(1) {
+  width: 30%;
+}
+
+.maintenance-table th:nth-child(2),
+.maintenance-table td:nth-child(2) {
+  width: 16%;
+}
+
+.maintenance-table th:nth-child(3),
+.maintenance-table td:nth-child(3) {
+  width: 16%;
+}
+
+.maintenance-table th:nth-child(4),
+.maintenance-table td:nth-child(4) {
+  width: 10%;
+}
+
+.maintenance-table th:nth-child(5),
+.maintenance-table td:nth-child(5) {
+  width: 16%;
+}
+
+.maintenance-table th:nth-child(6),
+.maintenance-table td:nth-child(6) {
+  width: 12%;
+}
+
+.maintenance-table .primary-btn {
+  min-height: 30px;
+  padding: 0.36rem 0.7rem;
+  border-radius: 10px;
+  font-size: 0.74rem;
+}
+
 @media (max-width: 1100px) {
   .lostfound-metric-grid,
-  .communication-metric-grid {
+  .communication-metric-grid,
+  .maintenance-metric-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .lostfound-table,
-  .communication-table {
+  .communication-table,
+  .maintenance-table {
     min-width: 980px;
   }
 }
 
 @media (max-width: 680px) {
   .lostfound-metric-grid,
-  .communication-metric-grid {
+  .communication-metric-grid,
+  .maintenance-metric-grid {
     grid-template-columns: 1fr;
   }
 
@@ -5230,7 +5765,10 @@
   .lostfound-toolbar .admin-filter-group select,
   .communication-toolbar .admin-toolbar-right,
   .communication-toolbar .admin-filter-group,
-  .communication-toolbar .admin-filter-group select {
+  .communication-toolbar .admin-filter-group select,
+  .maintenance-toolbar .admin-toolbar-right,
+  .maintenance-toolbar .admin-filter-group,
+  .maintenance-toolbar .admin-filter-group select {
     width: 100%;
   }
 }
