@@ -12,6 +12,8 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 
 @Configuration
 @EnableWebSecurity
@@ -96,6 +98,26 @@ public class SecurityConfig {
                 .invalidateHttpSession(true)
                 .deleteCookies("JSESSIONID")
                 .permitAll()
+            )
+            .exceptionHandling(exceptions -> exceptions
+                .authenticationEntryPoint((request, response, authException) -> {
+                    if (request.getRequestURI().startsWith("/api/")) {
+                        response.setStatus(HttpStatus.UNAUTHORIZED.value());
+                        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                        response.getWriter().write("{\"success\":false,\"message\":\"SESSION_REQUIRED\"}");
+                        return;
+                    }
+                    response.sendRedirect("/login");
+                })
+                .accessDeniedHandler((request, response, accessDeniedException) -> {
+                    if (request.getRequestURI().startsWith("/api/")) {
+                        response.setStatus(HttpStatus.FORBIDDEN.value());
+                        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                        response.getWriter().write("{\"success\":false,\"message\":\"FORBIDDEN\"}");
+                        return;
+                    }
+                    response.sendRedirect("/login");
+                })
             )
             .headers(headers -> headers.frameOptions(frame -> frame.disable())); // For H2 console if used
 
