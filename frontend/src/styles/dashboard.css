@@ -4525,6 +4525,83 @@
   color: var(--tx-danger);
 }
 
+.admin-toast {
+  position: fixed;
+  top: 1.25rem;
+  right: 1.25rem;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  width: min(360px, calc(100vw - 2rem));
+  padding: 0.78rem 0.82rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-card);
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.14);
+  color: var(--tx-primary);
+  font-size: 0.88rem;
+  line-height: 1.4;
+  animation: admin-toast-in 180ms ease-out;
+}
+
+.admin-toast svg {
+  flex: 0 0 auto;
+}
+
+.admin-toast span {
+  flex: 1;
+  min-width: 0;
+}
+
+.admin-toast--success {
+  border-color: color-mix(in srgb, var(--emerald) 34%, var(--border));
+  background: color-mix(in srgb, var(--emerald) 9%, var(--bg-card));
+}
+
+.admin-toast--success > svg {
+  color: var(--tx-success);
+}
+
+.admin-toast--error {
+  border-color: color-mix(in srgb, var(--rose) 38%, var(--border));
+  background: color-mix(in srgb, var(--rose) 8%, var(--bg-card));
+}
+
+.admin-toast--error > svg {
+  color: var(--tx-danger);
+}
+
+.admin-toast-close {
+  width: 28px;
+  height: 28px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--tx-muted);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.admin-toast-close:hover {
+  border-color: var(--border);
+  background: var(--bg-elevated);
+  color: var(--tx-primary);
+}
+
+@keyframes admin-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .admin-student-message {
   border: 1px solid var(--border);
   border-radius: var(--r-md);

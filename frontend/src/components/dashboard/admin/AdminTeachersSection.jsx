@@ -15,7 +15,8 @@ import {
   MapPin,
   Building2,
   CalendarDays,
-  Clock
+  Clock,
+  X
 } from 'lucide-react';
 import { api } from '../../../utils/api';
 import { SectionHeader, Panel, LoadingState, ErrorState, EmptyState } from '../../shared/SharedComponents';
@@ -71,6 +72,12 @@ export function AdminTeachersSection() {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  useEffect(() => {
+    if (!message) return undefined;
+    const timer = setTimeout(() => setMessage(null), 3200);
+    return () => clearTimeout(timer);
+  }, [message]);
 
   const handleSearch = (event) => {
     event.preventDefault();
@@ -135,7 +142,7 @@ export function AdminTeachersSection() {
   return (
     <div className="admin-management-page">
       <SectionHeader title="Teacher Management" subtitle="Manage faculty profiles, teaching assignments, schedules and account access." />
-      <TeacherMessage message={message} />
+      <TeacherMessage message={message} onDismiss={() => setMessage(null)} />
 
       {summary && (
         <div className="metric-grid admin-teachers-summary">
@@ -284,6 +291,12 @@ function TeacherDetailView({ teacher, message, onBack, onToggleStatus, onMessage
     });
   }, [teacher]);
 
+  useEffect(() => {
+    if (!message) return undefined;
+    const timer = setTimeout(() => onMessage(null), 3200);
+    return () => clearTimeout(timer);
+  }, [message, onMessage]);
+
   const handleSave = async (event) => {
     event.preventDefault();
     setSaving(true);
@@ -315,7 +328,7 @@ function TeacherDetailView({ teacher, message, onBack, onToggleStatus, onMessage
         </div>
       </div>
 
-      <TeacherMessage message={message} />
+      <TeacherMessage message={message} onDismiss={() => onMessage(null)} />
 
       <div className="section-grid admin-teacher-detail-grid">
         <Panel title="Identity & Profile" tag={teacher.active ? 'Active' : 'Disabled'}>
@@ -482,7 +495,16 @@ function StatCount({ label, value, className }) {
   );
 }
 
-function TeacherMessage({ message }) {
+function TeacherMessage({ message, onDismiss }) {
   if (!message) return null;
-  return <div className={`admin-teacher-message admin-teacher-message--${message.type}`}>{message.text}</div>;
+  const Icon = message.type === 'error' ? ShieldAlert : CheckCircle2;
+  return (
+    <div className={`admin-toast admin-toast--${message.type}`} role="status" aria-live="polite">
+      <Icon size={18} />
+      <span>{message.text}</span>
+      <button type="button" className="admin-toast-close" onClick={onDismiss} title="Dismiss notification">
+        <X size={15} />
+      </button>
+    </div>
+  );
 }
