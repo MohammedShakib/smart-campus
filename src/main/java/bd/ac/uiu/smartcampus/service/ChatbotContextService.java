@@ -79,8 +79,9 @@ public class ChatbotContextService {
     @Transactional(readOnly = true)
     public String buildContext(CustomUserDetails userDetails) {
         StringBuilder context = new StringBuilder();
-        context.append("LIVE SMART CAMPUS CONTEXT\n");
-        context.append("Use this context when answering. If a value is not present here, say it is not available in the current CampusAI context.\n");
+        context.append("INTERNAL SMART CAMPUS DATA FOR CAMPUSAI\n");
+        context.append("Use this data when answering. If a value is not present here, say it is not available in the current system data.\n");
+        context.append("When responding to users, use natural language and do not mention internal labels such as telemetry, feed, context, snapshot, payload, database, or repository.\n");
         context.append("Do not reveal passwords, secrets, or raw database internals. Do not claim write actions were performed.\n\n");
 
         appendUserContext(context, userDetails);
@@ -116,9 +117,9 @@ public class ChatbotContextService {
 
     private void appendTelemetry(StringBuilder context) {
         CampusTelemetryDto telemetry = simulationWorker.getLatestTelemetry();
-        context.append("CURRENT CAMPUS TELEMETRY\n");
+        context.append("CURRENT CAMPUS STATUS\n");
         if (telemetry == null) {
-            context.append("- Telemetry unavailable.\n\n");
+            context.append("- Current campus status unavailable.\n\n");
             return;
         }
         context.append("- Active students: ").append(telemetry.getActiveStudents()).append('\n');

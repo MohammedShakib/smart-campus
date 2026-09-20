@@ -90,7 +90,7 @@ CampusAI now receives a live, read-only Smart Campus context before each AI requ
 The context includes:
 
 - authenticated user name, email/login, role, department, and campus ID
-- current campus telemetry and bus locations
+- current campus status and bus locations
 - active emergency alerts
 - relevant notices
 - published events, cafeteria menu items, and lab equipment availability
@@ -107,7 +107,8 @@ Safety rules:
 
 - context is generated server-side after authentication
 - users only receive the context appropriate for their role
-- the model is instructed to say when data is not available in the current CampusAI context
+- the model is instructed to say when data is not available in the current system data
+- user-facing replies should avoid internal terms such as telemetry, feed, context, snapshot, payload, database, or repository
 - passwords, tokens, API keys, visitor pass codes, and national ID style fields are filtered from generated context
 - CampusAI can answer from data, but it must not claim it created, updated, or deleted database records
 
