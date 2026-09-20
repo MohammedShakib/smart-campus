@@ -107,7 +107,14 @@ gemini.model=${GEMINI_MODEL:gemini-3.6-flash}
 gemini.api.base-url=${GEMINI_API_BASE_URL:https://generativelanguage.googleapis.com/v1beta/models}
 ```
 
-For local development, the app also imports a git-ignored `.env` file from the project root:
+For normal Gemini usage, only the API key is required. The app uses the native Gemini `generateContent` API by default:
+
+```properties
+GEMINI_API_KEY=your_key_here
+GEMINI_MODEL=gemini-3.6-flash
+```
+
+For local development, the app also imports a git-ignored `.env` file from the project root. If you are using an OpenAI-compatible demo gateway, add the optional base URL:
 
 ```properties
 GEMINI_API_KEY=your_key_here
@@ -115,7 +122,7 @@ GEMINI_MODEL=gemini-3.6-flash
 GEMINI_API_BASE_URL=http://127.0.0.1:8081/v1
 ```
 
-When `GEMINI_API_BASE_URL` points to an OpenAI-compatible `/v1` gateway, CampusAI uses `POST /chat/completions` with a bearer token. Otherwise it uses the native Gemini `generateContent` API shape.
+When `GEMINI_API_BASE_URL` points to an OpenAI-compatible `/v1` gateway, CampusAI uses `POST /chat/completions` with a bearer token. If no custom base URL is set, it uses the native Gemini `generateContent` API shape.
 
 If `GEMINI_API_KEY` is missing, the app still starts normally and chatbot requests return:
 

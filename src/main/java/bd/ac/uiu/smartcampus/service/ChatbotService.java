@@ -105,7 +105,7 @@ public class ChatbotService {
 
     private boolean isOpenAiCompatibleGateway() {
         String normalizedBaseUrl = normalizeBaseUrl();
-        return apiKey.trim().startsWith("sk-") || normalizedBaseUrl.endsWith("/v1");
+        return normalizedBaseUrl.endsWith("/v1");
     }
 
     private URI buildOpenAiChatCompletionsUri() {
