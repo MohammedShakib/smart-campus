@@ -67,20 +67,32 @@ public class ChatbotService {
         }
 
         try {
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(buildGeminiUri())
-                    .header("Content-Type", "application/json")
-                    .POST(HttpRequest.BodyPublishers.ofString(buildRequestBody(userMessage, history)))
-                    .timeout(Duration.ofSeconds(30))
-                    .build();
+            boolean openAiCompatibleGateway = isOpenAiCompatibleGateway();
+            String requestBody = openAiCompatibleGateway
+                    ? buildOpenAiRequestBody(userMessage, history)
+                    : buildGeminiRequestBody(userMessage, history);
 
+            HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
+                    .uri(openAiCompatibleGateway ? buildOpenAiChatCompletionsUri() : buildGeminiUri())
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(requestBody))
+                    .timeout(Duration.ofSeconds(30))
+                    ;
+
+            if (openAiCompatibleGateway) {
+                requestBuilder.header("Authorization", "Bearer " + apiKey.trim());
+            }
+
+            HttpRequest request = requestBuilder.build();
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() < 200 || response.statusCode() >= 300) {
                 log.warn("Gemini API returned non-success status {}", response.statusCode());
                 return "CampusAI could not reach the AI service. Please try again.";
             }
 
-            return extractReply(response.body());
+            return openAiCompatibleGateway
+                    ? extractOpenAiReply(response.body())
+                    : extractGeminiReply(response.body());
         } catch (InterruptedException exception) {
             Thread.currentThread().interrupt();
             log.warn("CampusAI request was interrupted");
@@ -91,17 +103,29 @@ public class ChatbotService {
         }
     }
 
+    private boolean isOpenAiCompatibleGateway() {
+        String normalizedBaseUrl = normalizeBaseUrl();
+        return apiKey.trim().startsWith("sk-") || normalizedBaseUrl.endsWith("/v1");
+    }
+
+    private URI buildOpenAiChatCompletionsUri() {
+        return URI.create(normalizeBaseUrl() + "/chat/completions");
+    }
+
     private URI buildGeminiUri() {
-        String normalizedBaseUrl = apiBaseUrl.endsWith("/")
-                ? apiBaseUrl.substring(0, apiBaseUrl.length() - 1)
-                : apiBaseUrl;
-        String encodedKey = URLEncoder.encode(apiKey, StandardCharsets.UTF_8);
+        String encodedKey = URLEncoder.encode(apiKey.trim(), StandardCharsets.UTF_8);
+        String normalizedBaseUrl = normalizeBaseUrl();
         return URI.create(normalizedBaseUrl + "/" + model + ":generateContent?key=" + encodedKey);
     }
 
-    private String buildRequestBody(String userMessage, List<ChatRequest.ChatTurn> history) throws JsonProcessingException {
+    private String normalizeBaseUrl() {
+        String trimmed = apiBaseUrl == null ? "" : apiBaseUrl.trim();
+        return trimmed.endsWith("/") ? trimmed.substring(0, trimmed.length() - 1) : trimmed;
+    }
+
+    private String buildGeminiRequestBody(String userMessage, List<ChatRequest.ChatTurn> history) throws JsonProcessingException {
         List<Map<String, Object>> contents = new ArrayList<>();
-        for (ChatRequest.ChatTurn turn : normalizeHistory(history)) {
+        for (ChatRequest.ChatTurn turn : normalizeGeminiHistory(history)) {
             contents.add(content(turn.getRole(), turn.getText()));
         }
         contents.add(content("user", userMessage));
@@ -117,7 +141,34 @@ public class ChatbotService {
         return objectMapper.writeValueAsString(payload);
     }
 
-    private List<ChatRequest.ChatTurn> normalizeHistory(List<ChatRequest.ChatTurn> history) {
+    private String buildOpenAiRequestBody(String userMessage, List<ChatRequest.ChatTurn> history) throws JsonProcessingException {
+        List<Map<String, String>> messages = new ArrayList<>();
+        messages.add(Map.of("role", "system", "content", SYSTEM_PROMPT));
+
+        for (ChatRequest.ChatTurn turn : normalizeOpenAiHistory(history)) {
+            messages.add(Map.of("role", turn.getRole(), "content", turn.getText()));
+        }
+
+        messages.add(Map.of("role", "user", "content", userMessage));
+
+        Map<String, Object> payload = Map.of(
+                "model", model,
+                "messages", messages,
+                "temperature", 0.4,
+                "max_tokens", 1024
+        );
+        return objectMapper.writeValueAsString(payload);
+    }
+
+    private List<ChatRequest.ChatTurn> normalizeGeminiHistory(List<ChatRequest.ChatTurn> history) {
+        return normalizeHistory(history, true);
+    }
+
+    private List<ChatRequest.ChatTurn> normalizeOpenAiHistory(List<ChatRequest.ChatTurn> history) {
+        return normalizeHistory(history, false);
+    }
+
+    private List<ChatRequest.ChatTurn> normalizeHistory(List<ChatRequest.ChatTurn> history, boolean geminiRoles) {
         if (history == null || history.isEmpty()) {
             return List.of();
         }
@@ -130,7 +181,7 @@ public class ChatbotService {
             }
 
             ChatRequest.ChatTurn normalizedTurn = new ChatRequest.ChatTurn();
-            normalizedTurn.setRole(toGeminiRole(turn.getRole()));
+            normalizedTurn.setRole(geminiRoles ? toGeminiRole(turn.getRole()) : toOpenAiRole(turn.getRole()));
             normalizedTurn.setText(trimToLimit(turn.getText().trim(), MAX_HISTORY_TEXT_LENGTH));
             normalized.add(normalizedTurn);
         }
@@ -151,11 +202,18 @@ public class ChatbotService {
         return "model";
     }
 
+    private String toOpenAiRole(String role) {
+        if ("user".equalsIgnoreCase(role)) {
+            return "user";
+        }
+        return "assistant";
+    }
+
     private String trimToLimit(String text, int limit) {
         return text.length() <= limit ? text : text.substring(0, limit);
     }
 
-    private String extractReply(String responseJson) throws JsonProcessingException {
+    private String extractGeminiReply(String responseJson) throws JsonProcessingException {
         JsonNode root = objectMapper.readTree(responseJson);
         JsonNode parts = root.path("candidates").path(0).path("content").path("parts");
         if (!parts.isArray() || parts.isEmpty()) {
@@ -178,5 +236,15 @@ public class ChatbotService {
         return result.isEmpty()
                 ? "CampusAI did not generate a response. Please try again."
                 : result;
+    }
+
+    private String extractOpenAiReply(String responseJson) throws JsonProcessingException {
+        JsonNode root = objectMapper.readTree(responseJson);
+        String reply = root.path("choices").path(0).path("message").path("content").asText("").trim();
+        if (reply.isBlank()) {
+            log.warn("OpenAI-compatible Gemini response did not contain message content");
+            return "CampusAI received an unexpected response. Please try again.";
+        }
+        return reply;
     }
 }

@@ -112,7 +112,10 @@ For local development, the app also imports a git-ignored `.env` file from the p
 ```properties
 GEMINI_API_KEY=your_key_here
 GEMINI_MODEL=gemini-3.6-flash
+GEMINI_API_BASE_URL=http://127.0.0.1:8081/v1
 ```
+
+When `GEMINI_API_BASE_URL` points to an OpenAI-compatible `/v1` gateway, CampusAI uses `POST /chat/completions` with a bearer token. Otherwise it uses the native Gemini `generateContent` API shape.
 
 If `GEMINI_API_KEY` is missing, the app still starts normally and chatbot requests return:
 
