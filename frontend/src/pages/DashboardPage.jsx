@@ -10,6 +10,7 @@ import { initials, prettyRole } from '../utils/helpers';
 import { readUrlOption, writeUrlOption } from '../utils/urlState';
 import { ErrorState, LoadingState } from '../components/shared/SharedComponents';
 import { ActiveEmergencyBanner } from '../components/shared/ActiveEmergencyBanner';
+import { ChatbotWidget } from '../components/shared/ChatbotWidget';
 import { DashboardSection } from '../components/dashboard/DashboardSection';
 import smartCampusLogo from '../assets/smart-campus-logo.png';
 import '../styles/dashboard.css';
@@ -294,6 +295,8 @@ export function DashboardPage() {
           />
         </div>
       </section>
+
+      <ChatbotWidget />
 
       {profileOpen && (
         <ProfileDialog

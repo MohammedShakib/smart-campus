@@ -66,6 +66,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/campus/gate/checkin").hasAnyRole("SECURITY", "ADMIN")
                 .requestMatchers("/api/campus/complaint/submit", "/api/upload").hasAnyRole("STUDENT", "TEACHER", "ADMIN")
                 .requestMatchers("/api/campus/telemetry", "/api/campus/bus/locations").authenticated()
+                .requestMatchers("/api/chatbot").authenticated()
 
                 // React dashboard data endpoints
                 .requestMatchers("/api/dashboard/admin/**").hasRole("ADMIN")
