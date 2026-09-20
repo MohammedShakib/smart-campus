@@ -107,6 +107,13 @@ gemini.model=${GEMINI_MODEL:gemini-3.6-flash}
 gemini.api.base-url=${GEMINI_API_BASE_URL:https://generativelanguage.googleapis.com/v1beta/models}
 ```
 
+For local development, the app also imports a git-ignored `.env` file from the project root:
+
+```properties
+GEMINI_API_KEY=your_key_here
+GEMINI_MODEL=gemini-3.6-flash
+```
+
 If `GEMINI_API_KEY` is missing, the app still starts normally and chatbot requests return:
 
 ```text
