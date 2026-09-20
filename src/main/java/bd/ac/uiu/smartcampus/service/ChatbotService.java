@@ -62,6 +62,10 @@ public class ChatbotService {
     }
 
     public String chat(String userMessage, List<ChatRequest.ChatTurn> history) {
+        return chat(userMessage, history, "");
+    }
+
+    public String chat(String userMessage, List<ChatRequest.ChatTurn> history, String liveContext) {
         if (apiKey == null || apiKey.isBlank()) {
             return "CampusAI is not configured. Please set GEMINI_API_KEY before using the assistant.";
         }
@@ -69,8 +73,8 @@ public class ChatbotService {
         try {
             boolean openAiCompatibleGateway = isOpenAiCompatibleGateway();
             String requestBody = openAiCompatibleGateway
-                    ? buildOpenAiRequestBody(userMessage, history)
-                    : buildGeminiRequestBody(userMessage, history);
+                    ? buildOpenAiRequestBody(userMessage, history, liveContext)
+                    : buildGeminiRequestBody(userMessage, history, liveContext);
 
             HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
                     .uri(openAiCompatibleGateway ? buildOpenAiChatCompletionsUri() : buildGeminiUri())
@@ -123,7 +127,7 @@ public class ChatbotService {
         return trimmed.endsWith("/") ? trimmed.substring(0, trimmed.length() - 1) : trimmed;
     }
 
-    private String buildGeminiRequestBody(String userMessage, List<ChatRequest.ChatTurn> history) throws JsonProcessingException {
+    private String buildGeminiRequestBody(String userMessage, List<ChatRequest.ChatTurn> history, String liveContext) throws JsonProcessingException {
         List<Map<String, Object>> contents = new ArrayList<>();
         for (ChatRequest.ChatTurn turn : normalizeGeminiHistory(history)) {
             contents.add(content(turn.getRole(), turn.getText()));
@@ -131,7 +135,7 @@ public class ChatbotService {
         contents.add(content("user", userMessage));
 
         Map<String, Object> payload = Map.of(
-                "systemInstruction", Map.of("parts", List.of(Map.of("text", SYSTEM_PROMPT))),
+                "systemInstruction", Map.of("parts", List.of(Map.of("text", buildSystemPrompt(liveContext)))),
                 "contents", contents,
                 "generationConfig", Map.of(
                         "temperature", 0.4,
@@ -141,9 +145,9 @@ public class ChatbotService {
         return objectMapper.writeValueAsString(payload);
     }
 
-    private String buildOpenAiRequestBody(String userMessage, List<ChatRequest.ChatTurn> history) throws JsonProcessingException {
+    private String buildOpenAiRequestBody(String userMessage, List<ChatRequest.ChatTurn> history, String liveContext) throws JsonProcessingException {
         List<Map<String, String>> messages = new ArrayList<>();
-        messages.add(Map.of("role", "system", "content", SYSTEM_PROMPT));
+        messages.add(Map.of("role", "system", "content", buildSystemPrompt(liveContext)));
 
         for (ChatRequest.ChatTurn turn : normalizeOpenAiHistory(history)) {
             messages.add(Map.of("role", turn.getRole(), "content", turn.getText()));
@@ -158,6 +162,13 @@ public class ChatbotService {
                 "max_tokens", 1024
         );
         return objectMapper.writeValueAsString(payload);
+    }
+
+    private String buildSystemPrompt(String liveContext) {
+        if (liveContext == null || liveContext.isBlank()) {
+            return SYSTEM_PROMPT;
+        }
+        return SYSTEM_PROMPT + "\n\n" + liveContext;
     }
 
     private List<ChatRequest.ChatTurn> normalizeGeminiHistory(List<ChatRequest.ChatTurn> history) {

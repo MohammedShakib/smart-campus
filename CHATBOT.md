@@ -56,6 +56,7 @@ Source files:
 - `src/main/java/bd/ac/uiu/smartcampus/dto/ChatRequest.java`
 - `src/main/java/bd/ac/uiu/smartcampus/controller/ChatbotController.java`
 - `src/main/java/bd/ac/uiu/smartcampus/service/ChatbotService.java`
+- `src/main/java/bd/ac/uiu/smartcampus/service/ChatbotContextService.java`
 
 Endpoint:
 
@@ -81,6 +82,34 @@ Validation:
 - blank messages return `400`
 - overly long messages return `400`
 - history is capped server-side before sending to Gemini
+
+## Live Campus Context
+
+CampusAI now receives a live, read-only Smart Campus context before each AI request. This is not raw database access and it does not allow the model to run SQL or perform writes. The backend gathers a safe summary through existing repositories and services, then appends that summary to the model's system prompt.
+
+The context includes:
+
+- authenticated user name, email/login, role, department, and campus ID
+- current campus telemetry and bus locations
+- active emergency alerts
+- relevant notices
+- published events, cafeteria menu items, and lab equipment availability
+- role-specific dashboard data
+
+Role-specific data:
+
+- Admin: user counts, complaint queue size, gate pass count, recent admin actions, queued complaints, admin notices
+- Teacher: next class, schedule, class statuses, attendance sessions, room reservations, reported issues, teacher notices
+- Student: class schedule, attendance summaries, absence excuses, equipment bookings, support tickets, lost-and-found items, student notices
+- Security: visitor counts, parking occupancy, gate movement counts, parking zones, recent visitors, recent incidents, security notices
+
+Safety rules:
+
+- context is generated server-side after authentication
+- users only receive the context appropriate for their role
+- the model is instructed to say when data is not available in the current CampusAI context
+- passwords, tokens, API keys, visitor pass codes, and national ID style fields are filtered from generated context
+- CampusAI can answer from data, but it must not claim it created, updated, or deleted database records
 
 ## Security
 
@@ -130,6 +159,6 @@ If `GEMINI_API_KEY` is missing, the app still starts normally and chatbot reques
 CampusAI is not configured. Please set GEMINI_API_KEY before using the assistant.
 ```
 
-## Limitations
+## Current Limitations
 
-CampusAI is currently a general campus assistant. It does not have live access to student schedules, attendance, bus locations, cafeteria menus, visitor status, or event status unless those details are supplied in the conversation.
+CampusAI can answer from the live context that the backend provides at request time. It still does not have unrestricted database access, SQL execution, file access, or write permissions. If a feature needs action-taking later, add a dedicated backend API/tool with authorization, validation, and audit logging instead of exposing direct database control to the model.
