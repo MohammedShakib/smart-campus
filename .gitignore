@@ -25,5 +25,6 @@ Thumbs.db
 # Local environment overrides
 .env
 .env.*
+!.env.example
 !/.mvn/wrapper/maven-wrapper.properties
 scratch/

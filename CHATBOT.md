@@ -133,26 +133,27 @@ Configuration is environment-based:
 
 ```properties
 gemini.api.key=${GEMINI_API_KEY:}
-gemini.model=${GEMINI_MODEL:gemini-3.6-flash}
-gemini.api.base-url=${GEMINI_API_BASE_URL:https://generativelanguage.googleapis.com/v1beta/models}
+gemini.model=${GEMINI_MODEL:gemini-3.7-flash}
+gemini.api.base-url=${GEMINI_API_BASE_URL:http://127.0.0.1:8081/v1}
 ```
 
-For normal Gemini usage, only the API key is required. The app uses the native Gemini `generateContent` API by default:
+CampusAI is configured for GemBridge by default. The GemBridge key is not a direct Google Gemini API key; the backend sends it as a bearer token to the GemBridge `/v1/chat/completions` endpoint, and GemBridge forwards the request through the signed-in Gemini web session.
+
+The project root `.env` file is imported for local development and is intentionally git-ignored. To set up a machine, copy `.env.example` to `.env` and add the private key:
 
 ```properties
-GEMINI_API_KEY=your_key_here
-GEMINI_MODEL=gemini-3.6-flash
-```
-
-For local development, the app also imports a git-ignored `.env` file from the project root. If you are using an OpenAI-compatible demo gateway, add the optional base URL:
-
-```properties
-GEMINI_API_KEY=your_key_here
-GEMINI_MODEL=gemini-3.6-flash
+GEMINI_API_KEY=gb_your_gembridge_key_here
+GEMINI_MODEL=gemini-3.7-flash
 GEMINI_API_BASE_URL=http://127.0.0.1:8081/v1
 ```
 
-When `GEMINI_API_BASE_URL` points to an OpenAI-compatible `/v1` gateway, CampusAI uses `POST /chat/completions` with a bearer token. If no custom base URL is set, it uses the native Gemini `generateContent` API shape.
+If GemBridge is running on another trusted machine through Tailscale, use that private base URL instead:
+
+```properties
+GEMINI_API_BASE_URL=https://shakibs-pc.tail76a11b.ts.net/v1
+```
+
+When `GEMINI_API_BASE_URL` points to an OpenAI-compatible `/v1` gateway, CampusAI uses `POST /chat/completions` with a bearer token. If you need to use the native Google Gemini API instead, override `GEMINI_API_BASE_URL` with the Google models endpoint and set `GEMINI_API_KEY` to a real Google API key.
 
 If `GEMINI_API_KEY` is missing, the app still starts normally and chatbot requests return:
 
