@@ -15,6 +15,8 @@ public interface GateAccessLogRepository extends JpaRepository<GateAccessLog, Lo
     List<GateAccessLog> findByTimestampBetweenOrderByTimestampDesc(LocalDateTime start, LocalDateTime end);
 
     Optional<GateAccessLog> findFirstByUserOrderByTimestampDesc(User user);
+
+    Optional<GateAccessLog> findFirstByIdentifierSnapshotOrderByTimestampDesc(String identifierSnapshot);
     
     long countByTimestampBetweenAndAccessTypeAndResult(LocalDateTime start, LocalDateTime end, String accessType, String result);
 

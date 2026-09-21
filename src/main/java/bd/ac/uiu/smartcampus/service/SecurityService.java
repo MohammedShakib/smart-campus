@@ -259,26 +259,31 @@ public class SecurityService {
     @Transactional
     public GateAccessLog recordGateAccess(String identifier, String accessType, String gateName, String officer) {
         User user = userRepository.findByEmail(identifier)
-                .orElseGet(() -> userRepository.findByStudentOrEmpId(identifier)
-                .orElseThrow(() -> new IllegalArgumentException("Unknown identifier: " + identifier)));
+                .orElseGet(() -> userRepository.findByStudentOrEmpId(identifier).orElse(null));
 
-        if (!user.isActive()) {
-            GateAccessLog log = new GateAccessLog(user, identifier, user.getRole().name(), accessType, gateName, officer, "DENIED", "User is inactive");
+        String roleSnapshot = user != null ? user.getRole().name() : "ROLE_STUDENT";
+        String userName = user != null ? user.getFullName() : identifier;
+
+        if (user != null && !user.isActive()) {
+            GateAccessLog log = new GateAccessLog(user, identifier, roleSnapshot, accessType, gateName, officer, "DENIED", "User is inactive");
             gateAccessLogRepository.save(log);
             throw new IllegalStateException("User account is disabled.");
         }
 
-        Optional<GateAccessLog> lastLogOpt = gateAccessLogRepository.findFirstByUserOrderByTimestampDesc(user);
+        Optional<GateAccessLog> lastLogOpt = user != null
+                ? gateAccessLogRepository.findFirstByUserOrderByTimestampDesc(user)
+                : gateAccessLogRepository.findFirstByIdentifierSnapshotOrderByTimestampDesc(identifier);
+
         if (lastLogOpt.isPresent()) {
             GateAccessLog lastLog = lastLogOpt.get();
             if ("ALLOWED".equals(lastLog.getResult())) {
                 if ("ENTRY".equals(accessType) && "ENTRY".equals(lastLog.getAccessType())) {
-                    GateAccessLog log = new GateAccessLog(user, identifier, user.getRole().name(), accessType, gateName, officer, "DENIED", "Duplicate ENTRY. Already inside.");
+                    GateAccessLog log = new GateAccessLog(user, identifier, roleSnapshot, accessType, gateName, officer, "DENIED", "Duplicate ENTRY. Already inside.");
                     gateAccessLogRepository.save(log);
                     throw new IllegalStateException("Duplicate ENTRY. User is already inside.");
                 }
                 if ("EXIT".equals(accessType) && "EXIT".equals(lastLog.getAccessType())) {
-                    GateAccessLog log = new GateAccessLog(user, identifier, user.getRole().name(), accessType, gateName, officer, "DENIED", "Duplicate EXIT. Already outside.");
+                    GateAccessLog log = new GateAccessLog(user, identifier, roleSnapshot, accessType, gateName, officer, "DENIED", "Duplicate EXIT. Already outside.");
                     gateAccessLogRepository.save(log);
                     throw new IllegalStateException("Duplicate EXIT. User is already outside.");
                 }
@@ -286,14 +291,17 @@ public class SecurityService {
         } else {
             // First time logic
             if ("EXIT".equals(accessType)) {
-                GateAccessLog log = new GateAccessLog(user, identifier, user.getRole().name(), accessType, gateName, officer, "DENIED", "Invalid EXIT. No prior ENTRY found.");
+                GateAccessLog log = new GateAccessLog(user, identifier, roleSnapshot, accessType, gateName, officer, "DENIED", "Invalid EXIT. No prior ENTRY found.");
                 gateAccessLogRepository.save(log);
                 throw new IllegalStateException("Invalid EXIT. User has no prior ENTRY record.");
             }
         }
 
-        GateAccessLog log = new GateAccessLog(user, identifier, user.getRole().name(), accessType, gateName, officer, "ALLOWED", "Access Granted");
-        logFileWriter.appendAuditLog("GATE_" + accessType, "User " + user.getFullName() + " granted " + accessType + " at " + gateName + " by " + officer);
+        GateAccessLog log = new GateAccessLog(user, identifier, roleSnapshot, accessType, gateName, officer, "ALLOWED", "Access Granted");
+        logFileWriter.appendAuditLog("GATE_" + accessType, "User " + userName + " granted " + accessType + " at " + gateName + " by " + officer);
+        if ("ENTRY".equals(accessType)) {
+            attendeeSetService.checkInStudent(user != null && user.getStudentOrEmpId() != null ? user.getStudentOrEmpId() : identifier);
+        }
         return gateAccessLogRepository.save(log);
     }
 

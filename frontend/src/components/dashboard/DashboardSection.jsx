@@ -41,6 +41,7 @@ import { SecurityParkingSection } from './security/SecurityParkingSection';
 import { SecurityEmergencySection } from './security/SecurityEmergencySection';
 import { SecurityIncidentsSection } from './security/SecurityIncidentsSection';
 import { SecurityMapSection } from './security/SecurityMapSection';
+import { SecurityGateTerminalSection } from './security/SecurityGateTerminalSection';
 
 /* ─────────────────────────────────────────────────────────
    SECTION ROUTER
@@ -145,7 +146,7 @@ export function DashboardSection({
     if (section === 'emergency') return <SecurityEmergencySection />;
     if (section === 'incidents') return <SecurityIncidentsSection />;
     if (section === 'campusmap') return <SecurityMapSection />;
-    if (section === 'gate') return <GateSection data={data} reload={reload} />;
+    if (section === 'gate' || section === 'gate-history') return <SecurityGateTerminalSection data={data} reload={reload} />;
     if (section === 'busfleet') return <ShuttleSection busLocations={data.busLocations || {}} />;
   }
 
@@ -564,21 +565,16 @@ function GateSection({ data, reload }) {
   return (
     <div>
       <SectionHeader title="Gate Access Validator" subtitle="Set-based unique attendee tracking. Each ID can only check in once." />
-      <div className="section-grid">
-        <Panel title="Check-In Terminal" tag="Set Collection">
-          <form className="scan-form" onSubmit={scan}>
-            <input value={studentId} onChange={(e) => setStudentId(e.target.value)} placeholder="Student or staff ID" />
-            <button className="primary-btn" type="submit"><ShieldCheck size={17} /> Verify Access</button>
-          </form>
-          {message && <div className={`notice ${message.type}`}>{message.text}</div>}
-          <div className="stat-list" style={{ marginTop: '1rem' }}>
-            <StatRow label="Unique Gate Passes Today" value={data.uniqueGatePassCount} color="emerald" />
-          </div>
-        </Panel>
-        <Panel title="Campus Notices" tag="Live">
-          <NoticeList notices={(data.notices || []).slice(0, 4)} />
-        </Panel>
-      </div>
+      <Panel title="Check-In Terminal" tag="Set Collection">
+        <form className="scan-form" onSubmit={scan}>
+          <input value={studentId} onChange={(e) => setStudentId(e.target.value)} placeholder="Student or staff ID" />
+          <button className="primary-btn" type="submit"><ShieldCheck size={17} /> Verify Access</button>
+        </form>
+        {message && <div className={`notice ${message.type}`}>{message.text}</div>}
+        <div className="stat-list" style={{ marginTop: '1rem' }}>
+          <StatRow label="Unique Gate Passes Today" value={data.uniqueGatePassCount} color="emerald" />
+        </div>
+      </Panel>
     </div>
   );
 }

@@ -26,3 +26,4 @@ Thumbs.db
 .env
 .env.*
 !/.mvn/wrapper/maven-wrapper.properties
+scratch/
