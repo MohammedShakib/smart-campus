@@ -1,10 +1,12 @@
 package bd.ac.uiu.smartcampus.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "departments")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Department {
 
     @Id

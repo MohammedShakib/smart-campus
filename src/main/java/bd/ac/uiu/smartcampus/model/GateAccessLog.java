@@ -1,18 +1,22 @@
 package bd.ac.uiu.smartcampus.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "gate_access_logs")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class GateAccessLog {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "password", "departmentRef"})
     private User user;
 
     @Column(length = 50)
