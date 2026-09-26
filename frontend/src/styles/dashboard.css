@@ -1149,8 +1149,9 @@
 
 .bus-osm-map {
   position: relative;
-  min-height: 260px;
-  aspect-ratio: 16 / 6;
+  z-index: 1;
+  min-height: 360px;
+  aspect-ratio: 16 / 6.4;
   overflow: hidden;
   border: 1px solid var(--border);
   border-radius: 13px;
@@ -1158,52 +1159,50 @@
   box-shadow: 0 1px 2px rgba(15,23,42,0.05);
 }
 
-.bus-osm-tiles,
-.bus-osm-overlay {
-  position: absolute;
-  inset: 0;
+.bus-osm-map .leaflet-control-attribution {
+  color: var(--tx-muted);
+  font-size: 0.62rem;
+  font-weight: 700;
 }
 
-.bus-osm-tiles img {
-  position: absolute;
-  object-fit: cover;
-  user-select: none;
-  pointer-events: none;
+.bus-route-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.46rem;
 }
 
-.bus-osm-overlay {
-  z-index: 2;
-  width: 100%;
-  height: 100%;
+.bus-route-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.36rem;
+  min-height: 28px;
+  padding: 0.24rem 0.58rem;
+  border: 1px solid color-mix(in srgb, var(--bus-color) 28%, transparent);
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--bus-color) 10%, #ffffff);
+  color: var(--tx-primary);
+  font-size: 0.72rem;
+  font-weight: 800;
 }
 
-.bus-osm-route {
-  fill: none;
-  stroke: var(--sky);
-  stroke-width: 1.28;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  vector-effect: non-scaling-stroke;
-  opacity: 0.92;
-  filter: drop-shadow(0 1px 2px rgba(15,23,42,0.24));
+.bus-route-pill i {
+  width: 20px;
+  height: 4px;
+  border-radius: var(--r-pill);
+  background: var(--bus-color);
 }
 
-.bus-osm-route--bus-01 { stroke: #2563eb; }
-.bus-osm-route--bus-02 { stroke: #0f766e; }
-.bus-osm-route--bus-03 { stroke: #7c3aed; }
-
-.bus-campus-pin,
-.bus-live-marker {
-  position: absolute;
-  z-index: 3;
-  transform: translate(-50%, -50%);
+.bus-campus-div-icon,
+.bus-live-div-icon {
+  background: transparent;
+  border: 0;
 }
 
-.bus-campus-pin {
+.bus-campus-div-icon span {
   display: inline-flex;
   align-items: center;
   min-height: 26px;
-  padding: 0.28rem 0.52rem;
+  padding: 0.24rem 0.5rem;
   border: 1px solid rgba(37,99,235,0.28);
   border-radius: var(--r-pill);
   background: rgba(255,255,255,0.96);
@@ -1214,50 +1213,28 @@
   letter-spacing: 0.04em;
 }
 
-.bus-live-marker {
+.bus-live-div-icon span {
   display: inline-flex;
   align-items: center;
-  gap: 0.22rem;
+  gap: 0.24rem;
   min-height: 30px;
   padding: 0.3rem 0.46rem;
-  border: 1px solid rgba(14,165,233,0.32);
+  border: 1px solid color-mix(in srgb, var(--bus-color) 26%, transparent);
   border-radius: var(--r-pill);
-  background: rgba(255,255,255,0.96);
-  color: var(--sky);
+  background: rgba(255,255,255,0.97);
+  color: var(--bus-color);
   box-shadow: 0 8px 20px rgba(15,23,42,0.16);
   font-size: 0.72rem;
   font-weight: 900;
-  white-space: nowrap;
 }
 
-.bus-live-marker::after {
-  content: '';
+.bus-live-div-icon i {
   width: 7px;
   height: 7px;
-  margin-left: 0.08rem;
   border-radius: 50%;
   background: var(--emerald);
   box-shadow: 0 0 0 4px rgba(16,185,129,0.14);
   animation: dashboard-live-pulse 2.4s ease-in-out infinite;
-}
-
-.bus-map-credit {
-  position: absolute;
-  right: 0.45rem;
-  bottom: 0.38rem;
-  z-index: 4;
-  padding: 0.16rem 0.35rem;
-  border-radius: 5px;
-  background: rgba(255,255,255,0.88);
-  color: var(--tx-muted);
-  font-size: 0.62rem;
-  font-weight: 800;
-  text-decoration: none;
-  box-shadow: 0 1px 2px rgba(15,23,42,0.08);
-}
-
-.bus-map-credit:hover {
-  color: var(--accent);
 }
 
 .bus-list { display: grid; gap: 0.62rem; }
@@ -1350,22 +1327,18 @@
   width: 100%;
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, var(--sky), rgba(99,102,241,0.82), rgba(16,185,129,0.78));
-  opacity: 0.55;
+  background: linear-gradient(90deg, var(--bus-color, var(--sky)), rgba(16,185,129,0.78));
+  opacity: 0.5;
 }
 
 @media (max-width: 700px) {
   .bus-osm-map {
-    min-height: 220px;
+    min-height: 300px;
     aspect-ratio: 4 / 3;
   }
 
-  .bus-live-marker {
-    padding-inline: 0.36rem;
-  }
-
-  .bus-live-marker strong {
-    display: none;
+  .bus-route-legend {
+    gap: 0.36rem;
   }
 }
 

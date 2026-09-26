@@ -1,117 +1,101 @@
-import React from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { BusFront, Loader2, AlertCircle, Search, RotateCw } from 'lucide-react';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 
 const UIU_COORD = { lat: 23.7979, lng: 90.4492, label: 'UIU Campus' };
-const BUS_ROUTE_POINTS = {
-  'BUS-01': [
-    { lat: 23.7937, lng: 90.4234, label: 'Natun Bazar' },
-    { lat: 23.8019, lng: 90.4377, label: '100 Feet Bridge' },
-    UIU_COORD
-  ],
-  'BUS-02': [
-    { lat: 23.8223, lng: 90.4204, label: 'Kuril Flyover' },
-    { lat: 23.8117, lng: 90.4338, label: 'Bashundhara Link' },
-    UIU_COORD
-  ],
-  'BUS-03': [
-    { lat: 23.7808, lng: 90.4254, label: 'Badda' },
-    { lat: 23.7937, lng: 90.4234, label: 'Natun Bazar' },
-    UIU_COORD
-  ]
+const BUS_ROUTES = {
+  'BUS-01': {
+    name: 'Bus 01',
+    color: '#2563eb',
+    origin: 'Natun Bazar',
+    waypoints: [
+      { lat: 23.7937, lng: 90.4234 },
+      { lat: 23.8019, lng: 90.4377 },
+      UIU_COORD
+    ],
+    fallbackPath: [
+      { lat: 23.7937, lng: 90.4234 },
+      { lat: 23.7967, lng: 90.4277 },
+      { lat: 23.8007, lng: 90.4369 },
+      { lat: 23.8003, lng: 90.4422 },
+      { lat: 23.7986, lng: 90.4474 },
+      UIU_COORD
+    ],
+    livePoint: { lat: 23.8019, lng: 90.4377 }
+  },
+  'BUS-02': {
+    name: 'Bus 02',
+    color: '#0f766e',
+    origin: 'Kuril Flyover',
+    waypoints: [
+      { lat: 23.8223, lng: 90.4204 },
+      { lat: 23.8117, lng: 90.4338 },
+      UIU_COORD
+    ],
+    fallbackPath: [
+      { lat: 23.8223, lng: 90.4204 },
+      { lat: 23.8173, lng: 90.4244 },
+      { lat: 23.8117, lng: 90.4338 },
+      { lat: 23.8058, lng: 90.4415 },
+      { lat: 23.7991, lng: 90.4472 },
+      UIU_COORD
+    ],
+    livePoint: { lat: 23.7991, lng: 90.4472 }
+  },
+  'BUS-03': {
+    name: 'Bus 03',
+    color: '#7c3aed',
+    origin: 'Badda',
+    waypoints: [
+      { lat: 23.7808, lng: 90.4254 },
+      { lat: 23.7937, lng: 90.4234 },
+      UIU_COORD
+    ],
+    fallbackPath: [
+      { lat: 23.7808, lng: 90.4254 },
+      { lat: 23.7861, lng: 90.4238 },
+      { lat: 23.7937, lng: 90.4234 },
+      { lat: 23.7972, lng: 90.4285 },
+      { lat: 23.8011, lng: 90.4375 },
+      { lat: 23.8000, lng: 90.4444 },
+      UIU_COORD
+    ],
+    livePoint: { lat: 23.7937, lng: 90.4234 }
+  }
 };
-
-const BUS_LIVE_POINTS = {
-  'BUS-01': { lat: 23.8019, lng: 90.4377, label: 'Near 100 Feet Bridge' },
-  'BUS-02': { lat: 23.7991, lng: 90.4472, label: 'Approaching Campus Gate' },
-  'BUS-03': { lat: 23.7937, lng: 90.4234, label: 'Departed Natun Bazar' }
-};
-
-const OSM_ZOOM = 13;
-const TILE_SIZE = 256;
-
-function latLngToWorld({ lat, lng }, zoom = OSM_ZOOM) {
-  const scale = TILE_SIZE * 2 ** zoom;
-  const sinLat = Math.sin((lat * Math.PI) / 180);
-  return {
-    x: ((lng + 180) / 360) * scale,
-    y: (0.5 - Math.log((1 + sinLat) / (1 - sinLat)) / (4 * Math.PI)) * scale
-  };
-}
+const BUS_ORDER = ['BUS-01', 'BUS-02', 'BUS-03'];
 
 function getRouteForBus(bus) {
-  return BUS_ROUTE_POINTS[bus] || [
-    { lat: 23.7937, lng: 90.4234, label: 'Campus Route' },
-    UIU_COORD
-  ];
+  return BUS_ROUTES[bus] || {
+    name: bus,
+    color: '#0284c7',
+    origin: 'Campus Route',
+    waypoints: [{ lat: 23.7937, lng: 90.4234 }, UIU_COORD],
+    fallbackPath: [{ lat: 23.7937, lng: 90.4234 }, UIU_COORD],
+    livePoint: UIU_COORD
+  };
 }
 
-function getLivePoint(bus, location) {
-  const normalized = String(location || '').toLowerCase();
-  if (normalized.includes('100 feet')) return BUS_LIVE_POINTS['BUS-01'];
-  if (normalized.includes('campus gate') || normalized.includes('approaching')) return BUS_LIVE_POINTS['BUS-02'];
-  if (normalized.includes('natun bazar')) return BUS_LIVE_POINTS['BUS-03'];
-  const route = getRouteForBus(bus);
-  return BUS_LIVE_POINTS[bus] || route[route.length - 1];
+async function fetchRoadPath(route, signal) {
+  const coordinates = route.waypoints.map((point) => `${point.lng},${point.lat}`).join(';');
+  const response = await fetch(
+    `https://router.project-osrm.org/route/v1/driving/${coordinates}?overview=full&geometries=geojson&steps=false`,
+    { signal }
+  );
+  if (!response.ok) throw new Error('Route service unavailable');
+  const data = await response.json();
+  const path = data?.routes?.[0]?.geometry?.coordinates;
+  if (!Array.isArray(path) || path.length < 2) throw new Error('Route geometry missing');
+  return path.map(([lng, lat]) => ({ lat, lng }));
 }
 
-function buildMapModel(entries) {
-  const routes = entries.map(([bus, location]) => ({
-    bus,
-    location,
-    points: getRouteForBus(bus),
-    livePoint: getLivePoint(bus, location)
-  }));
-  const allPoints = routes.flatMap((route) => [...route.points, route.livePoint, UIU_COORD]);
-  const worldPoints = allPoints.map((point) => latLngToWorld(point));
-  const minX = Math.min(...worldPoints.map((point) => point.x));
-  const maxX = Math.max(...worldPoints.map((point) => point.x));
-  const minY = Math.min(...worldPoints.map((point) => point.y));
-  const maxY = Math.max(...worldPoints.map((point) => point.y));
-  const padding = 90;
-  const bounds = {
-    minX: minX - padding,
-    maxX: maxX + padding,
-    minY: minY - padding,
-    maxY: maxY + padding
-  };
-  bounds.width = bounds.maxX - bounds.minX;
-  bounds.height = bounds.maxY - bounds.minY;
-
-  const toPct = (point) => {
-    const world = latLngToWorld(point);
-    return {
-      x: ((world.x - bounds.minX) / bounds.width) * 100,
-      y: ((world.y - bounds.minY) / bounds.height) * 100
-    };
-  };
-
-  const tiles = [];
-  const startTileX = Math.floor(bounds.minX / TILE_SIZE);
-  const endTileX = Math.floor(bounds.maxX / TILE_SIZE);
-  const startTileY = Math.floor(bounds.minY / TILE_SIZE);
-  const endTileY = Math.floor(bounds.maxY / TILE_SIZE);
-  for (let x = startTileX; x <= endTileX; x += 1) {
-    for (let y = startTileY; y <= endTileY; y += 1) {
-      tiles.push({
-        key: `${x}-${y}`,
-        src: `https://tile.openstreetmap.org/${OSM_ZOOM}/${x}/${y}.png`,
-        left: (((x * TILE_SIZE) - bounds.minX) / bounds.width) * 100,
-        top: (((y * TILE_SIZE) - bounds.minY) / bounds.height) * 100,
-        width: (TILE_SIZE / bounds.width) * 100,
-        height: (TILE_SIZE / bounds.height) * 100
-      });
-    }
-  }
-
-  return {
-    tiles,
-    routes: routes.map((route) => ({
-      ...route,
-      path: route.points.map(toPct),
-      live: toPct(route.livePoint)
-    })),
-    campus: toPct(UIU_COORD)
-  };
+function markerIcon(className, html) {
+  return L.divIcon({
+    className,
+    html,
+    iconSize: null
+  });
 }
 
 export function SectionHeader({ title, subtitle }) {
@@ -139,60 +123,116 @@ export function NoticeList({ notices }) {
 }
 
 export function BusLocations({ locations }) {
-  const entries = Object.entries(locations || {});
+  const entries = Object.entries(locations || {}).sort(([a], [b]) => {
+    const aIndex = BUS_ORDER.indexOf(a);
+    const bIndex = BUS_ORDER.indexOf(b);
+    return (aIndex === -1 ? 99 : aIndex) - (bIndex === -1 ? 99 : bIndex);
+  });
+  const routeKey = entries.map(([bus, location]) => `${bus}:${location}`).join('|');
+  const routes = useMemo(() => entries.map(([bus, location]) => ({
+    bus,
+    location,
+    ...getRouteForBus(bus)
+  })), [routeKey]);
+  const mapRef = useRef(null);
+
+  useEffect(() => {
+    if (!mapRef.current || !routes.length) return undefined;
+    const abortController = new AbortController();
+    let active = true;
+    const map = L.map(mapRef.current, {
+      zoomControl: true,
+      scrollWheelZoom: false,
+      preferCanvas: true
+    }).setView([UIU_COORD.lat, UIU_COORD.lng], 13);
+    const layerGroup = L.featureGroup().addTo(map);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    L.marker([UIU_COORD.lat, UIU_COORD.lng], {
+      icon: markerIcon('bus-campus-div-icon', '<span>UIU</span>'),
+      title: UIU_COORD.label
+    }).addTo(layerGroup);
+
+    async function drawRoutes() {
+      const routePaths = await Promise.all(routes.map(async (route) => {
+        try {
+          return { route, path: await fetchRoadPath(route, abortController.signal) };
+        } catch {
+          if (abortController.signal.aborted) return null;
+          return { route, path: route.fallbackPath };
+        }
+      }));
+
+      if (!active) return;
+      routePaths.filter(Boolean).forEach(({ route, path }) => {
+        const latLngs = path.map((point) => [point.lat, point.lng]);
+        L.polyline(latLngs, {
+          color: route.color,
+          weight: 5,
+          opacity: 0.88,
+          lineCap: 'round',
+          lineJoin: 'round'
+        }).addTo(layerGroup);
+
+        L.circleMarker([route.waypoints[0].lat, route.waypoints[0].lng], {
+          radius: 5,
+          color: route.color,
+          weight: 2,
+          fillColor: '#ffffff',
+          fillOpacity: 1
+        }).addTo(layerGroup);
+
+        L.marker([route.livePoint.lat, route.livePoint.lng], {
+          icon: markerIcon(
+            'bus-live-div-icon',
+            `<span style="--bus-color:${route.color}"><i></i><b>${route.bus.replace('BUS-', '')}</b></span>`
+          ),
+          title: `${route.bus}: ${route.location}`
+        }).addTo(layerGroup);
+      });
+
+      const bounds = layerGroup.getBounds();
+      if (bounds.isValid()) map.fitBounds(bounds.pad(0.16), { maxZoom: 14 });
+      requestAnimationFrame(() => map.invalidateSize());
+    }
+
+    drawRoutes();
+
+    return () => {
+      active = false;
+      abortController.abort();
+      map.remove();
+    };
+  }, [routes]);
+
   if (!entries.length) return <p className="muted">No bus socket transmissions yet.</p>;
-  const map = buildMapModel(entries);
+
   return (
     <div className="bus-feed">
-      <div className="bus-osm-map" aria-label="OpenStreetMap shuttle route overview">
-        <div className="bus-osm-tiles" aria-hidden="true">
-          {map.tiles.map((tile) => (
-            <img
-              key={tile.key}
-              src={tile.src}
-              alt=""
-              loading="lazy"
-              draggable="false"
-              style={{ left: `${tile.left}%`, top: `${tile.top}%`, width: `${tile.width}%`, height: `${tile.height}%` }}
-            />
-          ))}
-        </div>
-        <svg className="bus-osm-overlay" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-          {map.routes.map((route) => (
-            <polyline
-              key={route.bus}
-              points={route.path.map((point) => `${point.x},${point.y}`).join(' ')}
-              className={`bus-osm-route bus-osm-route--${route.bus.toLowerCase()}`}
-            />
-          ))}
-        </svg>
-        <span className="bus-campus-pin" style={{ left: `${map.campus.x}%`, top: `${map.campus.y}%` }}>UIU</span>
-        {map.routes.map((route) => (
-          <span
-            className="bus-live-marker"
-            key={route.bus}
-            style={{ left: `${route.live.x}%`, top: `${route.live.y}%` }}
-            title={`${route.bus}: ${route.location}`}
-          >
-            <BusFront size={14} />
-            <strong>{route.bus.replace('BUS-', '')}</strong>
+      <div className="bus-route-legend" aria-label="Visible shuttle routes">
+        {routes.map((route) => (
+          <span className="bus-route-pill" key={route.bus} style={{ '--bus-color': route.color }}>
+            <i aria-hidden="true" />
+            {route.name}
           </span>
         ))}
-        <a className="bus-map-credit" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">
-          OpenStreetMap
-        </a>
       </div>
+      <div ref={mapRef} className="bus-osm-map" aria-label="Interactive OpenStreetMap shuttle route overview" />
 
       <div className="bus-list">
-        {entries.map(([bus, location]) => (
-          <div className="bus-item" key={bus}>
+        {routes.map((route) => (
+          <div className="bus-item" key={route.bus} style={{ '--bus-color': route.color }}>
             <span className="bus-icon"><BusFront size={16} /></span>
             <div className="bus-copy">
               <div className="bus-meta">
-                <strong>{bus}</strong>
+                <strong>{route.bus}</strong>
                 <span className="bus-live"><i aria-hidden="true" /> live</span>
               </div>
-              <span className="bus-location">{location}</span>
+              <span className="bus-location">{route.location}</span>
               <div className="bus-route-line" aria-hidden="true"><span /></div>
             </div>
           </div>
