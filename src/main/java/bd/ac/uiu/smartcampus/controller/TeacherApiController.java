@@ -266,15 +266,22 @@ public class TeacherApiController {
         );
         CampusNotice savedNotice = noticeRepository.save(notice);
         
-        notificationService.fanOutNotificationToRole(
-                Role.ROLE_STUDENT,
-                NotificationType.ANNOUNCEMENT,
-                "New academic announcement",
-                savedNotice.getTitle(),
-                "notices",
-                savedNotice.getId().toString(),
-                "ANNOUNCEMENT:" + savedNotice.getId()
-        );
+        if (request.getCourseCode() != null && !request.getCourseCode().isBlank() && request.getSectionName() != null && !request.getSectionName().isBlank()) {
+            List<RosterStudentDto> students = teacherService.getRosterStudents(userDetails.getUsername(), request.getCourseCode(), request.getSectionName());
+            for (RosterStudentDto dto : students) {
+                userRepository.findByEmail(dto.getEmail()).ifPresent(user -> {
+                    notificationService.createNotification(
+                            user,
+                            NotificationType.ANNOUNCEMENT,
+                            "New academic announcement",
+                            savedNotice.getTitle(),
+                            "notices",
+                            savedNotice.getId().toString(),
+                            "ANNOUNCEMENT:" + savedNotice.getId() + ":" + user.getId()
+                    );
+                });
+            }
+        }
         
         return ApiResponse.ok("Academic announcement published", savedNotice);
     }

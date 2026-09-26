@@ -212,33 +212,6 @@ public class StudentApiController {
         return ApiResponse.ok("Active emergencies", studentPortalService.getActiveEmergencies());
     }
 
-    @GetMapping("/notifications")
-    public ApiResponse<List<NotificationDto>> getNotifications(@AuthenticationPrincipal CustomUserDetails userDetails) {
-        User student = getAuthenticatedStudent(userDetails);
-        List<NotificationDto> notifications = notificationService.getNotifications(student);
-        return ApiResponse.ok("Student notifications fetched", notifications);
-    }
-
-    @GetMapping("/notifications/unread-count")
-    public ApiResponse<Map<String, Long>> getUnreadCount(@AuthenticationPrincipal CustomUserDetails userDetails) {
-        User student = getAuthenticatedStudent(userDetails);
-        long count = notificationService.getUnreadCount(student);
-        return ApiResponse.ok("Unread count fetched", Map.of("count", count));
-    }
-
-    @PostMapping("/notifications/{id}/read")
-    public ApiResponse<Void> markAsRead(@PathVariable Long id, @AuthenticationPrincipal CustomUserDetails userDetails) {
-        User student = getAuthenticatedStudent(userDetails);
-        notificationService.markAsRead(id, student);
-        return ApiResponse.ok("Notification marked as read", null);
-    }
-
-    @PostMapping("/notifications/read-all")
-    public ApiResponse<Void> markAllAsRead(@AuthenticationPrincipal CustomUserDetails userDetails) {
-        User student = getAuthenticatedStudent(userDetails);
-        notificationService.markAllAsRead(student);
-        return ApiResponse.ok("All notifications marked as read", null);
-    }
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiResponse<Void>> handleBadRequest(IllegalArgumentException ex) {

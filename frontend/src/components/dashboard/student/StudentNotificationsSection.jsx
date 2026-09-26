@@ -15,7 +15,7 @@ export function StudentNotificationsSection() {
   }, []);
 
   function fetchNotifications() {
-    api('/api/student/notifications')
+    api('/api/notifications')
       .then((res) => {
         setNotifications(res.data || []);
         setError(null);
@@ -25,11 +25,11 @@ export function StudentNotificationsSection() {
   }
 
   function markRead(id) {
-    postAction(`/api/student/notifications/${id}/read`, fetchNotifications);
+    postAction(`/api/notifications/${id}/read`, fetchNotifications);
   }
 
   function markAllRead() {
-    postAction(`/api/student/notifications/read-all`, fetchNotifications);
+    postAction(`/api/notifications/read-all`, fetchNotifications);
   }
 
   const unreadCount = notifications.filter(n => !n.read).length;

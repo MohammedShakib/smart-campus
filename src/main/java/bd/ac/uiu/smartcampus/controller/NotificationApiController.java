@@ -15,50 +15,51 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/teacher/notifications")
-public class TeacherNotificationApiController {
+@RequestMapping("/api/notifications")
+public class NotificationApiController {
 
     private final NotificationService notificationService;
     private final UserRepository userRepository;
 
-    public TeacherNotificationApiController(NotificationService notificationService, UserRepository userRepository) {
+    public NotificationApiController(NotificationService notificationService, UserRepository userRepository) {
         this.notificationService = notificationService;
         this.userRepository = userRepository;
     }
 
-    private User getAuthenticatedTeacher(CustomUserDetails userDetails) {
+    private User getAuthenticatedUser(CustomUserDetails userDetails) {
         if (userDetails == null) {
             throw new RuntimeException("Unauthorized");
         }
         return userRepository.findByEmail(userDetails.getUsername())
-                .orElseThrow(() -> new RuntimeException("Teacher not found"));
+                .orElseThrow(() -> new RuntimeException("User not found"));
     }
 
     @GetMapping
     public ApiResponse<List<NotificationDto>> getNotifications(@AuthenticationPrincipal CustomUserDetails userDetails) {
-        User teacher = getAuthenticatedTeacher(userDetails);
-        List<NotificationDto> notifications = notificationService.getNotifications(teacher);
-        return ApiResponse.ok("Teacher notifications fetched", notifications);
+        User user = getAuthenticatedUser(userDetails);
+        List<NotificationDto> notifications = notificationService.getNotifications(user);
+        return ApiResponse.ok("Notifications fetched", notifications);
     }
 
     @GetMapping("/unread-count")
     public ApiResponse<Map<String, Long>> getUnreadCount(@AuthenticationPrincipal CustomUserDetails userDetails) {
-        User teacher = getAuthenticatedTeacher(userDetails);
-        long count = notificationService.getUnreadCount(teacher);
+        if (userDetails == null) return ApiResponse.ok("Unread count fetched", Map.of("count", 0L));
+        User user = getAuthenticatedUser(userDetails);
+        long count = notificationService.getUnreadCount(user);
         return ApiResponse.ok("Unread count fetched", Map.of("count", count));
     }
 
     @PostMapping("/{id}/read")
     public ApiResponse<Void> markAsRead(@PathVariable Long id, @AuthenticationPrincipal CustomUserDetails userDetails) {
-        User teacher = getAuthenticatedTeacher(userDetails);
-        notificationService.markAsRead(id, teacher);
+        User user = getAuthenticatedUser(userDetails);
+        notificationService.markAsRead(id, user);
         return ApiResponse.ok("Notification marked as read", null);
     }
 
     @PostMapping("/read-all")
     public ApiResponse<Void> markAllAsRead(@AuthenticationPrincipal CustomUserDetails userDetails) {
-        User teacher = getAuthenticatedTeacher(userDetails);
-        notificationService.markAllAsRead(teacher);
+        User user = getAuthenticatedUser(userDetails);
+        notificationService.markAllAsRead(user);
         return ApiResponse.ok("All notifications marked as read", null);
     }
 

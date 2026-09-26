@@ -1097,7 +1097,7 @@ export function TeacherNotificationsSection({
 
   const loadNotifications = () => {
     setLoading(true);
-    api('/api/teacher/notifications')
+    api('/api/notifications')
       .then((res) => {
         setNotifications(res.data || []);
       })
@@ -1113,7 +1113,7 @@ export function TeacherNotificationsSection({
     const target = notifications.find((notification) => notification.id === id);
     if (!target || target.read) return;
 
-    api(`/api/teacher/notifications/${id}/read`, { method: 'POST' })
+    api(`/api/notifications/${id}/read`, { method: 'POST' })
       .then(() => {
         setNotifications((prev) =>
           prev.map((n) => (n.id === id ? { ...n, read: true } : n))
@@ -1136,7 +1136,7 @@ export function TeacherNotificationsSection({
   };
 
   const markAllAsRead = () => {
-    api('/api/teacher/notifications/read-all', { method: 'POST' })
+    api('/api/notifications/read-all', { method: 'POST' })
       .then(() => {
         setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
         onAllNotificationsRead?.();

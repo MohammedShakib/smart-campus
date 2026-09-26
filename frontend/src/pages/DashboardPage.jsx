@@ -31,6 +31,7 @@ const dashboardConfig = {
       { key: 'classrooms',  label: 'Smart Classrooms',  icon: Building2 },
       { key: 'transport',   label: 'Transport',         icon: Bus },
       { key: 'communication',label: 'Communication',    icon: RadioTower },
+      { key: 'notifications',label: 'Notifications',    icon: Bell },
       { key: 'maintenance', label: 'Maintenance',       icon: Wrench },
       { key: 'audit',       label: 'Audit Stack',       icon: FileText },
     ]
@@ -82,6 +83,7 @@ const dashboardConfig = {
       { key: 'incidents',  label: 'Incident Log',        icon: FileWarning },
       { key: 'campusmap',  label: 'Security Map',        icon: MapPin },
       { key: 'busfleet',   label: 'Bus Fleet',           icon: Bus },
+      { key: 'notifications',label: 'Notifications',    icon: Bell },
     ]
   }
 };
@@ -114,16 +116,10 @@ export function DashboardPage() {
   }, []);
 
   const loadUnreadCount = useCallback(() => {
-    if (role === 'teacher') {
-      api('/api/teacher/notifications/unread-count').then((res) => {
-        setUnreadNotifications(res.data?.count || 0);
-      }).catch(() => {});
-    } else if (role === 'student') {
-      api('/api/student/notifications/unread-count').then((res) => {
-        setUnreadNotifications(res.data?.count || 0);
-      }).catch(() => {});
-    }
-  }, [role]);
+    api('/api/notifications/unread-count').then((res) => {
+      setUnreadNotifications(res.data?.count || 0);
+    }).catch(() => {});
+  }, []);
 
   const decrementUnreadNotifications = useCallback((amount = 1) => {
     setUnreadNotifications((current) => Math.max(current - amount, 0));
@@ -136,18 +132,14 @@ export function DashboardPage() {
   useEffect(() => {
     loadDashboard();
     if (role === 'admin') loadAuditLogs();
-    if (role === 'teacher' || role === 'student') loadUnreadCount();
+    loadUnreadCount();
     
     const telemetryTimer = setInterval(() => {
       api('/api/campus/telemetry').then((res) => setTelemetry(res.data)).catch(() => {});
     }, 4000);
     
     let notifTimer;
-    if (role === 'teacher' || role === 'student') {
-      notifTimer = setInterval(() => {
-        loadUnreadCount();
-      }, 25000);
-    }
+    notifTimer = setInterval(() => { loadUnreadCount(); }, 25000);
     
     return () => {
       clearInterval(telemetryTimer);
@@ -278,12 +270,10 @@ export function DashboardPage() {
             <h1>{config.sections.find(s => s.key === activeSection)?.label}</h1>
           </div>
           <div className="topbar-actions">
-            {(role === 'teacher' || role === 'student') && (
-              <button className="topbar-bell" onClick={() => setActiveSection('notifications')} aria-label="Notifications">
+            <button className="topbar-bell" onClick={() => setActiveSection('notifications')} aria-label="Notifications">
                 <Bell size={18} />
                 {unreadNotifications > 0 && <span className="topbar-badge">{unreadNotifications > 99 ? '99+' : unreadNotifications}</span>}
               </button>
-            )}
           </div>
         </header>
 

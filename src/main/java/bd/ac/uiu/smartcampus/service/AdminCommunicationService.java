@@ -51,6 +51,10 @@ public class AdminCommunicationService {
     }
 
     private void fanOutNotice(CampusNotice notice) {
+        if (!"HIGH".equalsIgnoreCase(notice.getPriority()) && !"URGENT".equalsIgnoreCase(notice.getPriority())) {
+            return; // Only fan out IMPORTANT or URGENT notices
+        }
+
         Role targetRole = null;
         switch (notice.getAudience()) {
             case STUDENTS: targetRole = Role.ROLE_STUDENT; break;
