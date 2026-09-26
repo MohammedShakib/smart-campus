@@ -154,9 +154,9 @@ export function AdminUsersSection() {
                           <td className="actions-cell">
                             <button className="icon-btn" title="Edit" onClick={() => setEditingUser(user)}><Edit2 size={15} /></button>
                             {user.active ? (
-                              <button className="icon-btn" title="Disable" onClick={() => toggleStatus(user.id, user.active)}><XCircle size={15} color="var(--rose)" /></button>
+                              <button className="icon-btn text-danger" title="Disable" onClick={() => toggleStatus(user.id, user.active)}><XCircle size={15} /></button>
                             ) : (
-                              <button className="icon-btn" title="Enable" onClick={() => toggleStatus(user.id, user.active)}><CheckCircle size={15} color="var(--emerald)" /></button>
+                              <button className="icon-btn text-success" title="Enable" onClick={() => toggleStatus(user.id, user.active)}><CheckCircle size={15} /></button>
                             )}
                           </td>
                         </tr>

@@ -417,7 +417,7 @@ function AcademicTable({ tab, rows, busy, editItem, toggleStatus }) {
                   <button type="button" className="icon-btn" title="Edit" onClick={() => editItem(tab, row)}>
                     <Pencil size={15} />
                   </button>
-                  <button type="button" className="icon-btn" title={row.active ? 'Disable' : 'Enable'} disabled={busy === `status-${tab}-${row.id}`} onClick={() => toggleStatus(tab, row)}>
+                  <button type="button" className={`icon-btn ${row.active ? 'text-danger' : 'text-success'}`} title={row.active ? 'Disable' : 'Enable'} disabled={busy === `status-${tab}-${row.id}`} onClick={() => toggleStatus(tab, row)}>
                     <Power size={15} />
                   </button>
                 </div>
