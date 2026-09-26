@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import { SectionHeader, Panel } from '../../shared/SharedComponents';
 
-export function SecurityMapSection() {
+export function SecurityMapSection({ data }) {
   const [selectedPin, setSelectedPin] = useState(null);
 
   const securityCheckpoints = [
@@ -14,68 +14,68 @@ export function SecurityMapSection() {
       title: 'Gate 1 - Main Campus Entrance',
       type: 'ENTRY_GATE',
       status: 'OPERATIONAL',
-      officer: 'Officer Abul Kalam (Post 1)',
-      details: 'Dual RFID barrier, automated visitor scanner, pedestrian turnstiles online.',
+      officer: 'Gate Security Post',
+      details: 'Main pedestrian entrance and verification post.',
       coords: { top: '78%', left: '48%' },
-      stats: '142 entries today'
+      stats: `${data?.securitySummary?.gateEntriesToday || 0} entries today`
     },
     {
       id: 'gate-2',
       title: 'Gate 2 - North Exit & Shuttle Bay',
       type: 'EXIT_GATE',
       status: 'OPERATIONAL',
-      officer: 'Officer Jahangir Hossain (Post 2)',
-      details: 'Vehicle exit boom barrier, Shuttle bus check-in terminal.',
+      officer: 'Gate Security Post',
+      details: 'Vehicle exit barrier and Shuttle bus check-in.',
       coords: { top: '22%', left: '82%' },
-      stats: '88 exits today'
-    },
-    {
-      id: 'b1-ramp',
-      title: 'Basement 1 Vehicle Ramp (Inbound)',
-      type: 'PARKING_ACCESS',
-      status: 'OPERATIONAL',
-      officer: 'Automated ANPR Sensor B1',
-      details: 'Camera sensor plate recognition, live occupancy link to B1-EAST.',
-      coords: { top: '65%', left: '32%' },
-      stats: '84 cars parked'
-    },
-    {
-      id: 'b2-ramp',
-      title: 'Basement 2 Motorcycle Bay Ramp',
-      type: 'PARKING_ACCESS',
-      status: 'NEAR_CAPACITY',
-      officer: 'Sensor Bay B2',
-      details: 'High occupancy detected. Redirecting overflow to open ground.',
-      coords: { top: '68%', left: '62%' },
-      stats: '246 bikes parked'
-    },
-    {
-      id: 'sec-hq',
-      title: 'Campus Security Control Center',
-      type: 'HQ',
-      status: 'ACTIVE_MONITORING',
-      officer: 'Chief Security Officer',
-      details: 'Central CCTV monitoring wall (48 cameras), PA Emergency Broadcast console.',
-      coords: { top: '48%', left: '50%' },
-      stats: '48 CCTV feeds active'
-    },
-    {
-      id: 'assembly-zone',
-      title: 'Emergency Evacuation Assembly Ground',
-      type: 'EMERGENCY',
-      status: 'CLEAR',
-      officer: 'Evacuation Marshal',
-      details: 'Designated outdoor safe zone on UIU Central Sports Field.',
-      coords: { top: '35%', left: '20%' },
-      stats: 'Capacity: 3,000+'
+      stats: `${data?.securitySummary?.gateExitsToday || 0} exits today`
     }
   ];
+
+  const parkingZones = data?.securitySummary?.parkingZones || [];
+  parkingZones.forEach((zone, index) => {
+    let top = '65%';
+    let left = '32%';
+    if (index === 1) { top = '68%'; left = '62%'; }
+    
+    securityCheckpoints.push({
+      id: `parking-${zone.zoneCode}`,
+      title: zone.zoneName,
+      type: 'PARKING_ACCESS',
+      status: (zone.status === 'FULL' || zone.status === 'ALMOST_FULL') ? 'NEAR_CAPACITY' : 'OPERATIONAL',
+      officer: 'Automated Sensor',
+      details: `Vehicle occupancy monitoring for ${zone.type} zone.`,
+      coords: { top, left },
+      stats: `${zone.currentOccupied} / ${zone.totalCapacity} parked`
+    });
+  });
+
+  securityCheckpoints.push({
+    id: 'sec-hq',
+    title: 'Campus Security Control Center',
+    type: 'HQ',
+    status: 'ACTIVE_MONITORING',
+    officer: 'Chief Security Officer',
+    details: 'Central security monitoring and PA Emergency Broadcast console.',
+    coords: { top: '48%', left: '50%' },
+    stats: 'Monitoring active'
+  });
+
+  securityCheckpoints.push({
+    id: 'assembly-zone',
+    title: 'Emergency Evacuation Assembly Ground',
+    type: 'EMERGENCY',
+    status: data?.securitySummary?.hasActiveEmergency ? 'ALERT' : 'CLEAR',
+    officer: 'Evacuation Marshal',
+    details: 'Designated outdoor safe zone on UIU Central Sports Field.',
+    coords: { top: '35%', left: '20%' },
+    stats: 'Designated safe area'
+  });
 
   return (
     <div className="sec-subpage-container">
       <SectionHeader
         title="Interactive Security Map & Perimeter Checkpoints"
-        subtitle="Real-time status overview of campus access gates, parking ramps, CCTV hubs, and emergency assembly zones."
+        subtitle="Operational status overview of campus access gates, parking ramps, and emergency assembly zones."
       />
 
       <div className="sec-map-layout">

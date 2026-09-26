@@ -25,13 +25,3 @@ export function roleSummary(role) {
   return copy[role] || copy.student;
 }
 
-export function sampleClassrooms() {
-  return [
-    { roomNumber: 'Room 524 (CSE Lab 4)', capacity: 60, floor: 5, occupied: true,  powerKW: 3.8 },
-    { roomNumber: 'Room 522 (Theory)',     capacity: 55, floor: 5, occupied: false, powerKW: 0.4 },
-    { roomNumber: 'Room 412 (Multimedia)',capacity: 70, floor: 4, occupied: true,  powerKW: 4.2 },
-    { roomNumber: 'Room 301 (Auditorium)',capacity: 250,floor: 3, occupied: true,  powerKW: 18.5 },
-    { roomNumber: 'Room 608 (Seminar)',    capacity: 45, floor: 6, occupied: false, powerKW: 0.2 },
-    { roomNumber: 'Room 210 (Theory B)',  capacity: 60, floor: 2, occupied: false, powerKW: 0.3 },
-  ];
-}

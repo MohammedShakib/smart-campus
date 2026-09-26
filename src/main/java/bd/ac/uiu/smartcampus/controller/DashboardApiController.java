@@ -12,7 +12,7 @@ import bd.ac.uiu.smartcampus.repository.UserRepository;
 import bd.ac.uiu.smartcampus.security.CustomUserDetails;
 import bd.ac.uiu.smartcampus.service.TeacherDashboardService;
 import bd.ac.uiu.smartcampus.syllabus.collections.AdminActionStackService;
-import bd.ac.uiu.smartcampus.syllabus.collections.ClassroomModel;
+
 import bd.ac.uiu.smartcampus.syllabus.collections.ComplaintQueueService;
 import bd.ac.uiu.smartcampus.syllabus.collections.UniqueAttendeeSetService;
 import bd.ac.uiu.smartcampus.syllabus.concurrency.CampusSimulationWorker;
@@ -80,6 +80,7 @@ public class DashboardApiController {
         data.put("uniqueAttendeesCount", attendeeSetService.getUniqueCount());
         data.put("busLocations", busServerManager.getLatestBusLocations());
         data.put("notices", noticeRepository.findByAudienceInOrderByPostedAtDesc(List.of(bd.ac.uiu.smartcampus.model.NoticeAudience.ALL, bd.ac.uiu.smartcampus.model.NoticeAudience.ADMIN)));
+        data.put("classrooms", teacherDashboardService.getClassroomDtos());
         return ApiResponse.ok("Admin dashboard data", data);
     }
 
@@ -148,14 +149,4 @@ public class DashboardApiController {
         return user;
     }
 
-    public static List<ClassroomModel> sampleClassrooms() {
-        List<ClassroomModel> list = new ArrayList<>();
-        list.add(new ClassroomModel("Room 524 (CSE Lab 4)", 60, 5, true, 3.8));
-        list.add(new ClassroomModel("Room 522 (Theory)", 55, 5, false, 0.4));
-        list.add(new ClassroomModel("Room 412 (Multimedia)", 70, 4, true, 4.2));
-        list.add(new ClassroomModel("Room 301 (Auditorium)", 250, 3, true, 18.5));
-        list.add(new ClassroomModel("Room 608 (Seminar)", 45, 6, false, 0.2));
-        Collections.sort(list);
-        return list;
-    }
 }

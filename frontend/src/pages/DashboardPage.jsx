@@ -75,7 +75,7 @@ const dashboardConfig = {
     sections: [
       { key: 'overview',   label: 'Security Desk',       icon: ShieldCheck },
       { key: 'visitors',   label: 'Visitors & Passes',   icon: UsersRound },
-      { key: 'scanner',    label: 'QR Pass Scanner',     icon: QrCode },
+      { key: 'scanner',    label: 'Pass Verification',     icon: Search },
       { key: 'gate',       label: 'Gate Terminal',       icon: DoorOpen },
       { key: 'parking',    label: 'Parking Control',     icon: Car },
       { key: 'emergency',  label: 'Emergency Command',   icon: AlertTriangle },

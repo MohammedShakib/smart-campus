@@ -73,24 +73,19 @@ export function SecurityQrScannerSection() {
   return (
     <div className="sec-subpage-container">
       <SectionHeader
-        title="Visitor QR Barcode Scanner & Pass Verification"
-        subtitle="Point camera / optical scanner at guest's QR pass or manually enter visitor pass token."
+        title="Visitor Pass Verification"
+        subtitle="Manually enter visitor pass token to inspect validity and grant gate access."
       />
 
       <div className="sec-scanner-layout">
         {/* Left Column: Scanner Terminal */}
         <div className="sec-scanner-left">
-          <Panel title="QR Code & Pass Scanner Terminal" tag="Optical Gate Link">
+          <Panel title="Pass Verification Terminal" tag="Gate Link">
             <div className="sec-scanner-box">
-              <div className="sec-scanner-viewport">
-                <div className="sec-scanner-laser" />
-                <QrCode size={80} className="sec-scanner-icon" />
-                <span>Align QR Barcode within target frame</span>
-              </div>
 
               <form className="sec-scanner-form" onSubmit={handleVerify}>
                 <div className="sec-scanner-input-wrap">
-                  <QrCode size={18} />
+                  <Search size={18} />
                   <input
                     type="text"
                     placeholder="Enter Pass Code (e.g. VIS-UIU-78219)"
@@ -106,7 +101,7 @@ export function SecurityQrScannerSection() {
 
               {/* Sample Quick Preset Chips */}
               <div className="sec-scanner-presets">
-                <span className="muted">Quick Test Passes:</span>
+                <span className="muted">Demo Test Passes:</span>
                 <button type="button" className="sec-chip" onClick={() => { setPassInput('VIS-UIU-78219'); }}>
                   VIS-UIU-78219 (Approved)
                 </button>

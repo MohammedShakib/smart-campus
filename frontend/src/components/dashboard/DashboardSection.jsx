@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Building2, BusFront, ClipboardCheck, Database, DoorOpen, Layers, RadioTower, RefreshCw, Server, ShieldCheck, UsersRound, Wrench, Zap } from 'lucide-react';
 import { api, postAction } from '../../utils/api';
-import { sampleClassrooms, roleSummary } from '../../utils/helpers';
+import { roleSummary } from '../../utils/helpers';
 import { SectionHeader, NoticeList, BusLocations, StatRow, Panel, Table, ActionButton } from '../shared/SharedComponents';
 import {
   TeacherAttendanceSection,
@@ -78,7 +78,7 @@ export function DashboardSection({
           <div className="primary-stack">
             <OverviewPrimaryPanel role={role} data={data} reload={reload} />
             {role === 'admin' && data.busLocations && (
-              <Panel title="Bus Telemetry" tag="Live Socket">
+              <Panel title="Bus Telemetry" tag="Simulated Socket">
                 <BusLocations locations={data.busLocations} />
               </Panel>
             )}
@@ -99,7 +99,7 @@ export function DashboardSection({
     if (section === 'equipment') return <AdminEquipmentSection />;
     if (section === 'communication') return <AdminCommunicationSection />;
     if (section === 'maintenance') return <AdminMaintenanceSection data={data} reload={reload} />;
-    if (section === 'classrooms') return <ClassroomsSection classrooms={sampleClassrooms()} />;
+    if (section === 'classrooms') return <ClassroomsSection classrooms={data.classrooms} />;
     if (section === 'transport') return <TransportSection data={data} />;
     if (section === 'audit') return <AuditSection auditLogs={auditLogs} data={data} reload={reloadLogs} />;
   }
@@ -145,7 +145,7 @@ export function DashboardSection({
     if (section === 'parking') return <SecurityParkingSection />;
     if (section === 'emergency') return <SecurityEmergencySection />;
     if (section === 'incidents') return <SecurityIncidentsSection />;
-    if (section === 'campusmap') return <SecurityMapSection />;
+    if (section === 'campusmap') return <SecurityMapSection data={data} />;
     if (section === 'gate' || section === 'gate-history') return <SecurityGateTerminalSection data={data} reload={reload} />;
     if (section === 'busfleet') return <ShuttleSection busLocations={data.busLocations || {}} />;
   }
@@ -160,7 +160,7 @@ function WelcomeBanner({ data, telemetry, role }) {
   return (
     <div className="welcome-card">
       <div>
-        <span className="mini-pill"><RadioTower size={14} /> Live campus signal</span>
+        <span className="mini-pill"><RadioTower size={14} /> Simulated campus telemetry</span>
         <h2>Welcome, {data.user?.fullName || 'there'}</h2>
         <p>{roleSummary(role)}</p>
       </div>
@@ -183,7 +183,7 @@ function MetricGrid({ telemetry, data, role }) {
           value: `${telemetry.activeBuses} running`,
           icon: BusFront,
           tone: 'buses',
-          detail: 'Live fleet'
+          detail: 'Simulated fleet'
         },
         {
           label: 'My Tickets',
@@ -207,7 +207,7 @@ function MetricGrid({ telemetry, data, role }) {
           value: `${telemetry.activeBuses} running`,
           icon: BusFront,
           tone: 'buses',
-          detail: 'Live fleet'
+          detail: 'Simulated fleet'
         },
         {
           label: 'Power Load',
@@ -376,9 +376,9 @@ function TransportSection({ data }) {
 
   return (
     <div>
-      <SectionHeader title="Transport Management" subtitle="Live bus GPS telemetry via TCP socket. Transmit, track, and monitor fleet routes." />
+      <SectionHeader title="Transport Management" subtitle="Simulated bus telemetry via TCP socket. Transmit, track, and monitor fleet routes." />
       <div className="section-grid">
-        <Panel title="Live Bus Locations" tag="Socket">
+        <Panel title="Simulated Bus Locations" tag="Socket">
           <BusLocations locations={data.busLocations || {}} />
         </Panel>
         <Panel title="Transmit Bus Update" tag="TCP Socket">
@@ -408,7 +408,7 @@ function TransportSection({ data }) {
 function ClassroomsSection({ classrooms }) {
   return (
     <div>
-      <SectionHeader title="Smart Classroom Matrix" subtitle="Live room occupancy, power draw, and capacity sorted by comparable algorithm." />
+      <SectionHeader title="Smart Classroom Matrix" subtitle="Room occupancy, power draw, and capacity sorted by comparable algorithm." />
       <div className="classroom-grid">
         {(classrooms || []).map((room, i) => (
           <div key={i} className={`room-card ${room.occupied ? 'room-card--active' : ''}`}>
@@ -438,7 +438,7 @@ function ClassroomsSection({ classrooms }) {
 function ShuttleSection({ busLocations }) {
   return (
     <div className="student-page student-shuttle-page">
-      <SectionHeader title="Shuttle GPS Tracker" subtitle="Real-time bus locations transmitted via UIU TCP socket network." />
+      <SectionHeader title="Simulated Shuttle Feed" subtitle="Simulated bus locations transmitted via UIU TCP socket network." />
       <Panel title="Active Bus Routes" tag="Socket Feed">
         <BusLocations locations={busLocations} />
       </Panel>

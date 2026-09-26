@@ -12,7 +12,7 @@ import java.util.Random;
 
 /**
  * AOOP Syllabus Requirement: Java Concurrency & Threads (Thread / Runnable)
- * Runs a background worker thread that continuously generates live Smart Campus sensor telemetry.
+ * Runs a background worker thread that continuously generates simulated Smart Campus sensor telemetry.
  */
 @Service
 public class CampusSimulationWorker implements Runnable {
@@ -46,7 +46,7 @@ public class CampusSimulationWorker implements Runnable {
         workerThread = new Thread(this, "Campus-Digital-Twin-Simulation-Thread");
         workerThread.setDaemon(true);
         workerThread.start();
-        logger.info("Smart Campus concurrency worker thread started successfully.");
+        logger.info("Smart Campus simulated telemetry worker thread started successfully.");
     }
 
     @Override

@@ -167,7 +167,7 @@ export function SecurityOverviewSection({ data, reload, setActiveSection }) {
         <span className="sec-quick-label"><RadioTower size={15} /> Quick Actions:</span>
         <div className="sec-quick-buttons">
           <button type="button" className="sec-quick-btn" onClick={() => setActiveSection('scanner')}>
-            <QrCode size={16} /> Scan QR Pass
+            <Search size={16} /> Verify Pass
           </button>
           <button type="button" className="sec-quick-btn" onClick={() => setWalkInModalOpen(true)}>
             <Plus size={16} /> Log Walk-in Guest
