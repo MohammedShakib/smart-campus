@@ -882,8 +882,7 @@ export function TeacherExcusesSection() {
                         <div style={{ display: 'flex', gap: '0.4rem', flexDirection: 'column' }}>
                           <button
                             type="button"
-                            className="inline-action-btn"
-                            style={{ background: 'rgba(16,185,129,0.15)', color: 'var(--emerald)' }}
+                            className="action-pill-btn action-pill-btn--approve"
                             onClick={() => {
                               const r = prompt('Enter optional approval remarks for student:', 'Medical certificate accepted.');
                               if (r !== null) {
@@ -896,8 +895,7 @@ export function TeacherExcusesSection() {
                           </button>
                           <button
                             type="button"
-                            className="inline-action-btn"
-                            style={{ background: 'rgba(244,63,94,0.15)', color: 'var(--rose)' }}
+                            className="action-pill-btn action-pill-btn--reject"
                             onClick={() => {
                               const r = prompt('Enter rejection reason for student:', 'Insufficient medical documentation.');
                               if (r !== null) {

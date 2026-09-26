@@ -2257,6 +2257,13 @@
   font-size: 0.84rem;
 }
 
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
 .custom-data-table th {
   padding: 0.75rem 0.9rem;
   color: var(--tx-muted);
@@ -2308,13 +2315,16 @@
 .status-pill--rejected { background: rgba(244, 63, 94, 0.15); color: var(--rose); }
 
 .doc-link-tag {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
   margin-top: 0.3rem;
   font-size: 0.73rem;
   color: var(--sky);
   background: rgba(14, 165, 233, 0.1);
   padding: 0.15rem 0.45rem;
   border-radius: 4px;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 /* ── DIGITAL LOST & FOUND BOARD ────────────────────────────── */
@@ -3136,28 +3146,12 @@
 
 .modal-actions {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
   gap: 0.75rem;
   margin-top: 0.75rem;
   padding-top: 1rem;
   border-top: 1px solid #f1f5f9;
-}
-
-.ghost-btn {
-  padding: 0.65rem 1.25rem;
-  border-radius: 9px;
-  background: #f1f5f9;
-  border: 1px solid #cbd5e1;
-  color: #334155;
-  font-size: 0.84rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.ghost-btn:hover {
-  background: #e2e8f0;
-  color: #0f172a;
 }
 
 .empty-state-box {
@@ -5719,8 +5713,10 @@
 .admin-table-wrap {
   width: 100%;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   border-radius: var(--r-md);
   border: 1px solid var(--border);
+  scrollbar-width: thin;
 }
 
 .admin-table {
@@ -5786,6 +5782,7 @@
   border-bottom: 1px solid var(--border);
   color: var(--tx-primary);
   vertical-align: middle;
+  overflow-wrap: anywhere;
 }
 
 .admin-table tr:last-child td {
@@ -6282,6 +6279,11 @@
 }
 
 @media (max-width: 1100px) {
+  .admin-directory-table,
+  .academic-table {
+    min-width: 900px;
+  }
+
   .academic-summary-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -6292,6 +6294,20 @@
 }
 
 @media (max-width: 640px) {
+  .admin-table th,
+  .admin-table td {
+    padding: 0.68rem 0.75rem;
+    font-size: 0.8rem;
+  }
+
+  .admin-table th {
+    font-size: 0.68rem;
+  }
+
+  .admin-table-wrap {
+    margin-inline: -0.15rem;
+  }
+
   .academic-summary-grid {
     grid-template-columns: 1fr;
   }

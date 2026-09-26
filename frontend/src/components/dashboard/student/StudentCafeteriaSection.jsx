@@ -231,7 +231,7 @@ export function StudentCafeteriaSection() {
             <span className="metric-icon"><ShoppingBag size={20} /></span>
           </div>
           <strong style={{ color: 'var(--brand-orange, #f97316)' }}>
-            ৳ {trayTotal.toFixed(2)}
+            BDT {trayTotal.toFixed(2)}
           </strong>
           <div className="metric-card-foot">
             <span>{trayItemCount} items selected</span>
@@ -361,7 +361,7 @@ export function StudentCafeteriaSection() {
                           {item.name}
                         </h3>
                         <span style={{ fontSize: '1.1rem', fontWeight: 800, color: '#047857', whiteSpace: 'nowrap' }}>
-                          ৳ {priceNum.toFixed(2)}
+                          BDT {priceNum.toFixed(2)}
                         </span>
                       </div>
 
@@ -468,7 +468,7 @@ export function StudentCafeteriaSection() {
                         </td>
                         <td>
                           <strong style={{ fontSize: '0.92rem', color: '#047857' }}>
-                            ৳ {Number(item.price || 0).toFixed(2)}
+                            BDT {Number(item.price || 0).toFixed(2)}
                           </strong>
                         </td>
                         <td>
@@ -556,7 +556,7 @@ export function StudentCafeteriaSection() {
                       <div style={{ flex: 1, paddingRight: '0.5rem' }}>
                         <div style={{ fontWeight: 600, color: 'var(--tx-primary, #0f172a)' }}>{item.name}</div>
                         <div style={{ fontSize: '0.74rem', color: 'var(--tx-secondary, #64748b)' }}>
-                          ৳ {Number(item.price || 0).toFixed(2)} × {count}
+                          BDT {Number(item.price || 0).toFixed(2)} x {count}
                         </div>
                       </div>
 
@@ -579,7 +579,7 @@ export function StudentCafeteriaSection() {
                           <Plus size={11} />
                         </button>
                         <strong style={{ marginLeft: '0.4rem', color: '#047857', minWidth: '55px', textAlign: 'right' }}>
-                          ৳ {sub.toFixed(2)}
+                          BDT {sub.toFixed(2)}
                         </strong>
                       </div>
                     </div>
@@ -596,7 +596,7 @@ export function StudentCafeteriaSection() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginTop: '0.5rem' }}>
                   <span style={{ fontSize: '0.92rem', fontWeight: 700, color: 'var(--tx-primary, #0f172a)' }}>Estimated Bill:</span>
                   <span style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--brand-orange, #ea580c)' }}>
-                    ৳ {trayTotal.toFixed(2)}
+                    BDT {trayTotal.toFixed(2)}
                   </span>
                 </div>
                 <p style={{ margin: '0.75rem 0 0 0', fontSize: '0.72rem', color: 'var(--tx-muted, #94a3b8)', textAlign: 'center' }}>
