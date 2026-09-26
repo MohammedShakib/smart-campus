@@ -817,9 +817,9 @@ export function TeacherExcusesSection() {
     loadExcuses();
   }, []);
 
-  const handleReview = (excuseId, status) => {
+  const handleReview = (excuseId, status, reviewRemarks = remarks) => {
     setBusy(true);
-    api(`/api/teacher/excuses/${excuseId}/review?status=${status}&remarks=${encodeURIComponent(remarks)}`, { method: 'POST' })
+    api(`/api/teacher/excuses/${excuseId}/review?status=${status}&remarks=${encodeURIComponent(reviewRemarks)}`, { method: 'POST' })
       .then(() => {
         setBusy(false);
         setSelectedExcuse(null);
@@ -833,7 +833,7 @@ export function TeacherExcusesSection() {
   };
 
   return (
-    <div>
+    <div className="teacher-excuses-section">
       <SectionHeader
         title="Absence & Medical Leave Reviews"
         subtitle="Review student absence excuse submissions, doctor prescriptions, and official leave applications for your courses."
@@ -888,7 +888,7 @@ export function TeacherExcusesSection() {
                               const r = prompt('Enter optional approval remarks for student:', 'Medical certificate accepted.');
                               if (r !== null) {
                                 setRemarks(r);
-                                handleReview(exc.id, 'APPROVED');
+                                handleReview(exc.id, 'APPROVED', r);
                               }
                             }}
                           >
@@ -902,7 +902,7 @@ export function TeacherExcusesSection() {
                               const r = prompt('Enter rejection reason for student:', 'Insufficient medical documentation.');
                               if (r !== null) {
                                 setRemarks(r);
-                                handleReview(exc.id, 'REJECTED');
+                                handleReview(exc.id, 'REJECTED', r);
                               }
                             }}
                           >
