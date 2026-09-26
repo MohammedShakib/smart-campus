@@ -103,10 +103,11 @@ public class DashboardApiController {
     @GetMapping("/student")
     public ApiResponse<Map<String, Object>> student(@AuthenticationPrincipal CustomUserDetails userDetails) {
         Map<String, Object> data = basePayload(userDetails, "student");
+        String studentEmail = userDetails != null ? userDetails.getUsername() : "student-demo";
         String studentId = userDetails != null ? userDetails.getStudentOrEmpId() : "011211001";
-        data.put("notices", noticeRepository.findPublishedByAudienceIn(
+        data.put("notices", noticeRepository.findPublishedForStudent(
                 List.of(NoticeAudience.ALL, NoticeAudience.STUDENTS),
-                NoticeStatus.PUBLISHED, LocalDateTime.now()));
+                NoticeStatus.PUBLISHED, LocalDateTime.now(), studentEmail));
         data.put("busLocations", busServerManager.getLatestBusLocations());
         data.put("myComplaints", complaintRepository.findByStudentIdOrderByReportedAtDesc(studentId));
         return ApiResponse.ok("Student dashboard data", data);

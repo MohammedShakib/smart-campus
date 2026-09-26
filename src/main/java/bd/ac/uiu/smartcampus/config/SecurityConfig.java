@@ -65,7 +65,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/security/**").hasAnyRole("SECURITY", "ADMIN")
                 .requestMatchers("/api/campus/admin/**", "/api/campus/backup/**", "/api/campus/logs", "/api/campus/complaint/process-next", "/api/campus/bus/transmit").hasRole("ADMIN")
                 .requestMatchers("/api/campus/gate/checkin").hasAnyRole("SECURITY", "ADMIN")
-                .requestMatchers("/api/campus/complaint/submit", "/api/upload").hasAnyRole("STUDENT", "TEACHER", "ADMIN")
+                .requestMatchers("/api/campus/complaint/submit").hasAnyRole("STUDENT", "TEACHER", "ADMIN")
+                .requestMatchers("/api/upload").hasAnyRole("STUDENT", "TEACHER", "ADMIN", "SECURITY")
                 .requestMatchers("/api/campus/telemetry", "/api/campus/bus/locations").authenticated()
                 .requestMatchers("/api/chatbot").authenticated()
 

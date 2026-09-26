@@ -253,8 +253,20 @@ public class TeacherApiController {
                                                          @AuthenticationPrincipal CustomUserDetails userDetails) {
         if (request.getTitle() == null || request.getTitle().isBlank()
                 || request.getContent() == null || request.getContent().isBlank()) {
-            return ApiResponse.error("Title and message are required.");
+            throw new IllegalArgumentException("Title and message are required.");
         }
+        if (request.getCourseCode() == null || request.getCourseCode().isBlank()) {
+            throw new IllegalArgumentException("Course code is required.");
+        }
+        if (request.getSectionName() == null || request.getSectionName().isBlank()) {
+            throw new IllegalArgumentException("Section is required.");
+        }
+
+        String courseCode = request.getCourseCode().trim();
+        String sectionName = request.getSectionName().trim();
+        String teacherEmail = userDetails.getUsername();
+
+        List<RosterStudentDto> students = teacherService.getRosterStudents(teacherEmail, courseCode, sectionName);
         CampusNotice notice = new CampusNotice(
                 request.getTitle().trim(),
                 request.getContent().trim(),
@@ -264,23 +276,22 @@ public class TeacherApiController {
                 bd.ac.uiu.smartcampus.model.NoticeAudience.STUDENTS,
                 bd.ac.uiu.smartcampus.model.NoticeStatus.PUBLISHED
         );
+        notice.setTargetCourseCode(courseCode);
+        notice.setTargetSectionName(sectionName);
         CampusNotice savedNotice = noticeRepository.save(notice);
-        
-        if (request.getCourseCode() != null && !request.getCourseCode().isBlank() && request.getSectionName() != null && !request.getSectionName().isBlank()) {
-            List<RosterStudentDto> students = teacherService.getRosterStudents(userDetails.getUsername(), request.getCourseCode(), request.getSectionName());
-            for (RosterStudentDto dto : students) {
-                userRepository.findByEmail(dto.getEmail()).ifPresent(user -> {
-                    notificationService.createNotification(
-                            user,
-                            NotificationType.ANNOUNCEMENT,
-                            "New academic announcement",
-                            savedNotice.getTitle(),
-                            "notices",
-                            savedNotice.getId().toString(),
-                            "ANNOUNCEMENT:" + savedNotice.getId() + ":" + user.getId()
-                    );
-                });
-            }
+
+        for (RosterStudentDto dto : students) {
+            userRepository.findByEmail(dto.getEmail()).ifPresent(user -> {
+                notificationService.createNotification(
+                        user,
+                        NotificationType.ANNOUNCEMENT,
+                        "New academic announcement",
+                        savedNotice.getTitle(),
+                        "notices",
+                        savedNotice.getId().toString(),
+                        "TEACHER_ANNOUNCEMENT:" + savedNotice.getId() + ":" + user.getId()
+                );
+            });
         }
         
         return ApiResponse.ok("Academic announcement published", savedNotice);

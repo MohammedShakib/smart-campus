@@ -248,10 +248,19 @@ public class StudentPortalService {
 
     @Transactional
     public AbsenceExcuse reviewExcuse(Long excuseId, String teacherEmail, String statusStr, String remarks) {
-        AbsenceExcuse excuse = absenceExcuseRepository.findById(excuseId)
-                .orElseThrow(() -> new IllegalArgumentException("Absence excuse #" + excuseId + " not found."));
+        AbsenceExcuse excuse = absenceExcuseRepository.findByIdAndTeacherEmail(excuseId, teacherEmail)
+                .orElseThrow(() -> new IllegalArgumentException("Absence excuse not found or access denied."));
 
-        AbsenceExcuse.ExcuseStatus status = AbsenceExcuse.ExcuseStatus.valueOf(statusStr.toUpperCase());
+        if (statusStr == null || statusStr.isBlank()) {
+            throw new IllegalArgumentException("Excuse status is required.");
+        }
+
+        AbsenceExcuse.ExcuseStatus status;
+        try {
+            status = AbsenceExcuse.ExcuseStatus.valueOf(statusStr.trim().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException exception) {
+            throw new IllegalArgumentException("Invalid excuse status.");
+        }
         excuse.setStatus(status);
         excuse.setTeacherRemarks(remarks);
         excuse.setReviewedAt(LocalDateTime.now());

@@ -33,5 +33,26 @@ public interface CampusNoticeRepository extends JpaRepository<CampusNotice, Long
             @Param("audiences") List<NoticeAudience> audiences,
             @Param("status") NoticeStatus status,
             @Param("now") LocalDateTime now);
-}
 
+    /**
+     * Student-facing notice query. Campus-wide/student admin notices have no
+     * targetCourseCode/targetSectionName; teacher announcements are visible only
+     * when the authenticated student has an active matching enrollment.
+     */
+    @Query("SELECT n FROM CampusNotice n WHERE n.audience IN :audiences " +
+           "AND n.status = :status " +
+           "AND (n.expiresAt IS NULL OR n.expiresAt > :now) " +
+           "AND ((n.targetCourseCode IS NULL AND n.targetSectionName IS NULL) OR EXISTS (" +
+           "    SELECT e.id FROM ClassEnrollment e " +
+           "    WHERE e.student.email = :studentEmail " +
+           "    AND e.courseCode = n.targetCourseCode " +
+           "    AND e.sectionName = n.targetSectionName " +
+           "    AND e.active = true" +
+           ")) " +
+           "ORDER BY n.postedAt DESC")
+    List<CampusNotice> findPublishedForStudent(
+            @Param("audiences") List<NoticeAudience> audiences,
+            @Param("status") NoticeStatus status,
+            @Param("now") LocalDateTime now,
+            @Param("studentEmail") String studentEmail);
+}

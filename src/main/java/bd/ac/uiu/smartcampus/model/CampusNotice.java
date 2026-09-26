@@ -40,6 +40,12 @@ public class CampusNotice {
     @Column
     private LocalDateTime expiresAt;
 
+    @Column(length = 30)
+    private String targetCourseCode;
+
+    @Column(length = 30)
+    private String targetSectionName;
+
     public CampusNotice() {
     }
 
@@ -143,5 +149,21 @@ public class CampusNotice {
 
     public void setExpiresAt(LocalDateTime expiresAt) {
         this.expiresAt = expiresAt;
+    }
+
+    public String getTargetCourseCode() {
+        return targetCourseCode;
+    }
+
+    public void setTargetCourseCode(String targetCourseCode) {
+        this.targetCourseCode = targetCourseCode;
+    }
+
+    public String getTargetSectionName() {
+        return targetSectionName;
+    }
+
+    public void setTargetSectionName(String targetSectionName) {
+        this.targetSectionName = targetSectionName;
     }
 }

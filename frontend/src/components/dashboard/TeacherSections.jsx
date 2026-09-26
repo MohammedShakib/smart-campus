@@ -566,10 +566,30 @@ export function TeacherReservationSection({ data, reload }) {
 // ─────────────────────────────────────────────────────────
 // NOTICES SECTION
 // ─────────────────────────────────────────────────────────
-export function TeacherNoticesSection({ notices, reload }) {
-  const [form, setForm] = useState({ title: '', content: '' });
+export function TeacherNoticesSection({ notices, data = {}, reload }) {
+  const classOptions = Array.from(
+    new Map((data.schedule || [])
+      .map((item) => [`${item.courseCode}__${item.sectionName}`, item]))
+  ).map(([, item]) => item);
+  const firstClass = classOptions[0];
+  const [form, setForm] = useState({
+    title: '',
+    content: '',
+    courseCode: firstClass?.courseCode || '',
+    sectionName: firstClass?.sectionName || ''
+  });
   const [result, setResult] = useState(null);
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (!form.courseCode && !form.sectionName && firstClass) {
+      setForm((current) => ({
+        ...current,
+        courseCode: firstClass.courseCode,
+        sectionName: firstClass.sectionName
+      }));
+    }
+  }, [firstClass, form.courseCode, form.sectionName]);
 
   function publish(event) {
     event.preventDefault();
@@ -578,7 +598,7 @@ export function TeacherNoticesSection({ notices, reload }) {
     api('/api/teacher/announcements', { method: 'POST', body: JSON.stringify(form) })
       .then((res) => {
         setResult({ type: 'success', text: res.message });
-        setForm({ title: '', content: '' });
+        setForm((current) => ({ ...current, title: '', content: '' }));
         reload();
       })
       .catch((err) => setResult({ type: 'error', text: err.message }))
@@ -592,6 +612,24 @@ export function TeacherNoticesSection({ notices, reload }) {
       <div className="section-grid">
         <Panel title="Publish Academic Announcement" tag="ACADEMIC">
           <form className="ticket-form teacher-notice-form" onSubmit={publish}>
+            <select
+              value={`${form.courseCode}__${form.sectionName}`}
+              onChange={(e) => {
+                const selected = classOptions.find((item) => `${item.courseCode}__${item.sectionName}` === e.target.value);
+                setForm({
+                  ...form,
+                  courseCode: selected?.courseCode || '',
+                  sectionName: selected?.sectionName || ''
+                });
+              }}
+              required
+            >
+              {classOptions.map((item) => (
+                <option key={`${item.courseCode}__${item.sectionName}`} value={`${item.courseCode}__${item.sectionName}`}>
+                  {item.courseCode} - {item.sectionName}
+                </option>
+              ))}
+            </select>
             <input placeholder="Title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
             <textarea placeholder="Message" value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} required />
             <button className="primary-btn" type="submit" disabled={busy}><RadioTower size={17} /> Publish Announcement</button>

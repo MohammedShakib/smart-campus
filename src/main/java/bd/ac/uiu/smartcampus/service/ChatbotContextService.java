@@ -186,7 +186,7 @@ public class ChatbotContextService {
         appendList(context, "Equipment bookings", studentPortalService.getStudentBookings(studentId), 5);
         appendList(context, "My support tickets", complaintRepository.findByStudentIdOrderByReportedAtDesc(studentId), 5);
         appendList(context, "Lost and found items", studentPortalService.getLostFoundItems(null, null, "OPEN"), 6);
-        appendNotices(context, List.of(NoticeAudience.ALL, NoticeAudience.STUDENTS), 5);
+        appendStudentNotices(context, studentEmail, 5);
         context.append('\n');
     }
 
@@ -237,6 +237,15 @@ public class ChatbotContextService {
                 ? noticeRepository.findPublishedByAudienceIn(audiences, NoticeStatus.PUBLISHED, LocalDateTime.now())
                 : noticeRepository.findByAudienceInOrderByPostedAtDesc(audiences);
         appendList(context, "Notices for " + audiences, notices, limit);
+    }
+
+    private void appendStudentNotices(StringBuilder context, String studentEmail, int limit) {
+        List<CampusNotice> notices = noticeRepository.findPublishedForStudent(
+                List.of(NoticeAudience.ALL, NoticeAudience.STUDENTS),
+                NoticeStatus.PUBLISHED,
+                LocalDateTime.now(),
+                studentEmail);
+        appendList(context, "Notices for students", notices, limit);
     }
 
     private void appendEvents(StringBuilder context) {

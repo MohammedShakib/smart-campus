@@ -112,7 +112,7 @@ export function DashboardSection({
     if (section === 'excuses') return <TeacherExcusesSection />;
     if (section === 'officehours') return <TeacherOfficeHoursSection />;
     if (section === 'reservations') return <TeacherReservationSection data={data} reload={reload} />;
-    if (section === 'notices') return <TeacherNoticesSection notices={data.notices || []} reload={reload} />;
+    if (section === 'notices') return <TeacherNoticesSection notices={data.notices || []} data={data} reload={reload} />;
     if (section === 'reportIssue') return <TeacherReportIssueSection data={data} reload={reload} />;
     if (section === 'notifications') {
       return (
