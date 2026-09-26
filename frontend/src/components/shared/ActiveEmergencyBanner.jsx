@@ -7,7 +7,7 @@ export function ActiveEmergencyBanner() {
     const [dismissedIds, setDismissedIds] = useState([]);
 
     const loadEmergencies = useCallback(() => {
-        api('/api/security/emergencies/active')
+        api('/api/emergencies/active')
             .then(res => {
                 setEmergencies(res.data || []);
             })

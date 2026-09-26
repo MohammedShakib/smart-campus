@@ -212,6 +212,11 @@ public class SecurityService {
             throw new IllegalStateException("Visitor has already checked out and pass is closed.");
         }
 
+        // Visit date validation: pass must be valid for today
+        if (visitor.getVisitDate() != null && !visitor.getVisitDate().equals(LocalDate.now())) {
+            throw new IllegalStateException("This visitor pass is not valid for today. Pass date: " + visitor.getVisitDate() + ", Today: " + LocalDate.now());
+        }
+
         visitor.setStatus("CHECKED_IN");
         visitor.setActualCheckInTime(LocalDateTime.now());
         if (visitor.getApprovedBy() == null) {
@@ -261,18 +266,23 @@ public class SecurityService {
         User user = userRepository.findByEmail(identifier)
                 .orElseGet(() -> userRepository.findByStudentOrEmpId(identifier).orElse(null));
 
-        String roleSnapshot = user != null ? user.getRole().name() : "ROLE_STUDENT";
-        String userName = user != null ? user.getFullName() : identifier;
+        // Unknown identifier — deny immediately, no NPE
+        if (user == null) {
+            GateAccessLog log = new GateAccessLog(null, identifier, "UNKNOWN", accessType, gateName, officer, "DENIED", "Unknown identifier — no matching user found");
+            gateAccessLogRepository.save(log);
+            throw new IllegalArgumentException("Access denied: no user found for identifier '" + identifier + "'");
+        }
 
-        if (user != null && !user.isActive()) {
+        String roleSnapshot = user.getRole().name();
+        String userName = user.getFullName();
+
+        if (!user.isActive()) {
             GateAccessLog log = new GateAccessLog(user, identifier, roleSnapshot, accessType, gateName, officer, "DENIED", "User is inactive");
             gateAccessLogRepository.save(log);
             throw new IllegalStateException("User account is disabled.");
         }
 
-        Optional<GateAccessLog> lastLogOpt = user != null
-                ? gateAccessLogRepository.findFirstByUserOrderByTimestampDesc(user)
-                : gateAccessLogRepository.findFirstByIdentifierSnapshotOrderByTimestampDesc(identifier);
+        Optional<GateAccessLog> lastLogOpt = gateAccessLogRepository.findFirstByUserOrderByTimestampDesc(user);
 
         if (lastLogOpt.isPresent()) {
             GateAccessLog lastLog = lastLogOpt.get();
@@ -300,7 +310,7 @@ public class SecurityService {
         GateAccessLog log = new GateAccessLog(user, identifier, roleSnapshot, accessType, gateName, officer, "ALLOWED", "Access Granted");
         logFileWriter.appendAuditLog("GATE_" + accessType, "User " + userName + " granted " + accessType + " at " + gateName + " by " + officer);
         if ("ENTRY".equals(accessType)) {
-            attendeeSetService.checkInStudent(user != null && user.getStudentOrEmpId() != null ? user.getStudentOrEmpId() : identifier);
+            attendeeSetService.checkInStudent(user.getStudentOrEmpId() != null ? user.getStudentOrEmpId() : identifier);
         }
         return gateAccessLogRepository.save(log);
     }

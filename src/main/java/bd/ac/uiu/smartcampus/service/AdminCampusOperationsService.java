@@ -60,6 +60,9 @@ public class AdminCampusOperationsService {
     @Autowired
     private MaintenanceComplaintRepository complaintRepository;
 
+    @Autowired
+    private bd.ac.uiu.smartcampus.syllabus.collections.ComplaintQueueService complaintQueueService;
+
     // ----- BUS -----
     public List<Bus> getAllBuses() {
         return busRepository.findAll();
@@ -252,22 +255,44 @@ public class AdminCampusOperationsService {
 
     public MaintenanceComplaint updateComplaintStatus(Long id, String status, String resolutionNote, String adminEmail) {
         MaintenanceComplaint complaint = complaintRepository.findById(id).orElseThrow();
-        complaint.setStatus(status.toUpperCase(Locale.ROOT));
+        String currentStatus = complaint.getStatus() != null ? complaint.getStatus().toUpperCase(Locale.ROOT) : "OPEN";
+        String newStatus = status != null ? status.toUpperCase(Locale.ROOT) : "";
+
+        // Valid complaint statuses
+        java.util.Set<String> validStatuses = java.util.Set.of("OPEN", "ASSIGNED", "IN_PROGRESS", "RESOLVED", "CLOSED");
+        if (!validStatuses.contains(newStatus)) {
+            throw new IllegalArgumentException("Invalid complaint status: " + newStatus + ". Valid: " + validStatuses);
+        }
+
+        // Block nonsense reverse transitions
+        if ("CLOSED".equals(currentStatus)) {
+            throw new IllegalStateException("Cannot update a closed complaint.");
+        }
+        if ("RESOLVED".equals(currentStatus) && !("CLOSED".equals(newStatus) || "RESOLVED".equals(newStatus))) {
+            throw new IllegalStateException("A resolved complaint can only be CLOSED.");
+        }
+
+        complaint.setStatus(newStatus);
         if (resolutionNote != null && !resolutionNote.isBlank()) {
             complaint.setResolutionNote(resolutionNote);
         }
-        if ("RESOLVED".equalsIgnoreCase(status) || "CLOSED".equalsIgnoreCase(status)) {
+        if ("RESOLVED".equalsIgnoreCase(newStatus) || "CLOSED".equalsIgnoreCase(newStatus)) {
             if (complaint.getResolvedAt() == null) {
                 complaint.setResolvedAt(LocalDateTime.now());
             }
         }
         
+        // Sync FIFO queue: if status changes away from OPEN, remove from queue
+        if (!"OPEN".equals(newStatus)) {
+            complaintQueueService.removeFromQueue(id);
+        }
+
         MaintenanceComplaint saved = complaintRepository.save(complaint);
         
         // Notify reporter
         if (complaint.getReporterId() != null) {
             userRepository.findByStudentOrEmpId(complaint.getReporterId()).ifPresent(user -> {
-                String message = String.format("Your complaint \"%s\" in %s is now %s.", complaint.getIssueTitle(), complaint.getLocation(), status);
+                String message = String.format("Your complaint \"%s\" in %s is now %s.", complaint.getIssueTitle(), complaint.getLocation(), newStatus);
                 if (resolutionNote != null && !resolutionNote.isBlank()) {
                     message += " Note: " + resolutionNote;
                 }
@@ -278,12 +303,12 @@ public class AdminCampusOperationsService {
                         message,
                         "reportIssue",
                         complaint.getId().toString(),
-                        "COMPLAINT_UPDATE:" + complaint.getId() + ":" + status
+                        "COMPLAINT_UPDATE:" + complaint.getId() + ":" + newStatus
                 );
             });
         }
         
-        logAction(adminEmail, "COMPLAINT_UPDATED", "Updated complaint " + id + " to " + status);
+        logAction(adminEmail, "COMPLAINT_UPDATED", "Updated complaint " + id + " to " + newStatus);
         return saved;
     }
 
@@ -573,6 +598,21 @@ public class AdminCampusOperationsService {
                 throw new IllegalArgumentException("Event conflicts with an existing room reservation");
             }
         });
+
+        // Event vs Event conflict check: same location, same date, overlapping times
+        List<CampusEvent> conflictingEvents = eventRepository.findConflictingEvents(
+                event.getLocation().trim(),
+                event.getEventDate(),
+                event.getStartTime(),
+                event.getEndTime(),
+                event.getId() // null for new events (no self-exclusion needed), ID for updates
+        );
+        if (!conflictingEvents.isEmpty()) {
+            CampusEvent conflicting = conflictingEvents.get(0);
+            throw new IllegalArgumentException("Event conflicts with an existing event '" + conflicting.getTitle()
+                    + "' scheduled from " + conflicting.getStartTime() + " to " + conflicting.getEndTime()
+                    + " in " + event.getLocation());
+        }
     }
 
     private String dayName(LocalDate date) {

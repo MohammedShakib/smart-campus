@@ -22,6 +22,9 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
+import bd.ac.uiu.smartcampus.model.EmergencyAlert;
+import bd.ac.uiu.smartcampus.service.SecurityService;
+
 @RestController
 @RequestMapping("/api/campus")
 public class CampusApiController {

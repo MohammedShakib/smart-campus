@@ -14,6 +14,7 @@ import bd.ac.uiu.smartcampus.model.LabEquipment;
 import bd.ac.uiu.smartcampus.model.LostFoundItem;
 import bd.ac.uiu.smartcampus.model.MaintenanceComplaint;
 import bd.ac.uiu.smartcampus.model.NoticeAudience;
+import bd.ac.uiu.smartcampus.model.NoticeStatus;
 import bd.ac.uiu.smartcampus.model.ParkingZone;
 import bd.ac.uiu.smartcampus.model.Role;
 import bd.ac.uiu.smartcampus.model.SecurityIncident;
@@ -29,6 +30,7 @@ import bd.ac.uiu.smartcampus.syllabus.networking.BusServerSocketManager;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
@@ -156,7 +158,7 @@ public class ChatbotContextService {
         context.append("- Unique gate pass count: ").append(attendeeSetService.getUniqueCount()).append('\n');
         appendList(context, "Recent admin actions", actionStackService.getRecentStackHistory(), 5);
         appendList(context, "Queued complaints", complaintQueueService.getQueuedComplaints(), 5);
-        appendNotices(context, List.of(NoticeAudience.ALL, NoticeAudience.ADMIN), 5);
+        appendNotices(context, List.of(NoticeAudience.ALL, NoticeAudience.ADMIN), 5, false);
         context.append('\n');
     }
 
@@ -227,7 +229,14 @@ public class ChatbotContextService {
     }
 
     private void appendNotices(StringBuilder context, List<NoticeAudience> audiences, int limit) {
-        appendList(context, "Notices for " + audiences, noticeRepository.findByAudienceInOrderByPostedAtDesc(audiences), limit);
+        appendNotices(context, audiences, limit, true);
+    }
+
+    private void appendNotices(StringBuilder context, List<NoticeAudience> audiences, int limit, boolean filteredForRole) {
+        List<CampusNotice> notices = filteredForRole
+                ? noticeRepository.findPublishedByAudienceIn(audiences, NoticeStatus.PUBLISHED, LocalDateTime.now())
+                : noticeRepository.findByAudienceInOrderByPostedAtDesc(audiences);
+        appendList(context, "Notices for " + audiences, notices, limit);
     }
 
     private void appendEvents(StringBuilder context) {

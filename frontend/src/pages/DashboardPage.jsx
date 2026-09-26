@@ -118,6 +118,10 @@ export function DashboardPage() {
       api('/api/teacher/notifications/unread-count').then((res) => {
         setUnreadNotifications(res.data?.count || 0);
       }).catch(() => {});
+    } else if (role === 'student') {
+      api('/api/student/notifications/unread-count').then((res) => {
+        setUnreadNotifications(res.data?.count || 0);
+      }).catch(() => {});
     }
   }, [role]);
 
@@ -132,14 +136,14 @@ export function DashboardPage() {
   useEffect(() => {
     loadDashboard();
     if (role === 'admin') loadAuditLogs();
-    if (role === 'teacher') loadUnreadCount();
+    if (role === 'teacher' || role === 'student') loadUnreadCount();
     
     const telemetryTimer = setInterval(() => {
       api('/api/campus/telemetry').then((res) => setTelemetry(res.data)).catch(() => {});
     }, 4000);
     
     let notifTimer;
-    if (role === 'teacher') {
+    if (role === 'teacher' || role === 'student') {
       notifTimer = setInterval(() => {
         loadUnreadCount();
       }, 25000);

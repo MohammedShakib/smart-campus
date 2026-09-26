@@ -90,7 +90,8 @@ public class SecurityApiController {
                                                                                    @AuthenticationPrincipal CustomUserDetails userDetails) {
         String officer = userDetails != null ? userDetails.getFullName() : "Security Officer";
         bd.ac.uiu.smartcampus.model.GateAccessLog log = securityService.recordGateAccess(dto.getIdentifier(), dto.getAccessType(), dto.getGateName(), officer);
-        return ApiResponse.ok(dto.getAccessType() + " successful for " + log.getUser().getFullName(), log);
+        String displayName = log.getUser() != null ? log.getUser().getFullName() : log.getIdentifierSnapshot();
+        return ApiResponse.ok(dto.getAccessType() + " successful for " + displayName, log);
     }
 
     // ─── PARKING MANAGEMENT ─────────────────────────────────────

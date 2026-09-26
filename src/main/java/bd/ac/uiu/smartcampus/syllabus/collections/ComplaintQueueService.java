@@ -53,33 +53,54 @@ public class ComplaintQueueService {
     }
 
     /**
-     * Process next complaint in FIFO order (poll from head of queue)
+     * Process next complaint in FIFO order (poll from head of queue).
+     * Skips stale entries where complaint was already manually changed from OPEN state.
      */
     @Transactional
     public synchronized MaintenanceComplaint processNextComplaint() {
-        if (!complaintQueue.isEmpty()) {
+        while (!complaintQueue.isEmpty()) {
             MaintenanceComplaint complaint = complaintQueue.peek();
-            complaint.setStatus("RESOLVED");
-            repository.save(complaint);
-            
-            if ("ROLE_TEACHER".equals(complaint.getReporterRole())) {
-                userRepository.findByStudentOrEmpId(complaint.getReporterId()).ifPresent(teacher -> {
-                    String message = String.format("\"%s\" in %s has been resolved.", complaint.getIssueTitle(), complaint.getLocation());
+
+            // Re-fetch from DB to get authoritative status
+            MaintenanceComplaint dbComplaint = repository.findById(complaint.getId()).orElse(null);
+
+            if (dbComplaint == null || !"OPEN".equals(dbComplaint.getStatus())) {
+                // Stale queue entry: complaint was deleted or manually progressed — remove and skip
+                complaintQueue.poll();
+                continue;
+            }
+
+            // Valid OPEN complaint — process it
+            dbComplaint.setStatus("RESOLVED");
+            repository.save(dbComplaint);
+
+            if ("ROLE_TEACHER".equals(dbComplaint.getReporterRole())) {
+                userRepository.findByStudentOrEmpId(dbComplaint.getReporterId()).ifPresent(teacher -> {
+                    String message = String.format("\"%s\" in %s has been resolved.", dbComplaint.getIssueTitle(), dbComplaint.getLocation());
                     notificationService.createNotification(
                             teacher,
                             NotificationType.COMPLAINT_UPDATE,
                             "Maintenance issue resolved",
                             message,
                             "reportIssue",
-                            complaint.getId().toString(),
-                            "COMPLAINT_RESOLVED:" + complaint.getId()
+                            dbComplaint.getId().toString(),
+                            "COMPLAINT_RESOLVED:" + dbComplaint.getId()
                     );
                 });
             }
-            
-            return complaintQueue.poll();
+
+            complaintQueue.poll();
+            return dbComplaint;
         }
         return null;
+    }
+
+    /**
+     * Remove a complaint from the in-memory queue (call when admin manually changes status away from OPEN).
+     * Prevents stale entries from blocking the FIFO queue.
+     */
+    public synchronized void removeFromQueue(Long complaintId) {
+        complaintQueue.removeIf(c -> c.getId() != null && c.getId().equals(complaintId));
     }
 
     /**
@@ -100,3 +121,4 @@ public class ComplaintQueueService {
         return complaintQueue.size();
     }
 }
+
