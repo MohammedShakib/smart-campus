@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+﻿import React, { useState, useEffect, useCallback } from 'react';
 import { Search, Plus, Edit2, CheckCircle, XCircle, Save, X } from 'lucide-react';
 import { api } from '../../../utils/api';
 import { prettyRole } from '../../../utils/helpers';
@@ -208,9 +208,14 @@ function UserForm({ user, onClose, onSuccess, onError }) {
   };
 
   return (
-    <Panel title={user ? "Edit User" : "Add New User"} tag="Form" style={{ marginBottom: '1.5rem', border: '1px solid var(--border)' }}>
-      <form onSubmit={handleSubmit}>
-        <div className="admin-form-grid">
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '650px', width: '100%', margin: '0 auto', maxHeight: '90vh', overflowY: 'auto' }}>
+        <div className="modal-header">
+          <h3>{user ? "Edit User" : "Add New User"}</h3>
+          <button type="button" className="close-btn" onClick={onClose}>×</button>
+        </div>
+        <form onSubmit={handleSubmit} className="modal-form">
+          <div className="admin-form-grid">
           <div className="admin-form-group">
             <label>Full Name *</label>
             <input required value={formData.fullName} onChange={e => setFormData({...formData, fullName: e.target.value})} placeholder="e.g. John Doe" />
@@ -249,11 +254,12 @@ function UserForm({ user, onClose, onSuccess, onError }) {
           )}
         </div>
 
-        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '1.5rem' }}>
-          <button type="button" className="ghost-btn" onClick={onClose} disabled={saving}><X size={16} /> Cancel</button>
-          <button type="submit" className="primary-btn" disabled={saving}><Save size={16} /> {saving ? 'Saving...' : 'Save User'}</button>
-        </div>
-      </form>
-    </Panel>
+          <div className="modal-actions" style={{ marginTop: '1.5rem' }}>
+            <button type="button" className="ghost-btn" onClick={onClose} disabled={saving}><X size={16} /> Cancel</button>
+            <button type="submit" className="primary-btn" disabled={saving}><Save size={16} /> {saving ? 'Saving...' : 'Save User'}</button>
+          </div>
+        </form>
+      </div>
+    </div>
   );
 }
