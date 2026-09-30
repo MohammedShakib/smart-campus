@@ -5,19 +5,22 @@ import 'leaflet/dist/leaflet.css';
 
 const UIU_COORD = { lat: 23.7979, lng: 90.4492, label: 'UIU Campus' };
 const KURIL_BISHWAROAD_ROUTE = [
-  { lat: 23.8217, lng: 90.4202, label: 'Kuril Bishwaroad' },
-  { lat: 23.8203, lng: 90.4210, label: 'Kuril Flyover Loop' },
-  { lat: 23.8216, lng: 90.4234, label: 'Kuril Ramp' },
-  { lat: 23.8232, lng: 90.4249, label: 'Kuril Connector' },
-  { lat: 23.8253, lng: 90.4436, label: 'Bashundhara North Road' },
-  { lat: 23.8248, lng: 90.4464, label: 'Bashundhara R/A Turn' },
-  { lat: 23.8159, lng: 90.4462, label: 'Bashundhara Block I' },
-  { lat: 23.8060, lng: 90.4467, label: 'Jauar Tek' },
-  { lat: 23.8030, lng: 90.4462, label: 'UIU Approach Road' },
-  { lat: 23.8021, lng: 90.4409, label: 'Madani Avenue Link' },
-  { lat: 23.8004, lng: 90.4410, label: 'Campus Link Turn' },
-  { lat: 23.8002, lng: 90.4471, label: 'United City Road' },
-  { lat: 23.7985, lng: 90.4474, label: 'UIU Gate Approach' },
+  { lat: 23.8200, lng: 90.4201, label: 'Kuril Bishwaroad' },
+  { lat: 23.8184, lng: 90.4199, label: 'Kuril Bus Stop' },
+  { lat: 23.8177, lng: 90.4210, label: 'Kuril Ramp Loop' },
+  { lat: 23.8188, lng: 90.4226, label: 'Kuril Flyover Ramp' },
+  { lat: 23.8211, lng: 90.4240, label: 'Kuril Connector' },
+  { lat: 23.8238, lng: 90.4415, label: 'Bashundhara Link Road' },
+  { lat: 23.8240, lng: 90.4485, label: 'Bashundhara R/A Turn' },
+  { lat: 23.8170, lng: 90.4487, label: 'Bashundhara Road 02' },
+  { lat: 23.8080, lng: 90.4485, label: 'Bashundhara Road 02' },
+  { lat: 23.8030, lng: 90.4482, label: 'Jauar Tek Turn' },
+  { lat: 23.8018, lng: 90.4468, label: 'UIU Approach Bend' },
+  { lat: 23.8007, lng: 90.4480, label: 'United City Road' },
+  { lat: 23.7999, lng: 90.4410, label: 'Campus Link Road' },
+  { lat: 23.7989, lng: 90.4410, label: 'Campus Link Turn' },
+  { lat: 23.7988, lng: 90.4477, label: 'UIU Gate Approach' },
+  { lat: 23.7980, lng: 90.4478, label: 'UIU Main Gate' },
   UIU_COORD
 ];
 const BUS_ROUTES = {
@@ -44,6 +47,7 @@ const BUS_ROUTES = {
     name: 'Bus 02',
     color: '#0f766e',
     origin: 'Kuril Bishwaroad',
+    useManualPath: true,
     waypoints: KURIL_BISHWAROAD_ROUTE,
     fallbackPath: KURIL_BISHWAROAD_ROUTE,
     livePoint: { lat: 23.8030, lng: 90.4462 }
@@ -83,6 +87,7 @@ function getRouteForBus(bus) {
 }
 
 async function fetchRoadPath(route, signal) {
+  if (route.useManualPath) return route.fallbackPath;
   const coordinates = route.waypoints.map((point) => `${point.lng},${point.lat}`).join(';');
   const response = await fetch(
     `https://router.project-osrm.org/route/v1/driving/${coordinates}?overview=full&geometries=geojson&steps=false`,
