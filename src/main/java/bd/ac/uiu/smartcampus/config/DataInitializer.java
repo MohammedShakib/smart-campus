@@ -238,10 +238,10 @@ public class DataInitializer implements CommandLineRunner {
             r1.addStop(new BusRouteStop("UIU", 3, 20));
             busRouteRepository.save(r1);
 
-            BusRoute r2 = new BusRoute("R-02", "Kuril to UIU", "Kuril", "UIU");
-            r2.addStop(new BusRouteStop("Kuril Flyover", 1, 0));
-            r2.addStop(new BusRouteStop("Bashundhara Gate", 2, 15));
-            r2.addStop(new BusRouteStop("UIU", 3, 30));
+            BusRoute r2 = new BusRoute("R-02", "Kuril Bishwaroad to UIU", "Kuril Bishwaroad", "UIU");
+            r2.addStop(new BusRouteStop("Kuril Bishwaroad", 1, 0));
+            r2.addStop(new BusRouteStop("Bashundhara R/A Road 02", 2, 12));
+            r2.addStop(new BusRouteStop("UIU Campus Gate", 3, 25));
             busRouteRepository.save(r2);
         }
 

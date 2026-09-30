@@ -4,6 +4,22 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
 const UIU_COORD = { lat: 23.7979, lng: 90.4492, label: 'UIU Campus' };
+const KURIL_BISHWAROAD_ROUTE = [
+  { lat: 23.8217, lng: 90.4202, label: 'Kuril Bishwaroad' },
+  { lat: 23.8203, lng: 90.4210, label: 'Kuril Flyover Loop' },
+  { lat: 23.8216, lng: 90.4234, label: 'Kuril Ramp' },
+  { lat: 23.8232, lng: 90.4249, label: 'Kuril Connector' },
+  { lat: 23.8253, lng: 90.4436, label: 'Bashundhara North Road' },
+  { lat: 23.8248, lng: 90.4464, label: 'Bashundhara R/A Turn' },
+  { lat: 23.8159, lng: 90.4462, label: 'Bashundhara Block I' },
+  { lat: 23.8060, lng: 90.4467, label: 'Jauar Tek' },
+  { lat: 23.8030, lng: 90.4462, label: 'UIU Approach Road' },
+  { lat: 23.8021, lng: 90.4409, label: 'Madani Avenue Link' },
+  { lat: 23.8004, lng: 90.4410, label: 'Campus Link Turn' },
+  { lat: 23.8002, lng: 90.4471, label: 'United City Road' },
+  { lat: 23.7985, lng: 90.4474, label: 'UIU Gate Approach' },
+  UIU_COORD
+];
 const BUS_ROUTES = {
   'BUS-01': {
     name: 'Bus 01',
@@ -27,21 +43,10 @@ const BUS_ROUTES = {
   'BUS-02': {
     name: 'Bus 02',
     color: '#0f766e',
-    origin: 'Kuril Flyover',
-    waypoints: [
-      { lat: 23.8223, lng: 90.4204 },
-      { lat: 23.8117, lng: 90.4338 },
-      UIU_COORD
-    ],
-    fallbackPath: [
-      { lat: 23.8223, lng: 90.4204 },
-      { lat: 23.8173, lng: 90.4244 },
-      { lat: 23.8117, lng: 90.4338 },
-      { lat: 23.8058, lng: 90.4415 },
-      { lat: 23.7991, lng: 90.4472 },
-      UIU_COORD
-    ],
-    livePoint: { lat: 23.7991, lng: 90.4472 }
+    origin: 'Kuril Bishwaroad',
+    waypoints: KURIL_BISHWAROAD_ROUTE,
+    fallbackPath: KURIL_BISHWAROAD_ROUTE,
+    livePoint: { lat: 23.8030, lng: 90.4462 }
   },
   'BUS-03': {
     name: 'Bus 03',
@@ -88,6 +93,61 @@ async function fetchRoadPath(route, signal) {
   const path = data?.routes?.[0]?.geometry?.coordinates;
   if (!Array.isArray(path) || path.length < 2) throw new Error('Route geometry missing');
   return path.map(([lng, lat]) => ({ lat, lng }));
+}
+
+function distanceBetween(a, b) {
+  const earthRadiusMeters = 6371000;
+  const lat1 = a.lat * Math.PI / 180;
+  const lat2 = b.lat * Math.PI / 180;
+  const deltaLat = (b.lat - a.lat) * Math.PI / 180;
+  const deltaLng = (b.lng - a.lng) * Math.PI / 180;
+  const sinLat = Math.sin(deltaLat / 2);
+  const sinLng = Math.sin(deltaLng / 2);
+  const h = sinLat * sinLat + Math.cos(lat1) * Math.cos(lat2) * sinLng * sinLng;
+  return earthRadiusMeters * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
+}
+
+function pointAlongPath(path, progress) {
+  if (!path.length) return UIU_COORD;
+  if (path.length === 1) return path[0];
+  const clampedProgress = Math.max(0, Math.min(1, progress));
+  const segmentLengths = [];
+  let totalLength = 0;
+
+  for (let index = 1; index < path.length; index += 1) {
+    const segmentLength = distanceBetween(path[index - 1], path[index]);
+    segmentLengths.push(segmentLength);
+    totalLength += segmentLength;
+  }
+
+  if (!totalLength) return path[0];
+  let targetLength = totalLength * clampedProgress;
+  for (let index = 0; index < segmentLengths.length; index += 1) {
+    const segmentLength = segmentLengths[index];
+    if (targetLength <= segmentLength) {
+      const start = path[index];
+      const end = path[index + 1];
+      const ratio = segmentLength ? targetLength / segmentLength : 0;
+      return {
+        lat: start.lat + (end.lat - start.lat) * ratio,
+        lng: start.lng + (end.lng - start.lng) * ratio
+      };
+    }
+    targetLength -= segmentLength;
+  }
+
+  return path[path.length - 1];
+}
+
+function progressFromLocation(route, location) {
+  const text = String(location || '').toLowerCase();
+  if (/\b(uiu|campus|gate|arriv)/.test(text)) return 0.84;
+  if (/(approach|jauar|jaur|united city|madani)/.test(text)) return 0.72;
+  if (/(bashundhara|block|residential)/.test(text)) return 0.46;
+  if (/(depart|left|kuril|bishwaroad|flyover|ramp)/.test(text)) return 0.12;
+  if (/(natun|notun|bazar)/.test(text)) return route.bus === 'BUS-03' ? 0.38 : 0.16;
+  if (/(badda)/.test(text)) return 0.1;
+  return route.bus === 'BUS-02' ? 0.58 : 0.5;
 }
 
 function markerIcon(className, html) {
@@ -140,6 +200,7 @@ export function BusLocations({ locations }) {
     if (!mapRef.current || !routes.length) return undefined;
     const abortController = new AbortController();
     let active = true;
+    const animationFrames = [];
     const map = L.map(mapRef.current, {
       zoomControl: true,
       scrollWheelZoom: false,
@@ -170,6 +231,7 @@ export function BusLocations({ locations }) {
       if (!active) return;
       routePaths.filter(Boolean).forEach(({ route, path }) => {
         const latLngs = path.map((point) => [point.lat, point.lng]);
+        const startProgress = progressFromLocation(route, route.location);
         L.polyline(latLngs, {
           color: route.color,
           weight: 5,
@@ -186,13 +248,25 @@ export function BusLocations({ locations }) {
           fillOpacity: 1
         }).addTo(layerGroup);
 
-        L.marker([route.livePoint.lat, route.livePoint.lng], {
+        const livePoint = pointAlongPath(path, startProgress);
+        const liveMarker = L.marker([livePoint.lat, livePoint.lng], {
           icon: markerIcon(
             'bus-live-div-icon',
             `<span style="--bus-color:${route.color}"><i></i><b>${route.bus.replace('BUS-', '')}</b></span>`
           ),
           title: `${route.bus}: ${route.location}`
         }).addTo(layerGroup);
+
+        const routeDurationMs = route.bus === 'BUS-02' ? 90000 : 76000;
+        const animationIndex = animationFrames.push(0) - 1;
+        const animateBus = (timestamp) => {
+          if (!active) return;
+          const progress = (startProgress + ((timestamp % routeDurationMs) / routeDurationMs) * 0.18) % 1;
+          const nextPoint = pointAlongPath(path, progress);
+          liveMarker.setLatLng([nextPoint.lat, nextPoint.lng]);
+          animationFrames[animationIndex] = requestAnimationFrame(animateBus);
+        };
+        animationFrames[animationIndex] = requestAnimationFrame(animateBus);
       });
 
       const bounds = layerGroup.getBounds();
@@ -204,6 +278,9 @@ export function BusLocations({ locations }) {
 
     return () => {
       active = false;
+      animationFrames.forEach((frame) => {
+        if (frame) cancelAnimationFrame(frame);
+      });
       abortController.abort();
       map.remove();
     };
