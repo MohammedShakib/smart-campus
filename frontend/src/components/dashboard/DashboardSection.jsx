@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Building2, BusFront, ClipboardCheck, Database, DoorOpen, Layers, RadioTower, RefreshCw, Server, ShieldCheck, UsersRound, Wrench, Zap } from 'lucide-react';
+import { Bell, Building2, BusFront, ClipboardCheck, Database, DoorOpen, Layers, RadioTower, RefreshCw, Server, ShieldCheck, UsersRound, Wrench, Zap } from 'lucide-react';
 import { api, postAction } from '../../utils/api';
 import { roleSummary } from '../../utils/helpers';
 import { SectionHeader, NoticeList, BusLocations, StatRow, Panel, Table, ActionButton } from '../shared/SharedComponents';
@@ -98,6 +98,17 @@ export function DashboardSection({
     if (section === 'campus-operations') return <CampusOperationsTabs />;
     if (section === 'equipment') return <AdminEquipmentSection />;
     if (section === 'communication') return <AdminCommunicationSection />;
+    if (section === 'notifications') {
+      return (
+        <AdminNotificationsSection
+          data={data}
+          setActiveSection={setActiveSection}
+          onNotificationRead={onNotificationRead}
+          onAllNotificationsRead={onAllNotificationsRead}
+          refreshUnreadCount={refreshUnreadCount}
+        />
+      );
+    }
     if (section === 'maintenance') return <AdminMaintenanceSection data={data} reload={reload} />;
     if (section === 'classrooms') return <ClassroomsSection classrooms={data.classrooms} />;
     if (section === 'transport') return <TransportSection data={data} />;
@@ -383,22 +394,193 @@ function AuditSection({ auditLogs, data, reload }) {
           )}
         </Panel>
 
-        <Panel title="Action Stack History" tag="LIFO">
-          <div className="audit-table-wrap">
-            <Table
-              headers={['Action', 'Admin', 'Timestamp']}
-              rows={stackHistory.map((item) => [
-                item.actionType,
-                item.adminEmail,
-                item.timestamp ? new Date(item.timestamp).toLocaleString() : '-'
-              ])}
-              empty="No admin actions recorded yet."
-            />
-          </div>
+        <Panel title="Action Notifications" tag="LIFO">
+          <AdminActionNotificationList actions={stackHistory} />
         </Panel>
       </div>
     </div>
   );
+}
+
+function AdminNotificationsSection({
+  data,
+  setActiveSection,
+  onNotificationRead,
+  onAllNotificationsRead,
+  refreshUnreadCount
+}) {
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [filter, setFilter] = useState('all');
+  const stackHistory = data.actionStackHistory || [];
+
+  function loadNotifications() {
+    setLoading(true);
+    api('/api/notifications')
+      .then((res) => {
+        setNotifications(res.data || []);
+        setError(null);
+      })
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }
+
+  React.useEffect(() => {
+    loadNotifications();
+  }, []);
+
+  function markAsRead(notification) {
+    if (!notification || notification.read) return;
+    api(`/api/notifications/${notification.id}/read`, { method: 'POST' })
+      .then(() => {
+        setNotifications((prev) => prev.map((item) => (
+          item.id === notification.id ? { ...item, read: true } : item
+        )));
+        onNotificationRead?.(1);
+      })
+      .catch(() => refreshUnreadCount?.());
+  }
+
+  function openNotification(notification) {
+    if (!notification.read) {
+      markAsRead(notification);
+    }
+    if (notification.targetSection) {
+      setActiveSection?.(notification.targetSection);
+    }
+  }
+
+  function markAllAsRead() {
+    api('/api/notifications/read-all', { method: 'POST' })
+      .then(() => {
+        setNotifications((prev) => prev.map((item) => ({ ...item, read: true })));
+        onAllNotificationsRead?.();
+      })
+      .catch(() => refreshUnreadCount?.());
+  }
+
+  const filteredNotifications = filter === 'unread'
+    ? notifications.filter((notification) => !notification.read)
+    : notifications;
+  const unreadCount = notifications.filter((notification) => !notification.read).length;
+
+  return (
+    <div className="admin-notifications-page">
+      <SectionHeader
+        title="Notifications"
+        subtitle="Review system alerts and recent admin action notifications from one place."
+      />
+
+      {error && <div className="inline-alert inline-alert--error">{error}</div>}
+
+      <div className="audit-summary-grid">
+        <div className="audit-summary-card">
+          <Bell size={18} />
+          <span>Unread</span>
+          <strong>{unreadCount}</strong>
+        </div>
+        <div className="audit-summary-card">
+          <ClipboardCheck size={18} />
+          <span>Total Alerts</span>
+          <strong>{notifications.length}</strong>
+        </div>
+        <div className="audit-summary-card audit-summary-card--wide">
+          <Layers size={18} />
+          <span>Recent Actions</span>
+          <strong>{stackHistory.length}</strong>
+        </div>
+      </div>
+
+      <div className="notification-toolbar">
+        <div className="notification-filters">
+          <button className={filter === 'all' ? 'primary-btn' : 'ghost-btn'} type="button" onClick={() => setFilter('all')}>All</button>
+          <button className={filter === 'unread' ? 'primary-btn' : 'ghost-btn'} type="button" onClick={() => setFilter('unread')}>Unread</button>
+        </div>
+        <div className="notification-filters">
+          <button className="ghost-btn" type="button" onClick={loadNotifications}>
+            <RefreshCw size={15} /> Refresh
+          </button>
+          <button className="ghost-btn" type="button" onClick={markAllAsRead} disabled={!notifications.length}>
+            Mark all as read
+          </button>
+        </div>
+      </div>
+
+      <div className="admin-notification-grid">
+        <Panel title="System Notifications" tag={`${filteredNotifications.length} shown`}>
+          {loading ? (
+            <p className="muted">Loading notifications...</p>
+          ) : filteredNotifications.length === 0 ? (
+            <div className="audit-empty-state">
+              <Bell size={24} />
+              <strong>No notifications</strong>
+              <span>System alerts and role-based messages will appear here.</span>
+            </div>
+          ) : (
+            <div className="notification-list">
+              {filteredNotifications.map((notification) => (
+                <button
+                  type="button"
+                  key={notification.id}
+                  className={`notification-item admin-notification-card ${!notification.read ? 'notification-item--unread' : ''}`}
+                  onClick={() => openNotification(notification)}
+                >
+                  <div className="notification-meta">
+                    <strong>{notification.title}</strong>
+                    <span className="notification-time">
+                      {notification.createdAt ? new Date(notification.createdAt).toLocaleString() : '-'}
+                    </span>
+                  </div>
+                  <p className="notification-message">{notification.message}</p>
+                </button>
+              ))}
+            </div>
+          )}
+        </Panel>
+
+        <Panel title="Admin Action Notifications" tag="LIFO">
+          <AdminActionNotificationList actions={stackHistory} />
+        </Panel>
+      </div>
+    </div>
+  );
+}
+
+function AdminActionNotificationList({ actions }) {
+  if (!actions.length) {
+    return (
+      <div className="audit-empty-state">
+        <Layers size={24} />
+        <strong>No admin actions recorded</strong>
+        <span>Recent admin operations will appear as notification-style timeline items.</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="admin-action-feed">
+      {actions.map((item, index) => (
+        <article className="admin-action-notification" key={`${item.actionType}-${item.timestamp}-${index}`}>
+          <span className="admin-action-dot" />
+          <div>
+            <strong>{formatActionTitle(item.actionType)}</strong>
+            <p>{item.adminEmail || 'Admin'} performed this operation.</p>
+            <time>{item.timestamp ? new Date(item.timestamp).toLocaleString() : '-'}</time>
+          </div>
+        </article>
+      ))}
+    </div>
+  );
+}
+
+function formatActionTitle(actionType) {
+  return String(actionType || 'System action')
+    .toLowerCase()
+    .split('_')
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
 }
 
 function TransportSection({ data }) {

@@ -3776,6 +3776,102 @@
   color: var(--tx-secondary);
 }
 
+.admin-notifications-page {
+  max-width: 1500px;
+}
+
+.admin-notification-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(420px, 0.9fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.admin-notification-card {
+  width: 100%;
+  display: block;
+  text-align: left;
+  font: inherit;
+}
+
+.admin-action-feed {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.admin-action-notification {
+  position: relative;
+  display: grid;
+  grid-template-columns: 14px minmax(0, 1fr);
+  gap: 0.75rem;
+  padding: 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.admin-action-notification::before {
+  content: "";
+  position: absolute;
+  left: 1rem;
+  top: 2.15rem;
+  bottom: -0.85rem;
+  width: 1px;
+  background: var(--border);
+}
+
+.admin-action-notification:last-child::before {
+  display: none;
+}
+
+.admin-action-dot {
+  width: 12px;
+  height: 12px;
+  margin-top: 0.22rem;
+  border: 3px solid #ffffff;
+  border-radius: 999px;
+  background: var(--accent-dark);
+  box-shadow: 0 0 0 2px var(--accent-border);
+}
+
+.admin-action-notification strong {
+  display: block;
+  color: var(--tx-primary);
+  font-size: 0.88rem;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.admin-action-notification p {
+  margin: 0.22rem 0;
+  color: var(--tx-secondary);
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.admin-action-notification time {
+  color: var(--tx-muted);
+  font-size: 0.74rem;
+}
+
+@media (max-width: 900px) {
+  .admin-notification-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .notification-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .notification-filters {
+    flex-wrap: wrap;
+  }
+}
+
 /* Student portal polish */
 .student-page {
   width: min(100%, 1510px);
