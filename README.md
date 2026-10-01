@@ -83,6 +83,35 @@ Open your browser and navigate to the local server port configured in `applicati
 
 ---
 
+## Environment Balance: Local and Railway
+
+The same codebase is designed to run in both local XAMPP and Railway production. Keep environment-specific values outside the code:
+
+- Local: create a private `.env` file from `.env.example`, then use XAMPP MySQL values such as `localhost:3306`, `root`, and your local database name.
+- Railway: set the same variables in the Railway service `Variables` tab, using Railway MySQL reference variables such as `${{MySQL.MYSQLHOST}}`.
+- Do not commit `.env`; only `.env.example` should be committed.
+- Login sessions are stored in the configured database through Spring Session JDBC, so local sessions stay in the local database and Railway sessions stay in Railway MySQL.
+- The app reads `PORT` automatically on Railway and falls back to `8085` locally.
+
+Required database variables for both environments:
+
+```properties
+SPRING_DATASOURCE_URL=jdbc:mysql://host:port/database_name?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+SPRING_DATASOURCE_USERNAME=your_user
+SPRING_DATASOURCE_PASSWORD=your_password
+SPRING_DATASOURCE_DRIVER_CLASS_NAME=com.mysql.cj.jdbc.Driver
+SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT=org.hibernate.dialect.MySQLDialect
+```
+
+Optional environment variables:
+
+```properties
+SMART_CAMPUS_SESSION_TIMEOUT=7d
+smart-campus.attendance-base-url=http://localhost:8085
+```
+
+---
+
 ## 🔐 Demo Accounts
 
 The database is automatically seeded upon startup with the following demonstration accounts:
