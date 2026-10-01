@@ -3950,6 +3950,39 @@
   min-width: 0;
 }
 
+.cafeteria-refresh-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  min-width: 128px;
+  min-height: 36px;
+  margin-top: 0.45rem;
+  padding: 0 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #ffffff;
+  color: var(--tx-secondary);
+  font-size: 0.82rem;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.cafeteria-refresh-btn:hover:not(:disabled) {
+  border-color: var(--accent-border);
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+  box-shadow: 0 8px 18px rgba(79, 70, 229, 0.1);
+}
+
+.cafeteria-refresh-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.68;
+}
+
 .student-ticket-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.45fr) minmax(360px, 0.9fr);

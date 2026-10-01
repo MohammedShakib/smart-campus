@@ -179,14 +179,13 @@ export function StudentCafeteriaSection() {
         </div>
         <button
           type="button"
-          className="icon-btn"
+          className="cafeteria-refresh-btn"
           title="Refresh Menu"
           onClick={() => fetchMenu(true)}
           disabled={refreshing}
-          style={{ marginTop: '0.5rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 0.85rem' }}
         >
           <RotateCw size={15} className={refreshing ? 'animate-spin' : ''} />
-          <span style={{ fontSize: '0.82rem', fontWeight: 600 }}>Refresh Menu</span>
+          <span>{refreshing ? 'Refreshing' : 'Refresh Menu'}</span>
         </button>
       </div>
 
