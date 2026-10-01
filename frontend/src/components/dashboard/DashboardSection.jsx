@@ -324,15 +324,46 @@ function MaintenanceSection({ data, reload }) {
 }
 
 function AuditSection({ auditLogs, data, reload }) {
+  const stackHistory = data.actionStackHistory || [];
+  const latestAction = stackHistory[0];
+
   return (
-    <div>
-      <SectionHeader title="Audit Stack" subtitle="LIFO action log - file-backed audit trail of all admin operations." />
-      <div className="section-grid">
-        <Panel title="Audit Log Entries" tag={`${auditLogs.length} entries`}>
-          <div className="action-row" style={{ marginBottom: '1rem' }}>
-            <ActionButton label="Refresh Logs" icon={RefreshCw} onClick={reload} />
-            <ActionButton label="Backup Campus State" icon={Database} onClick={() => postAction('/api/campus/backup/save')} />
-            <ActionButton label="Restore Backup" icon={Server} onClick={() => postAction('/api/campus/backup/restore')} />
+    <div className="audit-page">
+      <SectionHeader title="Audit Stack" subtitle="Track admin actions, keep a file-backed trail, and manage campus-state backups." />
+
+      <div className="audit-summary-grid">
+        <div className="audit-summary-card">
+          <ClipboardCheck size={18} />
+          <span>Audit Entries</span>
+          <strong>{auditLogs.length}</strong>
+        </div>
+        <div className="audit-summary-card">
+          <Layers size={18} />
+          <span>Stack Actions</span>
+          <strong>{stackHistory.length}</strong>
+        </div>
+        <div className="audit-summary-card audit-summary-card--wide">
+          <ShieldCheck size={18} />
+          <span>Latest Action</span>
+          <strong>{latestAction?.actionType || 'No action yet'}</strong>
+        </div>
+      </div>
+
+      <div className="audit-layout">
+        <Panel title="Audit Trail" tag={`${auditLogs.length} entries`}>
+          <div className="audit-actions">
+            <button type="button" className="audit-action-btn" onClick={reload}>
+              <RefreshCw size={16} />
+              <span>Refresh Logs</span>
+            </button>
+            <button type="button" className="audit-action-btn" onClick={() => postAction('/api/campus/backup/save')}>
+              <Database size={16} />
+              <span>Backup State</span>
+            </button>
+            <button type="button" className="audit-action-btn" onClick={() => postAction('/api/campus/backup/restore')}>
+              <Server size={16} />
+              <span>Restore Backup</span>
+            </button>
           </div>
           {auditLogs.length > 0 ? (
             <div className="audit-log-list">
@@ -344,20 +375,26 @@ function AuditSection({ auditLogs, data, reload }) {
               ))}
             </div>
           ) : (
-            <p className="muted" style={{ padding: '1rem 0' }}>No audit entries yet. Actions will appear here.</p>
+            <div className="audit-empty-state">
+              <ClipboardCheck size={24} />
+              <strong>No audit entries yet</strong>
+              <span>Admin operations will appear here after new actions are recorded.</span>
+            </div>
           )}
         </Panel>
 
         <Panel title="Action Stack History" tag="LIFO">
-          <Table
-            headers={['Action', 'Admin', 'Timestamp']}
-            rows={(data.actionStackHistory || []).map((item) => [
-              item.actionType,
-              item.adminEmail,
-              item.timestamp ? new Date(item.timestamp).toLocaleString() : '-'
-            ])}
-            empty="No admin actions recorded yet."
-          />
+          <div className="audit-table-wrap">
+            <Table
+              headers={['Action', 'Admin', 'Timestamp']}
+              rows={stackHistory.map((item) => [
+                item.actionType,
+                item.adminEmail,
+                item.timestamp ? new Date(item.timestamp).toLocaleString() : '-'
+              ])}
+              empty="No admin actions recorded yet."
+            />
+          </div>
         </Panel>
       </div>
     </div>
