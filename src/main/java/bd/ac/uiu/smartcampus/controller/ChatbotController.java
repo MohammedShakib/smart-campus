@@ -45,6 +45,11 @@ public class ChatbotController {
             return ResponseEntity.ok(ApiResponse.ok("Reply generated.", Map.of("reply", directDatabaseReply)));
         }
 
+        String portalHelpReply = chatbotContextService.answerPortalHelpQuestion(message, userDetails);
+        if (!portalHelpReply.isBlank()) {
+            return ResponseEntity.ok(ApiResponse.ok("Reply generated.", Map.of("reply", portalHelpReply)));
+        }
+
         String webContext = chatbotContextService.buildWebContext(message);
         String liveContext = chatbotContextService.buildContext(userDetails)
                 + (webContext.isBlank() ? "" : "\n\n" + webContext);

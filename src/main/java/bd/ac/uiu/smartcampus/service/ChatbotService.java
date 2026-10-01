@@ -57,6 +57,12 @@ public class ChatbotService {
     @Value("${gemini.model:gemini-3.6-flash}")
     private String model;
 
+    @Value("${RAILWAY_SERVICE_ID:}")
+    private String railwayServiceId;
+
+    @Value("${RAILWAY_ENVIRONMENT_NAME:}")
+    private String railwayEnvironmentName;
+
     public ChatbotService(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
         this.httpClient = HttpClient.newBuilder()
@@ -71,6 +77,9 @@ public class ChatbotService {
     public String chat(String userMessage, List<ChatRequest.ChatTurn> history, String liveContext) {
         if (apiKey == null || apiKey.isBlank()) {
             return "CampusAI is not configured. Please set GEMINI_API_KEY before using the assistant.";
+        }
+        if (isHostedRuntime() && isLocalAiGateway()) {
+            return "CampusAI is running on the hosted server, but its AI gateway is still set to a local address. Please set GEMINI_API_BASE_URL in Railway to a public or private hosted AI gateway URL.";
         }
 
         try {
@@ -113,6 +122,18 @@ public class ChatbotService {
     private boolean isOpenAiCompatibleGateway() {
         String normalizedBaseUrl = normalizeBaseUrl();
         return normalizedBaseUrl.endsWith("/v1");
+    }
+
+    private boolean isHostedRuntime() {
+        return (railwayServiceId != null && !railwayServiceId.isBlank())
+                || (railwayEnvironmentName != null && !railwayEnvironmentName.isBlank());
+    }
+
+    private boolean isLocalAiGateway() {
+        String normalizedBaseUrl = normalizeBaseUrl().toLowerCase();
+        return normalizedBaseUrl.contains("://127.0.0.1")
+                || normalizedBaseUrl.contains("://localhost")
+                || normalizedBaseUrl.contains("://0.0.0.0");
     }
 
     private URI buildOpenAiChatCompletionsUri() {

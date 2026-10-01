@@ -276,6 +276,34 @@ public class ChatbotContextService {
         return "";
     }
 
+    public String answerPortalHelpQuestion(String message, CustomUserDetails userDetails) {
+        String normalized = message == null ? "" : message.toLowerCase(Locale.ROOT);
+        if (normalized.isBlank()) {
+            return "";
+        }
+
+        if (containsAny(normalized, "submit a ticket", "support ticket", "ticket submit", "report issue", "report a problem", "complaint")) {
+            Role role = userDetails != null && userDetails.getUser() != null ? userDetails.getUser().getRole() : null;
+            if (role == Role.ROLE_STUDENT) {
+                return "To submit a support ticket, open Student Portal > Support Tickets, choose the issue type, add the location and details, then submit it. After submission, you can track the ticket status from the same page.";
+            }
+            if (role == Role.ROLE_TEACHER) {
+                return "To report an issue, open Faculty Desk > Report Issue, describe the problem with the room or equipment details, then submit it. The maintenance/admin team can review it from their dashboard.";
+            }
+            return "To submit or manage a support ticket, use the Support Tickets or Maintenance area from your dashboard. Add a clear issue title, location, priority, and details before submitting.";
+        }
+
+        if (containsAny(normalized, "office hour", "consultation", "book consultation")) {
+            return "For faculty office hours, open Faculty Office Hours, pick an open slot, write a short topic, and confirm the booking. Your booked consultations will appear in the booked tab.";
+        }
+
+        if (containsAny(normalized, "qr", "attendance qr", "scan attendance", "mark attendance")) {
+            return "For QR attendance, the teacher starts an attendance session and shows the QR code. Students scan it while logged in, and the system records attendance for the active class session.";
+        }
+
+        return "";
+    }
+
     private boolean containsAny(String text, String... terms) {
         for (String term : terms) {
             if (text.contains(term)) {
