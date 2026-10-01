@@ -40,7 +40,9 @@ public class ChatbotController {
             return ResponseEntity.badRequest().body(ApiResponse.error("Message is too long."));
         }
 
-        String liveContext = chatbotContextService.buildContext(userDetails);
+        String webContext = chatbotContextService.buildWebContext(message);
+        String liveContext = chatbotContextService.buildContext(userDetails)
+                + (webContext.isBlank() ? "" : "\n\n" + webContext);
         String reply = chatbotService.chat(message, request.getHistory(), liveContext);
         return ResponseEntity.ok(ApiResponse.ok("Reply generated.", Map.of("reply", reply)));
     }
