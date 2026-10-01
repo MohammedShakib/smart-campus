@@ -10,9 +10,11 @@ public class SmartCampusApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(SmartCampusApplication.class, args);
+        String port = System.getenv().getOrDefault("PORT", "8085");
         System.out.println("=================================================================");
         System.out.println("  UIU SMART CAMPUS IS NOW ONLINE!                               ");
-        System.out.println("  Access Web Portal: http://localhost:8085/login                ");
+        System.out.println("  HTTP Port: " + port);
+        System.out.println("  Health Check: /health                                         ");
         System.out.println("  Demo Accounts:");
         System.out.println("    - Admin:    admin-demo    / demo-admin-pass                 ");
         System.out.println("    - Teacher:  teacher-demo  / demo-teacher-pass               ");
