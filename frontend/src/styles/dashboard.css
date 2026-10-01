@@ -3021,6 +3021,127 @@
   line-height: 1.4;
 }
 
+.office-hours-wrapper .section-header {
+  margin-bottom: 1rem;
+}
+
+.office-hours-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(120px, 0.16fr)) minmax(260px, 1fr);
+  gap: 0.8rem;
+  margin-bottom: 1rem;
+}
+
+.office-hours-summary-item,
+.office-hours-summary-next {
+  min-height: 72px;
+  padding: 0.88rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.office-hours-summary-item span,
+.office-hours-summary-next span {
+  display: block;
+  color: var(--tx-muted);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.office-hours-summary-item strong,
+.office-hours-summary-next strong {
+  display: block;
+  margin-top: 0.25rem;
+  color: var(--tx-primary);
+  font-size: 1.25rem;
+  line-height: 1.15;
+}
+
+.office-hours-summary-next {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.office-hours-summary-next svg {
+  color: var(--accent-dark);
+}
+
+.office-hours-wrapper .concurrency-banner {
+  align-items: center;
+  min-height: 44px;
+  gap: 0.65rem;
+  padding: 0.72rem 0.95rem;
+  margin-bottom: 1rem;
+  background: #eef6ff;
+  border-color: #bfdbfe;
+  color: var(--tx-secondary);
+  font-size: 0.84rem;
+}
+
+.office-hours-wrapper .concurrency-banner-icon {
+  color: var(--accent-dark);
+  margin-top: 0;
+}
+
+.office-hours-wrapper .slots-grid {
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 0.95rem;
+}
+
+.office-hours-wrapper .slot-card {
+  min-height: 0;
+  padding: 1rem;
+  border-radius: 10px;
+}
+
+.office-hours-wrapper .slot-card-header {
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+}
+
+.office-hours-wrapper .slot-title-block {
+  min-width: 0;
+}
+
+.office-hours-wrapper .slot-dept-tag {
+  display: block;
+  max-width: 230px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--tx-muted);
+  font-size: 0.66rem;
+  font-weight: 800;
+}
+
+.office-hours-wrapper .slot-teacher-name {
+  margin-top: 0.18rem;
+  font-size: 0.98rem;
+  font-weight: 800;
+}
+
+.office-hours-wrapper .slot-meta-list {
+  gap: 0.42rem;
+  margin-bottom: 1rem;
+}
+
+.office-hours-wrapper .slot-book-btn {
+  min-height: 40px;
+  padding: 0 0.9rem;
+  border-radius: 8px;
+}
+
+@media (max-width: 900px) {
+  .office-hours-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 .appointments-list {
   display: flex;
   flex-direction: column;

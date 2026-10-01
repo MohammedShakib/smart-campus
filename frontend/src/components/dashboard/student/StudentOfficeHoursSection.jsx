@@ -3,18 +3,13 @@ import {
   CalendarDays,
   Clock,
   MapPin,
-  UserCheck,
-  Send,
   CheckCircle2,
-  AlertCircle,
-  HelpCircle,
-  ShieldAlert,
   MessageSquare,
   Lock,
   XCircle,
-  Sparkles,
   BookOpen,
-  Info
+  Info,
+  Users
 } from 'lucide-react';
 import { api } from '../../../utils/api';
 import { SectionHeader, Panel } from '../../shared/SharedComponents';
@@ -46,6 +41,8 @@ export function StudentOfficeHoursSection() {
 
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState(null);
+  const nextSlot = availableSlots[0];
+  const facultyCount = new Set(availableSlots.map((slot) => slot.teacherName)).size;
 
   const loadSlots = () => {
     setLoading(true);
@@ -135,20 +132,35 @@ export function StudentOfficeHoursSection() {
   return (
     <div className="student-page office-hours-wrapper">
       <SectionHeader
-        title="Faculty Office Hours & Consultation Engine"
-        subtitle="Reserve one-on-one consultation slots with faculty members. Powered by concurrency-safe locking and mandatory query pre-submission."
+        title="Faculty Office Hours"
+        subtitle="Find an available consultation slot, send your topic, and keep track of booked meetings."
       />
 
-      {/* AOOP Concurrency Notice Callout */}
-      <div className="concurrency-banner">
-        <Lock size={20} className="concurrency-banner-icon" />
-        <div>
-          <strong>Concurrency-Safe Slot Reservation</strong>
-          <p>
-            Consultation booking employs serialized thread locking (`ReentrantLock` + database transaction isolation) to prevent race conditions.
-            Student query pre-submission is mandatory so instructors can review topics in advance.
-          </p>
+      <div className="office-hours-summary">
+        <div className="office-hours-summary-item">
+          <span>Open Slots</span>
+          <strong>{availableSlots.length}</strong>
         </div>
+        <div className="office-hours-summary-item">
+          <span>Faculty</span>
+          <strong>{facultyCount || '-'}</strong>
+        </div>
+        <div className="office-hours-summary-item">
+          <span>Booked</span>
+          <strong>{myAppointments.length}</strong>
+        </div>
+        <div className="office-hours-summary-next">
+          <CalendarDays size={16} />
+          <div>
+            <span>Next available</span>
+            <strong>{nextSlot ? `${nextSlot.dayOfWeek}, ${nextSlot.startTime}` : 'No open slots'}</strong>
+          </div>
+        </div>
+      </div>
+
+      <div className="concurrency-banner">
+        <Info size={18} className="concurrency-banner-icon" />
+        <span>Submit a short topic before booking so the faculty member can prepare for the session.</span>
       </div>
 
       {/* Tabs */}
@@ -185,7 +197,7 @@ export function StudentOfficeHoursSection() {
                 return (
                   <div key={slot.id} className="slot-card">
                     <div className="slot-card-header">
-                      <div>
+                      <div className="slot-title-block">
                         <span className="slot-dept-tag">{slot.department || 'CSE Department'}</span>
                         <h4 className="slot-teacher-name">{slot.teacherName}</h4>
                       </div>
@@ -195,7 +207,7 @@ export function StudentOfficeHoursSection() {
                     <div className="slot-meta-list">
                       <div className="slot-meta-item">
                         <CalendarDays size={15} />
-                        <strong>{slot.dayOfWeek}, {slot.slotDate}</strong>
+                        <span>{slot.dayOfWeek}, {slot.slotDate}</span>
                       </div>
                       <div className="slot-meta-item">
                         <Clock size={15} />
@@ -225,11 +237,12 @@ export function StudentOfficeHoursSection() {
       ) : (
         /* My Appointments Tab */
         <div className="appointments-panel">
-          <Panel title="My Consultation Schedule & Pre-Submitted Queries" tag={`${myAppointments.length} bookings`}>
+          <Panel title="My Consultation Schedule" tag={`${myAppointments.length} bookings`}>
             {myAppointments.length === 0 ? (
-              <p className="muted" style={{ padding: '2rem 0', textAlign: 'center' }}>
-                You have no active faculty consultation appointments booked.
-              </p>
+              <div className="student-empty-compact">
+                <Users size={18} />
+                <span>No consultation bookings yet.</span>
+              </div>
             ) : (
               <div className="appointments-list">
                 {myAppointments.map((app) => (
