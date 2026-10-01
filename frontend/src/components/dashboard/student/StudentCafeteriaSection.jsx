@@ -509,75 +509,59 @@ export function StudentCafeteriaSection() {
         {/* Right Column: Meal Tray / Budget Calculator */}
         {trayItemCount > 0 && (
           <div
-            className="panel"
-            style={{
-              position: 'sticky',
-              top: '80px',
-              borderRadius: '16px',
-              border: '1px solid var(--border-color, #e2e8f0)',
-              background: 'var(--bg-surface, #ffffff)',
-              boxShadow: '0 8px 24px rgba(0,0,0,0.06)'
-            }}
+            className="panel meal-tray-panel"
           >
-            <div className="panel-header" style={{ paddingBottom: '0.75rem', borderBottom: '1px solid var(--border-color, #f1f5f9)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <div className="meal-tray-header">
+              <div className="meal-tray-title">
                 <ShoppingBag size={18} color="var(--brand-orange, #ea580c)" />
-                <h3 style={{ margin: 0, fontSize: '0.98rem' }}>Meal Tray Budget</h3>
+                <h3>Meal Tray Budget</h3>
               </div>
               <button
                 type="button"
-                className="icon-btn"
+                className="meal-tray-clear-btn"
                 title="Clear Tray"
+                aria-label="Clear meal tray"
                 onClick={clearTray}
-                style={{ color: 'var(--rose, #e11d48)' }}
               >
                 <Trash2 size={14} />
               </button>
             </div>
 
-            <div className="panel-body" style={{ padding: '1rem 0' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', maxHeight: '340px', overflowY: 'auto', paddingRight: '4px' }}>
+            <div className="meal-tray-body">
+              <div className="meal-tray-list">
                 {trayItems.map(({ item, count }) => {
                   const sub = Number(item.price || 0) * count;
                   return (
                     <div
                       key={item.id}
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        fontSize: '0.84rem',
-                        padding: '0.5rem',
-                        borderRadius: '8px',
-                        background: 'var(--bg-main, #f8fafc)'
-                      }}
+                      className="meal-tray-row"
                     >
-                      <div style={{ flex: 1, paddingRight: '0.5rem' }}>
-                        <div style={{ fontWeight: 600, color: 'var(--tx-primary, #0f172a)' }}>{item.name}</div>
-                        <div style={{ fontSize: '0.74rem', color: 'var(--tx-secondary, #64748b)' }}>
+                      <div className="meal-tray-item-copy">
+                        <strong>{item.name}</strong>
+                        <span>
                           BDT {Number(item.price || 0).toFixed(2)} x {count}
-                        </div>
+                        </span>
                       </div>
 
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <div className="meal-tray-row-actions">
                         <button
                           type="button"
-                          className="icon-btn"
+                          className="meal-tray-stepper"
                           onClick={() => updateTrayCount(item.id, -1)}
-                          style={{ width: '22px', height: '22px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                          aria-label={`Decrease ${item.name}`}
                         >
                           <Minus size={11} />
                         </button>
-                        <span style={{ fontWeight: 700, minWidth: '16px', textAlign: 'center', fontSize: '0.8rem' }}>{count}</span>
+                        <span>{count}</span>
                         <button
                           type="button"
-                          className="icon-btn"
+                          className="meal-tray-stepper"
                           onClick={() => updateTrayCount(item.id, 1)}
-                          style={{ width: '22px', height: '22px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                          aria-label={`Increase ${item.name}`}
                         >
                           <Plus size={11} />
                         </button>
-                        <strong style={{ marginLeft: '0.4rem', color: '#047857', minWidth: '55px', textAlign: 'right' }}>
+                        <strong>
                           BDT {sub.toFixed(2)}
                         </strong>
                       </div>
@@ -587,18 +571,18 @@ export function StudentCafeteriaSection() {
               </div>
 
               {/* Total calculation */}
-              <div style={{ marginTop: '1.25rem', paddingTop: '1rem', borderTop: '2px dashed var(--border-color, #e2e8f0)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.4rem', fontSize: '0.84rem', color: 'var(--tx-secondary, #64748b)' }}>
+              <div className="meal-tray-summary">
+                <div className="meal-tray-summary-row">
                   <span>Total Items:</span>
-                  <span style={{ fontWeight: 600 }}>{trayItemCount}</span>
+                  <strong>{trayItemCount}</strong>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginTop: '0.5rem' }}>
-                  <span style={{ fontSize: '0.92rem', fontWeight: 700, color: 'var(--tx-primary, #0f172a)' }}>Estimated Bill:</span>
-                  <span style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--brand-orange, #ea580c)' }}>
+                <div className="meal-tray-total-row">
+                  <span>Estimated Bill:</span>
+                  <strong>
                     BDT {trayTotal.toFixed(2)}
-                  </span>
+                  </strong>
                 </div>
-                <p style={{ margin: '0.75rem 0 0 0', fontSize: '0.72rem', color: 'var(--tx-muted, #94a3b8)', textAlign: 'center' }}>
+                <p>
                   Pay at UIU Cafeteria counter via Cash or bKash / Nagad.
                 </p>
               </div>
