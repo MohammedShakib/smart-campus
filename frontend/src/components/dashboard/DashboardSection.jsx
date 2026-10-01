@@ -175,12 +175,14 @@ function WelcomeBanner({ data, telemetry, role }) {
 function MetricGrid({ telemetry, data, role }) {
   const occupiedRooms = Number(telemetry.occupiedRooms || 0);
   const totalRooms = Number(telemetry.totalRooms || 0);
+  const liveBusCount = Object.keys(data.busLocations || {}).length;
+  const activeBusCount = liveBusCount || telemetry.activeBuses || 0;
   const roomUtilization = totalRooms > 0 ? Math.round((occupiedRooms / totalRooms) * 100) : null;
   const cards = role === 'student'
     ? [
         {
           label: 'Campus Buses',
-          value: `${telemetry.activeBuses} running`,
+          value: `${activeBusCount} running`,
           icon: BusFront,
           tone: 'buses',
           detail: 'Simulated fleet'
@@ -204,7 +206,7 @@ function MetricGrid({ telemetry, data, role }) {
         },
         {
           label: 'Campus Buses',
-          value: `${telemetry.activeBuses} running`,
+          value: `${activeBusCount} running`,
           icon: BusFront,
           tone: 'buses',
           detail: 'Simulated fleet'

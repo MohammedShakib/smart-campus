@@ -2,78 +2,49 @@ import React, { useEffect, useMemo, useRef } from 'react';
 import { BusFront, Loader2, AlertCircle, Search, RotateCw } from 'lucide-react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import roadPaths from './bus-road-paths.json';
 
 const UIU_COORD = { lat: 23.7979, lng: 90.4492, label: 'UIU Campus' };
 const KURIL_BISHWAROAD_ROUTE = [
-  { lat: 23.8200, lng: 90.4201, label: 'Kuril Bishwaroad' },
-  { lat: 23.8184, lng: 90.4199, label: 'Kuril Bus Stop' },
-  { lat: 23.8177, lng: 90.4210, label: 'Kuril Ramp Loop' },
-  { lat: 23.8188, lng: 90.4226, label: 'Kuril Flyover Ramp' },
-  { lat: 23.8211, lng: 90.4240, label: 'Kuril Connector' },
-  { lat: 23.8238, lng: 90.4415, label: 'Bashundhara Link Road' },
-  { lat: 23.8240, lng: 90.4485, label: 'Bashundhara R/A Turn' },
-  { lat: 23.8170, lng: 90.4487, label: 'Bashundhara Road 02' },
-  { lat: 23.8080, lng: 90.4485, label: 'Bashundhara Road 02' },
-  { lat: 23.8030, lng: 90.4482, label: 'Jauar Tek Turn' },
-  { lat: 23.8018, lng: 90.4468, label: 'UIU Approach Bend' },
-  { lat: 23.8007, lng: 90.4480, label: 'United City Road' },
-  { lat: 23.7999, lng: 90.4410, label: 'Campus Link Road' },
-  { lat: 23.7989, lng: 90.4410, label: 'Campus Link Turn' },
-  { lat: 23.7988, lng: 90.4477, label: 'UIU Gate Approach' },
-  { lat: 23.7980, lng: 90.4478, label: 'UIU Main Gate' },
+  { lat: 23.8187, lng: 90.4204, label: 'Kuril Bishwaroad' },
+  { lat: 23.8207, lng: 90.4241, label: 'Kuril Connector' },
+  { lat: 23.8240, lng: 90.4493, label: 'Road 02 North Turn' },
+  { lat: 23.8020, lng: 90.4491, label: 'Jauar Tek Turn' },
+  { lat: 23.8004, lng: 90.4477, label: 'UIU Approach' },
   UIU_COORD
 ];
+const savedPath = (bus) => roadPaths[bus].coordinates.map(([lng, lat]) => ({ lat, lng }));
+const UIU_TO_NATUN_BAZAR_ROUTE = savedPath('BUS-01');
+const UIU_TO_BADDA_ROUTE = savedPath('BUS-03');
 const BUS_ROUTES = {
   'BUS-01': {
     name: 'Bus 01',
     color: '#2563eb',
-    origin: 'Natun Bazar',
-    waypoints: [
-      { lat: 23.7937, lng: 90.4234 },
-      { lat: 23.8019, lng: 90.4377 },
-      UIU_COORD
-    ],
-    fallbackPath: [
-      { lat: 23.7937, lng: 90.4234 },
-      { lat: 23.7967, lng: 90.4277 },
-      { lat: 23.8007, lng: 90.4369 },
-      { lat: 23.8003, lng: 90.4422 },
-      { lat: 23.7986, lng: 90.4474 },
-      UIU_COORD
-    ],
-    livePoint: { lat: 23.8019, lng: 90.4377 }
+    origin: 'UIU',
+    roadPath: UIU_TO_NATUN_BAZAR_ROUTE,
+    waypoints: UIU_TO_NATUN_BAZAR_ROUTE,
+    livePoint: { lat: 23.8004, lng: 90.4334 }
   },
   'BUS-02': {
     name: 'Bus 02',
     color: '#0f766e',
     origin: 'Kuril Bishwaroad',
-    useManualPath: true,
     waypoints: KURIL_BISHWAROAD_ROUTE,
-    fallbackPath: KURIL_BISHWAROAD_ROUTE,
+    fallbackPath: [],
     livePoint: { lat: 23.8030, lng: 90.4462 }
   },
   'BUS-03': {
     name: 'Bus 03',
     color: '#7c3aed',
-    origin: 'Badda',
-    waypoints: [
-      { lat: 23.7808, lng: 90.4254 },
-      { lat: 23.7937, lng: 90.4234 },
-      UIU_COORD
-    ],
-    fallbackPath: [
-      { lat: 23.7808, lng: 90.4254 },
-      { lat: 23.7861, lng: 90.4238 },
-      { lat: 23.7937, lng: 90.4234 },
-      { lat: 23.7972, lng: 90.4285 },
-      { lat: 23.8011, lng: 90.4375 },
-      { lat: 23.8000, lng: 90.4444 },
-      UIU_COORD
-    ],
-    livePoint: { lat: 23.7937, lng: 90.4234 }
+    origin: 'UIU',
+    roadPath: UIU_TO_BADDA_ROUTE,
+    waypoints: UIU_TO_BADDA_ROUTE,
+    fallbackPath: [],
+    livePoint: { lat: 23.7876, lng: 90.4534 }
   }
 };
 const BUS_ORDER = ['BUS-01', 'BUS-02', 'BUS-03'];
+const VISIBLE_BUSES = new Set(['BUS-01', 'BUS-02', 'BUS-03']);
 
 function getRouteForBus(bus) {
   return BUS_ROUTES[bus] || {
@@ -87,7 +58,7 @@ function getRouteForBus(bus) {
 }
 
 async function fetchRoadPath(route, signal) {
-  if (route.useManualPath) return route.fallbackPath;
+  if (route.roadPath) return route.roadPath;
   const coordinates = route.waypoints.map((point) => `${point.lng},${point.lat}`).join(';');
   const response = await fetch(
     `https://router.project-osrm.org/route/v1/driving/${coordinates}?overview=full&geometries=geojson&steps=false`,
@@ -144,16 +115,6 @@ function pointAlongPath(path, progress) {
   return path[path.length - 1];
 }
 
-function progressFromLocation(route, location) {
-  const text = String(location || '').toLowerCase();
-  if (/\b(uiu|campus|gate|arriv)/.test(text)) return 0.84;
-  if (/(approach|jauar|jaur|united city|madani)/.test(text)) return 0.72;
-  if (/(bashundhara|block|residential)/.test(text)) return 0.46;
-  if (/(depart|left|kuril|bishwaroad|flyover|ramp)/.test(text)) return 0.12;
-  if (/(natun|notun|bazar)/.test(text)) return route.bus === 'BUS-03' ? 0.38 : 0.16;
-  if (/(badda)/.test(text)) return 0.1;
-  return route.bus === 'BUS-02' ? 0.58 : 0.5;
-}
 
 function markerIcon(className, html) {
   return L.divIcon({
@@ -188,12 +149,12 @@ export function NoticeList({ notices }) {
 }
 
 export function BusLocations({ locations }) {
-  const entries = Object.entries(locations || {}).sort(([a], [b]) => {
+  const entries = Object.entries(locations || {}).filter(([bus]) => VISIBLE_BUSES.has(bus)).sort(([a], [b]) => {
     const aIndex = BUS_ORDER.indexOf(a);
     const bIndex = BUS_ORDER.indexOf(b);
     return (aIndex === -1 ? 99 : aIndex) - (bIndex === -1 ? 99 : bIndex);
   });
-  const routeKey = entries.map(([bus, location]) => `${bus}:${location}`).join('|');
+  const routeKey = entries.map(([bus]) => bus).join('|');
   const routes = useMemo(() => entries.map(([bus, location]) => ({
     bus,
     location,
@@ -212,6 +173,12 @@ export function BusLocations({ locations }) {
       preferCanvas: true
     }).setView([UIU_COORD.lat, UIU_COORD.lng], 13);
     const layerGroup = L.featureGroup().addTo(map);
+    const resizeObserver = new ResizeObserver(() => {
+      map.invalidateSize();
+      const bounds = layerGroup.getBounds();
+      if (bounds.isValid()) map.fitBounds(bounds.pad(0.08), { maxZoom: 15 });
+    });
+    resizeObserver.observe(mapRef.current);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
@@ -229,6 +196,7 @@ export function BusLocations({ locations }) {
           return { route, path: await fetchRoadPath(route, abortController.signal) };
         } catch {
           if (abortController.signal.aborted) return null;
+          if (!Array.isArray(route.fallbackPath) || route.fallbackPath.length < 2) return null;
           return { route, path: route.fallbackPath };
         }
       }));
@@ -236,7 +204,7 @@ export function BusLocations({ locations }) {
       if (!active) return;
       routePaths.filter(Boolean).forEach(({ route, path }) => {
         const latLngs = path.map((point) => [point.lat, point.lng]);
-        const startProgress = progressFromLocation(route, route.location);
+        const startProgress = 0;
         L.polyline(latLngs, {
           color: route.color,
           weight: 5,
@@ -253,6 +221,15 @@ export function BusLocations({ locations }) {
           fillOpacity: 1
         }).addTo(layerGroup);
 
+        const destination = route.waypoints[route.waypoints.length - 1];
+        L.circleMarker([destination.lat, destination.lng], {
+          radius: 5,
+          color: route.color,
+          weight: 2,
+          fillColor: route.color,
+          fillOpacity: 0.85
+        }).addTo(layerGroup);
+
         const livePoint = pointAlongPath(path, startProgress);
         const liveMarker = L.marker([livePoint.lat, livePoint.lng], {
           icon: markerIcon(
@@ -262,20 +239,24 @@ export function BusLocations({ locations }) {
           title: `${route.bus}: ${route.location}`
         }).addTo(layerGroup);
 
-        const routeDurationMs = route.bus === 'BUS-02' ? 90000 : 76000;
+        // Simulate 20 km/h over the complete saved road geometry, then dwell
+        // at the destination. performance.now() is not a repeating trip clock.
+        const lengthMeters = path.slice(1).reduce((sum, point, index) => sum + distanceBetween(path[index], point), 0);
+        const routeDurationMs = lengthMeters / (20 / 3.6) * 1000;
+        const startedAt = performance.now();
         const animationIndex = animationFrames.push(0) - 1;
         const animateBus = (timestamp) => {
           if (!active) return;
-          const progress = (startProgress + ((timestamp % routeDurationMs) / routeDurationMs) * 0.18) % 1;
+          const progress = Math.min(1, startProgress + (timestamp - startedAt) / routeDurationMs);
           const nextPoint = pointAlongPath(path, progress);
           liveMarker.setLatLng([nextPoint.lat, nextPoint.lng]);
-          animationFrames[animationIndex] = requestAnimationFrame(animateBus);
+          if (progress < 1) animationFrames[animationIndex] = requestAnimationFrame(animateBus);
         };
         animationFrames[animationIndex] = requestAnimationFrame(animateBus);
       });
 
       const bounds = layerGroup.getBounds();
-      if (bounds.isValid()) map.fitBounds(bounds.pad(0.16), { maxZoom: 14 });
+      if (bounds.isValid()) map.fitBounds(bounds.pad(0.08), { maxZoom: 15 });
       requestAnimationFrame(() => map.invalidateSize());
     }
 
@@ -287,6 +268,7 @@ export function BusLocations({ locations }) {
         if (frame) cancelAnimationFrame(frame);
       });
       abortController.abort();
+      resizeObserver.disconnect();
       map.remove();
     };
   }, [routes]);
@@ -314,7 +296,7 @@ export function BusLocations({ locations }) {
                 <strong>{route.bus}</strong>
                 <span className="bus-live"><i aria-hidden="true" /> live</span>
               </div>
-              <span className="bus-location">{route.location}</span>
+              <span className="bus-location">{locations[route.bus]}</span>
               <div className="bus-route-line" aria-hidden="true"><span /></div>
             </div>
           </div>

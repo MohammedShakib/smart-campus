@@ -36,7 +36,7 @@ public class CampusSimulationWorker implements Runnable {
         currentTelemetry.setPowerConsumptionKW(145.8);
         currentTelemetry.setCampusTemperatureC(28.4);
         currentTelemetry.setAirQualityIndex("Good (AQI 45)");
-        currentTelemetry.setActiveBuses(6);
+        currentTelemetry.setActiveBuses(3);
         currentTelemetry.setPendingComplaints(3);
         currentTelemetry.setVisitorsToday(48);
         currentTelemetry.setSystemStatus("OPTIMAL");

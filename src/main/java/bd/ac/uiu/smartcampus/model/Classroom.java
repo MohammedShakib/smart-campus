@@ -22,7 +22,7 @@ public class Classroom implements Comparable<Classroom> {
     @Column(nullable = false)
     private boolean occupied;
 
-    @Column(nullable = false, columnDefinition = "bit(1) default b'1'")
+    @Column(nullable = false)
     private boolean active = true;
 
     @Column(nullable = false)

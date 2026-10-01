@@ -31,9 +31,9 @@ public class BusServerSocketManager {
     @PostConstruct
     public void startBusServer() {
         // Pre-populate some baseline bus positions
-        latestBusLocations.put("BUS-01", "Natun Bazar -> UIU (Near 100 Feet Bridge)");
+        latestBusLocations.put("BUS-01", "UIU -> Natun Bazar (Madani Avenue)");
         latestBusLocations.put("BUS-02", "Kuril Bishwaroad -> UIU (Bashundhara R/A Road 02)");
-        latestBusLocations.put("BUS-03", "Badda -> UIU (Departed Natun Bazar)");
+        latestBusLocations.put("BUS-03", "UIU -> Badda (Meradia Kacha Bazar)");
 
         // Start ServerSocket listener in a daemon thread so it doesn't block Spring Boot startup
         Thread serverThread = new Thread(this::listenForBusClients, "Bus-ServerSocket-Listener");

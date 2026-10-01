@@ -1142,16 +1142,28 @@
 }
 
 /* Bus feed */
+.primary-stack:has(.bus-feed) {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.primary-stack:has(.bus-feed),
+.panel:has(.bus-feed) {
+  min-width: 0;
+}
+
 .bus-feed {
   display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr);
   gap: 0.85rem;
 }
 
 .bus-osm-map {
   position: relative;
   z-index: 1;
-  min-height: 360px;
-  aspect-ratio: 16 / 6.4;
+  width: 100%;
+  min-width: 0;
+  height: 620px;
   overflow: hidden;
   border: 1px solid var(--border);
   border-radius: 13px;
@@ -1333,8 +1345,7 @@
 
 @media (max-width: 700px) {
   .bus-osm-map {
-    min-height: 300px;
-    aspect-ratio: 4 / 3;
+    height: 520px;
   }
 
   .bus-route-legend {

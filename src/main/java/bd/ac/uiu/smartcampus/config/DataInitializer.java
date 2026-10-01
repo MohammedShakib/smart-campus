@@ -182,7 +182,7 @@ public class DataInitializer implements CommandLineRunner {
             ));
             noticeRepository.save(new CampusNotice(
                     "UIU Shuttle Bus Real-Time Tracking Online",
-                    "Campus shuttle route 1 (Natun Bazar to UIU) and route 2 (Kuril to UIU) socket telemetry feeds are actively transmitting.",
+                    "Campus shuttle routes for Natun Bazar, Kuril, and Badda are actively transmitting socket telemetry.",
                     "TRANSPORT", "MEDIUM", "Transport Division"
             ));
         }
@@ -226,24 +226,46 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void seedCampusOperationsData() {
-        if (busRepository.count() == 0) {
-            busRepository.save(new Bus("BUS-01", "DHAKA METRO-JA 11-2233", 40, "Karim Mia", "01711223344"));
-            busRepository.save(new Bus("BUS-02", "DHAKA METRO-JA 44-5566", 50, "Rahim Uddin", "01811223344"));
-        }
-        
-        if (busRouteRepository.count() == 0) {
-            BusRoute r1 = new BusRoute("R-01", "Natun Bazar to UIU", "Natun Bazar", "UIU");
-            r1.addStop(new BusRouteStop("Natun Bazar", 1, 0));
-            r1.addStop(new BusRouteStop("100 Feet Bridge", 2, 10));
-            r1.addStop(new BusRouteStop("UIU", 3, 20));
-            busRouteRepository.save(r1);
+        Bus bus1 = seedBus("BUS-01", "DHAKA METRO-JA 11-2233", 40, "Karim Mia", "01711223344");
+        Bus bus2 = seedBus("BUS-02", "DHAKA METRO-JA 44-5566", 50, "Rahim Uddin", "01811223344");
+        Bus bus3 = seedBus("BUS-03", "DHAKA METRO-JA 77-8899", 45, "Jamal Hossain", "01911223344");
 
-            BusRoute r2 = new BusRoute("R-02", "Kuril Bishwaroad to UIU", "Kuril Bishwaroad", "UIU");
-            r2.addStop(new BusRouteStop("Kuril Bishwaroad", 1, 0));
-            r2.addStop(new BusRouteStop("Bashundhara R/A Road 02", 2, 12));
-            r2.addStop(new BusRouteStop("UIU Campus Gate", 3, 25));
-            busRouteRepository.save(r2);
-        }
+        seedBusRoute(
+                "R-01",
+                "Natun Bazar to UIU",
+                "Natun Bazar",
+                "UIU",
+                bus1,
+                List.of(
+                        new BusRouteStop("Natun Bazar", 1, 0),
+                        new BusRouteStop("100 Feet Bridge", 2, 10),
+                        new BusRouteStop("UIU", 3, 20)
+                )
+        );
+        seedBusRoute(
+                "R-02",
+                "Kuril Bishwaroad to UIU",
+                "Kuril Bishwaroad",
+                "UIU",
+                bus2,
+                List.of(
+                        new BusRouteStop("Kuril Bishwaroad", 1, 0),
+                        new BusRouteStop("Bashundhara R/A Road 02", 2, 12),
+                        new BusRouteStop("UIU Campus Gate", 3, 25)
+                )
+        );
+        seedBusRoute(
+                "R-03",
+                "UIU to Badda",
+                "UIU",
+                "Badda",
+                bus3,
+                List.of(
+                        new BusRouteStop("UIU Campus Gate", 1, 0),
+                        new BusRouteStop("Wonderland Road", 2, 8),
+                        new BusRouteStop("Meradia Kacha Bazar", 3, 20)
+                )
+        );
 
         if (campusEventRepository.count() == 0) {
             campusEventRepository.save(new CampusEvent("Tech Fest 2026", "Annual technology festival.", LocalDate.now().plusDays(10), LocalTime.of(10, 0), LocalTime.of(18, 0), "UIU Open Ground", 500, "CSE Club", "PUBLISHED"));
@@ -257,6 +279,20 @@ public class DataInitializer implements CommandLineRunner {
         }
     }
 
+    private Bus seedBus(String busCode, String registrationNumber, int capacity, String driverName, String driverPhone) {
+        return busRepository.findByBusCode(busCode)
+                .orElseGet(() -> busRepository.save(new Bus(busCode, registrationNumber, capacity, driverName, driverPhone)));
+    }
+
+    private void seedBusRoute(String routeCode, String name, String origin, String destination, Bus assignedBus, List<BusRouteStop> stops) {
+        busRouteRepository.findByRouteCode(routeCode).orElseGet(() -> {
+            BusRoute route = new BusRoute(routeCode, name, origin, destination);
+            route.setAssignedBus(assignedBus);
+            stops.forEach(route::addStop);
+            return busRouteRepository.save(route);
+        });
+    }
+
     private void seedMasterData() {
         // Departments
         seedDepartment("CSE", "Computer Science & Engineering");
@@ -266,17 +302,161 @@ public class DataInitializer implements CommandLineRunner {
         seedDepartment("SEC", "Campus Security & Safety");
         seedDepartment("REG", "Registrar");
         seedDepartment("SA", "Student Affairs");
+        seedDepartment("ENG", "English");
+        seedDepartment("GED", "General Education");
+        seedDepartment("MATH", "Mathematics");
+        seedDepartment("PHY", "Physics");
+        seedDepartment("BIO", "Biology");
+        seedDepartment("SOC", "Social Sciences");
+        seedDepartment("PMG", "Project Management");
+        seedDepartment("BDS", "Bangladesh Studies");
+        seedDepartment("ECO", "Economics");
+        seedDepartment("ACT", "Accounting");
+        seedDepartment("IPE", "Industrial & Production Engineering");
+        seedDepartment("PSY", "Psychology");
+        seedDepartment("BAN", "Bangla");
+        seedDepartment("FLN", "Foreign Languages");
+        seedDepartment("SWL", "Software and Law");
+        seedDepartment("BHV", "Behavioral Science");
+        seedDepartment("URC", "University Required Courses");
 
         // Buildings
         if (!buildingRepository.existsByCode("UIU-MAIN")) {
             buildingRepository.save(new Building("UIU-MAIN", "UIU Main Campus", 6, "Main Academic Building"));
         }
 
-        // Courses
-        Department cseDept = departmentRepository.findByCode("CSE").orElse(null);
-        if (cseDept != null) {
-            seedCourse("CSE 2211", "Advanced Object Oriented Programming", cseDept, 3);
-            seedCourse("CSE 3312", "Database Systems", cseDept, 3);
+        // UIU BSCSE curriculum, effective Summer 2026 onward.
+        Object[][] courses = {
+                {"ENG 1011", "English I", 3},
+                {"ENG 1013", "English II", 3},
+                {"SOC 2101", "Society, Environment and Engineering Ethics", 3},
+                {"PMG 4101", "Project Management", 3},
+                {"BDS 1201", "History of the Emergence of Bangladesh", 2},
+                {"ECO 4101", "Economics", 3},
+                {"SOC 4101", "Introduction to Sociology", 3},
+                {"ACT 2111", "Financial and Managerial Accounting", 3},
+                {"IPE 3401", "Industrial and Operational Management", 3},
+                {"GED 4003", "Technology Entrepreneurship", 3},
+                {"PSY 2101", "Psychology", 3},
+                {"BDS 2201", "Bangladesh Studies", 3},
+                {"BAN 2501", "Bangla", 3},
+                {"SOC 4301", "Introduction to Anthropology", 3},
+                {"FLN 1101", "Introduction to a Foreign Language", 3},
+                {"SWL 4101", "Software and Law", 3},
+                {"BHV 2101", "Introduction to Behavioral Science", 3},
+                {"URC 1101", "Life Skill for Success", 3},
+                {"GED 1005", "AI Literacy and Prompt Engineering", 3},
+                {"PHY 2105", "Physics", 3},
+                {"PHY 2106", "Physics Laboratory", 1},
+                {"BIO 3105", "Biology for Engineers", 3},
+                {"MATH 1151", "Fundamental Calculus", 3},
+                {"MATH 2183", "Calculus and Linear Algebra", 3},
+                {"MATH 2201", "Coordinate Geometry and Vector Analysis", 3},
+                {"MATH 2205", "Probability and Statistics", 3},
+                {"EEE 2113", "Electrical Circuits", 3},
+                {"EEE 2123", "Electronics", 3},
+                {"EEE 2124", "Electronics Laboratory", 1},
+                {"EEE 4261", "Green Computing", 3},
+                {"CSE 1110", "Introduction to Computer Systems", 1},
+                {"CSE 1111", "Structured Programming Language", 3},
+                {"CSE 1112", "Structured Programming Language Laboratory", 1},
+                {"CSE 1115", "Object Oriented Programming", 3},
+                {"CSE 1116", "Object Oriented Programming Laboratory", 1},
+                {"CSE 2118", "Advanced Object Oriented Programming Laboratory", 1},
+                {"CSE 4165", "Web Programming", 3},
+                {"CSE 1325", "Digital Logic Design", 3},
+                {"CSE 1326", "Digital Logic Design Laboratory", 1},
+                {"CSE 3313", "Computer Architecture", 3},
+                {"CSE 4325", "Microprocessors and Microcontrollers", 3},
+                {"CSE 4326", "Microprocessors and Microcontrollers Laboratory", 1},
+                {"CSE 2213", "Discrete Mathematics", 3},
+                {"CSE 2215", "Data Structure and Algorithms I", 3},
+                {"CSE 2216", "Data Structure and Algorithms I Laboratory", 1},
+                {"CSE 2217", "Data Structure and Algorithms II", 3},
+                {"CSE 2218", "Data Structure and Algorithms II Laboratory", 1},
+                {"CSE 2233", "Theory of Computation", 3},
+                {"CSE 3411", "System Analysis and Design", 3},
+                {"CSE 3412", "System Analysis and Design Laboratory", 1},
+                {"CSE 3421", "Software Engineering", 3},
+                {"CSE 3422", "Software Engineering Laboratory", 1},
+                {"CSE 4531", "Computer Security", 3},
+                {"CSE 3521", "Database Management Systems", 3},
+                {"CSE 3522", "Database Management Systems Laboratory", 1},
+                {"CSE 4509", "Operating Systems", 3},
+                {"CSE 4510", "Operating Systems Laboratory", 1},
+                {"CSE 3711", "Computer Networks", 3},
+                {"CSE 3712", "Computer Networks Laboratory", 1},
+                {"CSE 3811", "Artificial Intelligence", 3},
+                {"CSE 3812", "Artificial Intelligence Laboratory", 1},
+                {"CSE 4889", "Machine Learning", 3},
+                {"CSE 4121", "Security Monitoring", 3},
+                {"CSE 4759", "Wireless and Cellular Communication", 3},
+                {"CSE 4123", "Software and Application Security", 3},
+                {"CSE 4125", "Ethical Hacking and Network Defense", 3},
+                {"CSE 4127", "Cloud Security", 3},
+                {"CSE 4129", "Digital Forensics", 3},
+                {"CSE 4131", "Internet of Things (IoT) Security", 3},
+                {"CSE 3715", "Data Communication", 3},
+                {"CSE 4199", "Special Topics", 3},
+                {"CSE 4793", "Advanced Network Services and Management", 3},
+                {"CSE 4783", "Cryptography", 3},
+                {"CSE 4777", "Network Security", 3},
+                {"CSE 4943", "Web Application Security", 3},
+                {"CSE 4949", "IT Audit: Concepts and Practice", 3},
+                {"CSE 3542", "Industry Internship", 3},
+                {"CSE 4435", "Software Architecture", 3},
+                {"CSE 4181", "Mobile Application Development", 3},
+                {"CSE 4495", "Software Testing and Quality Assurance", 3},
+                {"CSE 4587", "Cloud Computing", 3},
+                {"CSE 4567", "Advanced Database Management Systems", 3},
+                {"CSE 4413", "Virtual Reality/Augmented Reality System Design", 3},
+                {"CSE 4611", "Compiler Design", 3},
+                {"CSE 4945", "UI: Concepts and Design", 3},
+                {"CSE 4871", "Data Analytics", 3},
+                {"CSE 4299", "Special Topics", 3},
+                {"CSE 4133", "Business Intelligence", 3},
+                {"CSE 4451", "Human Computer Interaction", 3},
+                {"CSE 4485", "Game Design and Development", 3},
+                {"CSE 4519", "Distributed Systems", 3},
+                {"CSE 4523", "Simulation and Modeling", 3},
+                {"CSE 4621", "Computer Graphics", 3},
+                {"CSE 4601", "Mathematical Analysis for Computer Science", 3},
+                {"CSE 4633", "Basic Graph Theory", 3},
+                {"CSE 4655", "Algorithm Engineering", 3},
+                {"CSE 4547", "Multimedia Systems Design", 3},
+                {"CSE 4613", "Computational Geometry", 3},
+                {"CSE 4379", "Real-time Embedded Systems", 3},
+                {"CSE 4337", "Robotics", 3},
+                {"CSE 4399", "Special Topics", 3},
+                {"CSE 4327", "VLSI Design", 3},
+                {"CSE 4853", "Internet of Things (IoT)", 3},
+                {"CSE 4819", "AI for Autonomous Systems", 3},
+                {"CSE 4813", "Deep Learning", 3},
+                {"CSE 4815", "Large Language Model and Generative AI", 3},
+                {"CSE 4329", "Digital System Design", 3},
+                {"CSE 4397", "Interfacing", 3},
+                {"CSE 4891", "Data Mining", 3},
+                {"CSE 4823", "Data Driven Decision Making", 3},
+                {"CSE 4817", "Big Data Analytics", 3},
+                {"CSE 4821", "Digital Marketing", 3},
+                {"CSE 4941", "Enterprise Systems: Concepts and Practice", 3},
+                {"CSE 4765", "Electronic Commerce", 3},
+                {"CSE 4499", "Special Topics", 3},
+                {"CSE 4811", "Natural Language Processing", 3},
+                {"CSE 4893", "Introduction to Bioinformatics", 3},
+                {"CSE 4883", "Digital Image Processing", 3},
+                {"CSE 4825", "Speech Processing and Recognition", 3},
+                {"CSE 4599", "Special Topics", 3},
+                {"CSE 4000A", "Final Year Design Project - I", 2},
+                {"CSE 4000B", "Final Year Design Project - II", 2},
+                {"CSE 4000C", "Final Year Design Project - III", 2}
+        };
+
+        for (Object[] course : courses) {
+            Department department = resolveDepartmentForCourse((String) course[0]);
+            if (department != null) {
+                seedCourse((String) course[0], (String) course[1], department, (Integer) course[2]);
+            }
         }
     }
 
@@ -284,6 +464,13 @@ public class DataInitializer implements CommandLineRunner {
         if (!departmentRepository.existsByCode(code)) {
             departmentRepository.save(new Department(code, name));
         }
+    }
+
+    private Department resolveDepartmentForCourse(String courseCode) {
+        String prefix = courseCode.split("\\s+")[0];
+        return departmentRepository.findByCode(prefix)
+                .or(() -> departmentRepository.findByCode("GED"))
+                .orElse(null);
     }
 
     private void seedCourse(String code, String name, Department dept, int credits) {
