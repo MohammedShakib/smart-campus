@@ -2,7 +2,9 @@ package bd.ac.uiu.smartcampus.controller;
 
 import bd.ac.uiu.smartcampus.dto.AdminStudentDetailDto;
 import bd.ac.uiu.smartcampus.dto.AdminStudentDto;
+import bd.ac.uiu.smartcampus.dto.AdminStudentEnrollmentRequest;
 import bd.ac.uiu.smartcampus.dto.AdminStudentUpdateRequest;
+import bd.ac.uiu.smartcampus.dto.TeachingScheduleResponse;
 import bd.ac.uiu.smartcampus.service.AdminStudentService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -50,6 +52,27 @@ public class AdminStudentController {
             @RequestBody AdminStudentUpdateRequest request,
             Authentication authentication) {
         return ResponseEntity.ok(studentService.updateStudentProfile(id, request, authentication.getName()));
+    }
+
+    @GetMapping("/{id}/enrollment-options")
+    public ResponseEntity<List<TeachingScheduleResponse>> getEnrollmentOptions(@PathVariable Long id) {
+        return ResponseEntity.ok(studentService.getAvailableEnrollmentOptions(id));
+    }
+
+    @PostMapping("/{id}/enrollments")
+    public ResponseEntity<AdminStudentDetailDto> addEnrollment(
+            @PathVariable Long id,
+            @RequestBody AdminStudentEnrollmentRequest request,
+            Authentication authentication) {
+        return ResponseEntity.ok(studentService.addEnrollment(id, request, authentication.getName()));
+    }
+
+    @DeleteMapping("/{id}/enrollments/{enrollmentId}")
+    public ResponseEntity<AdminStudentDetailDto> removeEnrollment(
+            @PathVariable Long id,
+            @PathVariable Long enrollmentId,
+            Authentication authentication) {
+        return ResponseEntity.ok(studentService.removeEnrollment(id, enrollmentId, authentication.getName()));
     }
 
     @PatchMapping("/{id}/status")

@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ClassEnrollmentRepository extends JpaRepository<ClassEnrollment, Long> {
@@ -19,6 +20,8 @@ public interface ClassEnrollmentRepository extends JpaRepository<ClassEnrollment
     List<ClassEnrollment> findByStudentAndActiveTrue(User student);
 
     List<ClassEnrollment> findByStudentInAndActiveTrue(Collection<User> students);
+
+    Optional<ClassEnrollment> findByIdAndStudent(Long id, User student);
 
     boolean existsByStudent(User student);
 
@@ -66,6 +69,9 @@ public interface ClassEnrollmentRepository extends JpaRepository<ClassEnrollment
      * Check duplicate before seeding — by teacher + student User objects + course + section.
      */
     boolean existsByTeacherAndStudentAndCourseCodeAndSectionName(
+            User teacher, User student, String courseCode, String sectionName);
+
+    Optional<ClassEnrollment> findByTeacherAndStudentAndCourseCodeAndSectionName(
             User teacher, User student, String courseCode, String sectionName);
 
     /**

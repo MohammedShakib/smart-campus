@@ -5329,6 +5329,23 @@
   margin-top: 1rem;
 }
 
+.admin-student-enrollment-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.55rem;
+  align-items: center;
+  margin-bottom: 0.85rem;
+}
+
+.admin-student-enrollment-form select {
+  min-width: 0;
+  height: 40px;
+}
+
+.admin-student-enrollment-form .primary-btn {
+  min-width: 82px;
+}
+
 .admin-student-enrollment {
   justify-content: space-between;
   gap: 1rem;
@@ -5342,6 +5359,11 @@
 
 .admin-student-enrollment-teacher {
   text-align: right;
+  margin-left: auto;
+}
+
+.admin-student-enrollment .icon-btn {
+  flex: 0 0 auto;
 }
 
 .admin-student-empty-note {

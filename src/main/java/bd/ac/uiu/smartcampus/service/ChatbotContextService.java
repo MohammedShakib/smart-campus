@@ -61,7 +61,7 @@ import java.util.regex.Pattern;
 @Service
 public class ChatbotContextService {
 
-    private static final int MAX_CONTEXT_LENGTH = 20000;
+    private static final int MAX_CONTEXT_LENGTH = 12000;
     private static final int MAX_WEB_CONTEXT_LENGTH = 6000;
     private static final int MAX_WEB_PAGES = 2;
     private static final Pattern URL_PATTERN = Pattern.compile("https?://[^\\s)\\]}>\"']+");
@@ -155,6 +155,148 @@ public class ChatbotContextService {
         return trimContext(context.toString());
     }
 
+    @Transactional(readOnly = true)
+    public String answerDirectDatabaseQuestion(String message, CustomUserDetails userDetails) {
+        String normalized = message == null ? "" : message.toLowerCase(Locale.ROOT);
+        boolean liveQuestion = isLiveQuestion(normalized);
+        boolean recordQuestion = isRecordQuestion(normalized);
+        if (!normalized.contains("how many")
+                && !normalized.contains("count")
+                && !normalized.contains("total")
+                && !normalized.contains("active")
+                && !normalized.contains("running")
+                && !normalized.contains("right now")
+                && !normalized.contains("currently")
+                && !normalized.contains("power")
+                && !normalized.contains("load")
+                && !normalized.contains("কয়টা")
+                && !normalized.contains("কয়টা")
+                && !normalized.contains("কত")) {
+            return "";
+        }
+
+        if (containsAny(normalized, "course", "courses", "কোর্স")) {
+            long total = courseRepository.count();
+            long active = courseRepository.findAll().stream().filter(Course::isActive).count();
+            long cse = courseRepository.findAll().stream()
+                    .filter(course -> course.getCourseCode() != null && course.getCourseCode().startsWith("CSE "))
+                    .count();
+            return String.format("We currently have %d courses in the system. %d are active, %d are CSE courses, and %d are non-CSE/supporting courses.",
+                    total, active, cse, total - cse);
+        }
+        if (containsAny(normalized, "department", "departments", "ডিপার্টমেন্ট")) {
+            return "We currently have " + departmentRepository.count() + " departments in the system.";
+        }
+        if (containsAny(normalized, "student", "students", "ছাত্র", "স্টুডেন্ট")) {
+            if (liveQuestion && !recordQuestion) {
+                CampusTelemetryDto telemetry = simulationWorker.getLatestTelemetry();
+                return "Right now, live campus status shows " + telemetry.getActiveStudents()
+                        + " active students. The database also has "
+                        + userRepository.countByRole(Role.ROLE_STUDENT) + " student accounts.";
+            }
+            return "We currently have " + userRepository.countByRole(Role.ROLE_STUDENT) + " student accounts in the system.";
+        }
+        if (containsAny(normalized, "teacher", "teachers", "faculty", "শিক্ষক", "টিচার")) {
+            if (liveQuestion && !recordQuestion) {
+                CampusTelemetryDto telemetry = simulationWorker.getLatestTelemetry();
+                return "Right now, live campus status shows " + telemetry.getFacultyOnCampus()
+                        + " faculty members on campus. The database also has "
+                        + userRepository.countByRole(Role.ROLE_TEACHER) + " teacher accounts.";
+            }
+            return "We currently have " + userRepository.countByRole(Role.ROLE_TEACHER) + " teacher accounts in the system.";
+        }
+        if (containsAny(normalized, "security", "guard")) {
+            return "We currently have " + userRepository.countByRole(Role.ROLE_SECURITY) + " security user accounts in the system.";
+        }
+        if (containsAny(normalized, "user", "users", "account", "accounts")) {
+            return "We currently have " + userRepository.count() + " total user accounts, with "
+                    + userRepository.countByActiveTrue() + " active accounts.";
+        }
+        if (containsAny(normalized, "visitor", "visitors")) {
+            if ((liveQuestion || containsAny(normalized, "today")) && !recordQuestion) {
+                CampusTelemetryDto telemetry = simulationWorker.getLatestTelemetry();
+                return "Today, live campus status shows " + telemetry.getVisitorsToday()
+                        + " visitors. The database also has " + safeCount("campus_visitors")
+                        + " visitor records.";
+            }
+            return "We currently have " + safeCount("campus_visitors") + " visitor records in the system.";
+        }
+        if (containsAny(normalized, "complaint", "complaints", "maintenance")) {
+            return "We currently have " + complaintRepository.count() + " maintenance complaint records in the system.";
+        }
+        if (containsAny(normalized, "bus", "buses", "transport")) {
+            if (liveQuestion && !recordQuestion) {
+                int liveTrackedBuses = busServerManager.getLatestBusLocations().size();
+                CampusTelemetryDto telemetry = simulationWorker.getLatestTelemetry();
+                int liveBuses = liveTrackedBuses > 0 ? liveTrackedBuses : telemetry.getActiveBuses();
+                long activeFleet = safeCountWhere("buses", "active = true");
+                if (activeFleet >= 0 && activeFleet != liveBuses) {
+                    return "Right now, live tracking shows " + liveBuses
+                            + " running campus buses. The database has " + activeFleet
+                            + " active bus records and " + safeCount("bus_routes") + " bus routes.";
+                }
+                return "Right now, live tracking shows " + liveBuses
+                        + " running campus buses, with " + safeCount("bus_routes") + " bus routes in the system.";
+            }
+            return "We currently have " + safeCount("buses") + " buses and " + safeCount("bus_routes") + " bus routes in the system.";
+        }
+        if (containsAny(normalized, "room", "rooms", "classroom", "classrooms")) {
+            if (liveQuestion && !recordQuestion) {
+                CampusTelemetryDto telemetry = simulationWorker.getLatestTelemetry();
+                return "Right now, live campus status shows " + telemetry.getOccupiedRooms()
+                        + " of " + telemetry.getTotalRooms()
+                        + " rooms active. The database also has " + safeCount("classrooms")
+                        + " classroom records.";
+            }
+            return "We currently have " + safeCount("classrooms") + " classroom records and "
+                    + safeCount("buildings") + " building records in the system.";
+        }
+        if (containsAny(normalized, "power", "load", "kw")) {
+            CampusTelemetryDto telemetry = simulationWorker.getLatestTelemetry();
+            return "Right now, the campus power load is " + telemetry.getPowerConsumptionKW() + " kW.";
+        }
+        if (containsAny(normalized, "notice", "notices", "announcement", "announcements")) {
+            return "We currently have " + noticeRepository.count() + " campus notices in the system.";
+        }
+        if (containsAny(normalized, "event", "events")) {
+            return "We currently have " + safeCount("campus_events") + " campus event records in the system.";
+        }
+        if (containsAny(normalized, "equipment", "lab")) {
+            return "We currently have " + safeCount("lab_equipment") + " lab equipment records and "
+                    + safeCount("equipment_bookings") + " equipment booking records in the system.";
+        }
+        if (containsAny(normalized, "incident", "incidents")) {
+            return "We currently have " + safeCount("security_incidents") + " security incident records in the system.";
+        }
+        if (containsAny(normalized, "attendance")) {
+            return "We currently have " + safeCount("attendance_sessions") + " attendance sessions and "
+                    + safeCount("attendance_records") + " attendance records in the system.";
+        }
+
+        return "";
+    }
+
+    private boolean containsAny(String text, String... terms) {
+        for (String term : terms) {
+            if (text.contains(term)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean isLiveQuestion(String normalized) {
+        return containsAny(normalized,
+                "right now", "currently", "current", "active", "running", "live", "now",
+                "on campus", "today", "ekhono", "ekhon", "cholche", "choltese", "running right");
+    }
+
+    private boolean isRecordQuestion(String normalized) {
+        return containsAny(normalized,
+                "record", "records", "account", "accounts", "database", "db", "stored", "saved",
+                "table", "row", "rows");
+    }
+
     private void appendUserContext(StringBuilder context, CustomUserDetails userDetails) {
         context.append("AUTHENTICATED USER\n");
         if (userDetails == null) {
@@ -234,8 +376,8 @@ public class ChatbotContextService {
         context.append("Recent database activity visible to this role\n");
         allowedTables.stream()
                 .sorted()
-                .limit(role == Role.ROLE_ADMIN ? 24 : 12)
-                .forEach(table -> appendRecentRowsForTable(context, table, role == Role.ROLE_ADMIN ? 3 : 2));
+                .limit(role == Role.ROLE_ADMIN ? 12 : 8)
+                .forEach(table -> appendRecentRowsForTable(context, table, 1));
     }
 
     private Set<String> allowedRecentTablesForRole(List<String> tables, Role role) {
@@ -295,6 +437,17 @@ public class ChatbotContextService {
     private long safeCount(String table) {
         try {
             Long count = jdbcTemplate.queryForObject("select count(*) from " + quoteIdentifier(table), Long.class);
+            return count == null ? 0 : count;
+        } catch (Exception exception) {
+            return -1;
+        }
+    }
+
+    private long safeCountWhere(String table, String whereClause) {
+        try {
+            Long count = jdbcTemplate.queryForObject(
+                    "select count(*) from " + quoteIdentifier(table) + " where " + whereClause,
+                    Long.class);
             return count == null ? 0 : count;
         } catch (Exception exception) {
             return -1;

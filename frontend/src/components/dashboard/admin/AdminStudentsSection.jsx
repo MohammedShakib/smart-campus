@@ -14,7 +14,9 @@ import {
   Mail,
   CalendarDays,
   Activity,
-  X
+  X,
+  Plus,
+  Trash2
 } from 'lucide-react';
 import { api } from '../../../utils/api';
 import { SectionHeader, Panel, LoadingState, ErrorState, EmptyState } from '../../shared/SharedComponents';
@@ -123,6 +125,11 @@ export function AdminStudentsSection() {
     }
   };
 
+  const handleSelectedStudentUpdated = async (updatedStudent) => {
+    setSelectedStudent(updatedStudent);
+    await loadData({ showLoading: false });
+  };
+
   if (selectedStudent) {
     return (
       <StudentDetailView
@@ -131,7 +138,7 @@ export function AdminStudentsSection() {
         onBack={() => setSelectedStudent(null)}
         onToggleStatus={() => toggleStudentStatus(selectedStudent.id, selectedStudent.active)}
         onMessage={setMessage}
-        onStudentUpdated={setSelectedStudent}
+        onStudentUpdated={handleSelectedStudentUpdated}
         statusBusy={statusBusyId === selectedStudent.id}
       />
     );
@@ -278,6 +285,10 @@ function StudentDetailView({ student, message, onBack, onToggleStatus, onMessage
     semester: student.semester || ''
   });
   const [saving, setSaving] = useState(false);
+  const [enrollmentOptions, setEnrollmentOptions] = useState([]);
+  const [selectedScheduleId, setSelectedScheduleId] = useState('');
+  const [enrollmentBusy, setEnrollmentBusy] = useState(false);
+  const [removingEnrollmentId, setRemovingEnrollmentId] = useState(null);
 
   useEffect(() => {
     setFormData({
@@ -292,6 +303,27 @@ function StudentDetailView({ student, message, onBack, onToggleStatus, onMessage
     const timer = setTimeout(() => onMessage(null), 3200);
     return () => clearTimeout(timer);
   }, [message, onMessage]);
+
+  const loadEnrollmentOptions = useCallback(async () => {
+    try {
+      const options = await api(`/api/admin/students/${student.id}/enrollment-options`);
+      setEnrollmentOptions(options || []);
+      setSelectedScheduleId((current) => {
+        if (current && (options || []).some((option) => String(option.id) === String(current))) {
+          return current;
+        }
+        return options?.[0]?.id ? String(options[0].id) : '';
+      });
+    } catch (err) {
+      setEnrollmentOptions([]);
+      setSelectedScheduleId('');
+      onMessage({ type: 'error', text: err.message });
+    }
+  }, [student.id, onMessage]);
+
+  useEffect(() => {
+    loadEnrollmentOptions();
+  }, [loadEnrollmentOptions, student.enrollments]);
 
   const handleSave = async (event) => {
     event.preventDefault();
@@ -315,6 +347,41 @@ function StudentDetailView({ student, message, onBack, onToggleStatus, onMessage
       onMessage({ type: 'error', text: err.message });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const addEnrollment = async (event) => {
+    event.preventDefault();
+    if (!selectedScheduleId) return;
+    setEnrollmentBusy(true);
+    onMessage(null);
+    try {
+      const updated = await api(`/api/admin/students/${student.id}/enrollments`, {
+        method: 'POST',
+        body: JSON.stringify({ scheduleId: Number(selectedScheduleId) })
+      });
+      await onStudentUpdated(updated);
+      onMessage({ type: 'success', text: 'Student enrollment added.' });
+    } catch (err) {
+      onMessage({ type: 'error', text: err.message });
+    } finally {
+      setEnrollmentBusy(false);
+    }
+  };
+
+  const removeEnrollment = async (enrollmentId) => {
+    setRemovingEnrollmentId(enrollmentId);
+    onMessage(null);
+    try {
+      const updated = await api(`/api/admin/students/${student.id}/enrollments/${enrollmentId}`, {
+        method: 'DELETE'
+      });
+      await onStudentUpdated(updated);
+      onMessage({ type: 'success', text: 'Student enrollment removed.' });
+    } catch (err) {
+      onMessage({ type: 'error', text: err.message });
+    } finally {
+      setRemovingEnrollmentId(null);
     }
   };
 
@@ -403,18 +470,47 @@ function StudentDetailView({ student, message, onBack, onToggleStatus, onMessage
 
         <div className="side-stack">
           <Panel title="Academic Enrollments" tag={`${student.enrollments.length} active`}>
+            <form className="admin-student-enrollment-form" onSubmit={addEnrollment}>
+              <select
+                value={selectedScheduleId}
+                onChange={(event) => setSelectedScheduleId(event.target.value)}
+                disabled={enrollmentBusy || enrollmentOptions.length === 0}
+              >
+                {enrollmentOptions.length === 0 ? (
+                  <option value="">No available sections</option>
+                ) : enrollmentOptions.map((option) => (
+                  <option key={option.id} value={option.id}>
+                    {option.courseCode} - {option.sectionName} - {option.teacherName || option.teacherEmail}
+                  </option>
+                ))}
+              </select>
+              <button className="primary-btn" type="submit" disabled={enrollmentBusy || !selectedScheduleId}>
+                {enrollmentBusy ? <Loader2 size={16} className="spin" /> : <Plus size={16} />}
+                Add
+              </button>
+            </form>
             {student.enrollments.length > 0 ? (
               <div className="audit-log-list">
                 {student.enrollments.map((enrollment, index) => (
-                  <div key={`${enrollment.courseCode}-${enrollment.sectionName}-${index}`} className="audit-entry admin-student-enrollment">
+                  <div key={enrollment.id || `${enrollment.courseCode}-${enrollment.sectionName}-${index}`} className="audit-entry admin-student-enrollment">
                     <div>
                       <strong>{enrollment.courseCode}</strong>
+                      {enrollment.courseTitle && <span className="muted admin-student-subtext">{enrollment.courseTitle}</span>}
                       <span className="muted admin-student-subtext">{enrollment.sectionName}</span>
                     </div>
                     <div className="admin-student-enrollment-teacher">
                       <span className="muted admin-student-subtext">Instructor</span>
                       <span>{enrollment.teacherName}</span>
                     </div>
+                    <button
+                      type="button"
+                      className="icon-btn text-danger"
+                      title="Remove enrollment"
+                      onClick={() => removeEnrollment(enrollment.id)}
+                      disabled={removingEnrollmentId === enrollment.id}
+                    >
+                      {removingEnrollmentId === enrollment.id ? <Loader2 size={15} className="spin" /> : <Trash2 size={15} />}
+                    </button>
                   </div>
                 ))}
               </div>

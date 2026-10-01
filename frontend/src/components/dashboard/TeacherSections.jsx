@@ -291,14 +291,24 @@ export function TeacherAttendanceSection({ data, reload }) {
   const [record, setRecord] = useState({ studentId: '', studentName: '', status: 'PRESENT' });
   const [result, setResult] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [attendanceBaseUrl, setAttendanceBaseUrl] = useState(window.location.origin);
 
   useEffect(() => {
     setSessions(data.attendanceSessions || []);
   }, [data.attendanceSessions]);
 
+  useEffect(() => {
+    api('/api/app/config')
+      .then((res) => {
+        const baseUrl = res.data?.attendanceBaseUrl;
+        if (baseUrl) setAttendanceBaseUrl(baseUrl.replace(/\/$/, ''));
+      })
+      .catch(() => setAttendanceBaseUrl(window.location.origin));
+  }, []);
+
   const activeSession = sessions.find((item) => item.session?.active);
   const checkInUrl = activeSession?.session?.token
-    ? `${window.location.origin}/attendance/checkin?token=${activeSession.session.token}`
+    ? `${attendanceBaseUrl}/attendance/checkin?token=${activeSession.session.token}`
     : '';
 
   // Load enrolled students when we have an active session

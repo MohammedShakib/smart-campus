@@ -10,6 +10,14 @@ const QUICK_PROMPTS = [
   'Campus facilities',
 ];
 
+const MIN_THINKING_MS = 900;
+
+function wait(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
 function renderMarkdown(text) {
   if (!text) return null;
 
@@ -143,10 +151,13 @@ export function ChatbotWidget() {
     setIsLoading(true);
 
     try {
-      const response = await api('/api/chatbot', {
-        method: 'POST',
-        body: JSON.stringify({ message: userMessage, history }),
-      });
+      const [response] = await Promise.all([
+        api('/api/chatbot', {
+          method: 'POST',
+          body: JSON.stringify({ message: userMessage, history }),
+        }),
+        wait(MIN_THINKING_MS),
+      ]);
 
       const reply = response?.data?.reply || 'Sorry, I could not generate a response.';
       setMessages((current) => [...current, { role: 'assistant', text: reply }]);
@@ -245,9 +256,12 @@ export function ChatbotWidget() {
                   <Bot size={16} />
                 </div>
                 <div className="chatbot-typing-bubble" aria-label="CampusAI is typing">
-                  <span className="chatbot-typing-dot" />
-                  <span className="chatbot-typing-dot" />
-                  <span className="chatbot-typing-dot" />
+                  <span className="chatbot-typing-text">Checking live campus data</span>
+                  <span className="chatbot-typing-dots">
+                    <span className="chatbot-typing-dot" />
+                    <span className="chatbot-typing-dot" />
+                    <span className="chatbot-typing-dot" />
+                  </span>
                 </div>
               </div>
             )}

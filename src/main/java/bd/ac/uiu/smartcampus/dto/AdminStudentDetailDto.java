@@ -56,9 +56,12 @@ public class AdminStudentDetailDto {
     public void setAttendanceSummary(AttendanceSummary attendanceSummary) { this.attendanceSummary = attendanceSummary; }
 
     public static class EnrollmentInfo {
+        private Long id;
         private String courseCode;
+        private String courseTitle;
         private String sectionName;
         private String teacherName;
+        private String teacherEmail;
 
         public EnrollmentInfo(String courseCode, String sectionName, String teacherName) {
             this.courseCode = courseCode;
@@ -66,12 +69,28 @@ public class AdminStudentDetailDto {
             this.teacherName = teacherName;
         }
 
+        public EnrollmentInfo(Long id, String courseCode, String courseTitle, String sectionName,
+                              String teacherName, String teacherEmail) {
+            this.id = id;
+            this.courseCode = courseCode;
+            this.courseTitle = courseTitle;
+            this.sectionName = sectionName;
+            this.teacherName = teacherName;
+            this.teacherEmail = teacherEmail;
+        }
+
+        public Long getId() { return id; }
+        public void setId(Long id) { this.id = id; }
         public String getCourseCode() { return courseCode; }
         public void setCourseCode(String courseCode) { this.courseCode = courseCode; }
+        public String getCourseTitle() { return courseTitle; }
+        public void setCourseTitle(String courseTitle) { this.courseTitle = courseTitle; }
         public String getSectionName() { return sectionName; }
         public void setSectionName(String sectionName) { this.sectionName = sectionName; }
         public String getTeacherName() { return teacherName; }
         public void setTeacherName(String teacherName) { this.teacherName = teacherName; }
+        public String getTeacherEmail() { return teacherEmail; }
+        public void setTeacherEmail(String teacherEmail) { this.teacherEmail = teacherEmail; }
     }
 
     public static class AttendanceSummary {
