@@ -37,6 +37,12 @@
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
 
+        <!-- Persist HTTP sessions in the database so deployments do not log users out -->
+        <dependency>
+            <groupId>org.springframework.session</groupId>
+            <artifactId>spring-session-jdbc</artifactId>
+        </dependency>
+
         <!-- Spring Data JPA & Hibernate -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
