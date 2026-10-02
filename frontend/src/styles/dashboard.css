@@ -2858,6 +2858,328 @@ button {
 }
 
 /* ============================================================
+   MOBILE DRAWER NAVIGATION
+   ============================================================ */
+.mobile-menu-btn,
+.sidebar-close-btn,
+.mobile-sidebar-backdrop {
+  display: none;
+}
+
+@media (max-width: 1120px) {
+  .dashboard-shell {
+    display: block;
+    min-height: 100vh;
+  }
+
+  .mobile-menu-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: #ffffff;
+    color: var(--tx-secondary);
+    cursor: pointer;
+  }
+
+  .mobile-sidebar-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 79;
+    border: 0;
+    background: rgba(15,23,42,0.38);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.24s ease;
+  }
+
+  .sidebar-is-open .mobile-sidebar-backdrop {
+    display: block;
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 80;
+    width: min(318px, 86vw);
+    height: 100dvh;
+    overflow-y: auto;
+    padding: calc(0.95rem + env(safe-area-inset-top)) 0.85rem calc(1rem + env(safe-area-inset-bottom));
+    border-right: 1px solid rgba(203,213,225,0.95);
+    border-bottom: 0;
+    transform: translateX(-104%);
+    transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.28s ease;
+    box-shadow: none;
+  }
+
+  .sidebar-is-open .sidebar {
+    transform: translateX(0);
+    box-shadow: 24px 0 60px rgba(15,23,42,0.22);
+  }
+
+  .sidebar-brand {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: auto;
+    padding: 0.15rem 0.25rem 0.95rem;
+  }
+
+  .sidebar-brand > div {
+    margin-left: auto;
+  }
+
+  .sidebar-brand span {
+    text-align: right;
+  }
+
+  .sidebar-close-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: #ffffff;
+    color: var(--tx-secondary);
+    cursor: pointer;
+  }
+
+  .sidebar nav {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    gap: 0.32rem;
+    overflow-x: visible;
+    margin: 0.85rem 0;
+    padding: 0;
+    scroll-snap-type: none;
+  }
+
+  .nav-item {
+    width: 100%;
+    min-width: 0;
+    justify-content: flex-start;
+    white-space: normal;
+    scroll-snap-align: none;
+  }
+
+  .nav-chevron {
+    display: block;
+  }
+
+  .user-card--student {
+    max-width: none;
+    margin-top: auto;
+  }
+
+  .main-area {
+    min-height: 100vh;
+  }
+
+  .topbar {
+    flex-direction: row;
+    align-items: center;
+  }
+}
+
+@media (max-width: 640px) {
+  .topbar {
+    position: sticky;
+    top: 0;
+    min-height: 60px;
+  }
+
+  .topbar-actions {
+    gap: 0.45rem;
+  }
+
+  .mobile-menu-btn,
+  .topbar-bell,
+  .install-app-btn {
+    width: 38px;
+    height: 38px;
+  }
+}
+
+/* ============================================================
+   STUDENT ATTENDANCE QR SCANNER
+   ============================================================ */
+.student-qr-fab {
+  position: fixed;
+  right: 28px;
+  bottom: 98px;
+  z-index: 88;
+  width: 54px;
+  height: 54px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  color: #ffffff;
+  background: linear-gradient(135deg, #0ea5e9 0%, #4f46e5 62%, #7c3aed 100%);
+  box-shadow: 0 14px 30px rgba(14,165,233,0.34), 0 2px 8px rgba(15,23,42,0.16);
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.student-qr-fab:hover {
+  transform: translateY(-2px) scale(1.04);
+  box-shadow: 0 18px 42px rgba(79,70,229,0.34), 0 4px 12px rgba(15,23,42,0.18);
+}
+
+.qr-scanner-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 110;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(15,23,42,0.58);
+  backdrop-filter: blur(12px);
+}
+
+.qr-scanner-modal {
+  width: min(440px, 100%);
+  max-height: min(760px, calc(100dvh - 2rem));
+  overflow-y: auto;
+  padding: 1rem;
+  border: 1px solid rgba(226,232,240,0.24);
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 28px 80px rgba(15,23,42,0.34);
+}
+
+.qr-scanner-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.9rem;
+}
+
+.qr-scanner-head span {
+  display: block;
+  color: var(--accent-dark);
+  font-size: 0.68rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.qr-scanner-head h2 {
+  margin-top: 0.12rem;
+  color: var(--tx-primary);
+  font-size: 1.08rem;
+  font-weight: 850;
+}
+
+.qr-camera-frame {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 1 / 1;
+  border-radius: 16px;
+  background: #020617;
+}
+
+.qr-camera-frame video {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.qr-reticle {
+  position: absolute;
+  inset: 15%;
+  border: 2px solid rgba(255,255,255,0.88);
+  border-radius: 18px;
+  box-shadow: 0 0 0 999px rgba(2,6,23,0.26);
+}
+
+.qr-reticle::before,
+.qr-reticle::after {
+  content: '';
+  position: absolute;
+  left: 18%;
+  right: 18%;
+  height: 2px;
+  background: rgba(14,165,233,0.88);
+}
+
+.qr-reticle::before { top: 50%; }
+.qr-reticle::after { display: none; }
+
+.qr-camera-loading {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 0.55rem;
+  color: #e2e8f0;
+  background: rgba(2,6,23,0.64);
+  font-weight: 800;
+}
+
+.qr-scanner-message {
+  margin-top: 0.8rem;
+  color: var(--tx-secondary);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.qr-manual-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.55rem;
+  margin-top: 0.85rem;
+}
+
+.qr-manual-form input {
+  min-height: 40px;
+  padding: 0 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  outline: none;
+}
+
+.qr-manual-form input:focus {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
+}
+
+@media (max-width: 480px) {
+  .student-qr-fab {
+    right: 18px;
+    bottom: 84px;
+    width: 52px;
+    height: 52px;
+  }
+
+  .qr-scanner-backdrop {
+    align-items: end;
+    padding: 0.7rem;
+  }
+
+  .qr-scanner-modal {
+    max-height: calc(100dvh - 1.4rem);
+    border-radius: 18px;
+  }
+
+  .qr-manual-form {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ============================================================
    NEW STUDENT PORTAL FEATURES STYLING
    ============================================================ */
 

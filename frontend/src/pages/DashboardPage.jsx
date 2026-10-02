@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   Activity, AlertTriangle, Bell, BookOpen, Bus, Building2, CalendarCheck, CalendarDays,
   Camera, Car, ChevronRight, ClipboardCheck, Cpu, DoorOpen, FileText, FileWarning,
-  Download, GraduationCap, IdCard, KeyRound, LogOut, Mail, MapPin, MessageSquare, Presentation, QrCode,
+  Download, GraduationCap, IdCard, KeyRound, LogOut, Mail, MapPin, Menu, MessageSquare, Presentation, QrCode,
   RadioTower, Save, Search, ShieldCheck, Upload, UsersRound, Wrench, X
 } from 'lucide-react';
 import { api } from '../utils/api';
@@ -12,6 +12,7 @@ import { readUrlOption, writeUrlOption } from '../utils/urlState';
 import { ErrorState, LoadingState } from '../components/shared/SharedComponents';
 import { ActiveEmergencyBanner } from '../components/shared/ActiveEmergencyBanner';
 import { ChatbotWidget } from '../components/shared/ChatbotWidget';
+import { StudentQrScannerShortcut } from '../components/shared/StudentQrScannerShortcut';
 import { DashboardSection } from '../components/dashboard/DashboardSection';
 import smartCampusLogo from '../assets/smart-campus-logo.png';
 import '../styles/dashboard.css';
@@ -107,6 +108,8 @@ export function DashboardPage() {
   const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '' });
   const [installPrompt, setInstallPrompt] = useState(null);
   const [canInstallApp, setCanInstallApp] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const touchStartRef = React.useRef(null);
 
   const loadDashboard = useCallback(() => {
     api(`/api/dashboard/${role}`)
@@ -157,6 +160,7 @@ export function DashboardPage() {
     }
 
     writeUrlOption('section', activeSection, 'overview');
+    setSidebarOpen(false);
   }, [activeSection, config.sections]);
 
   useEffect(() => {
@@ -252,16 +256,52 @@ export function DashboardPage() {
     setCanInstallApp(false);
   }
 
+  function handleTouchStart(event) {
+    const touch = event.touches?.[0];
+    if (!touch) return;
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+  }
+
+  function handleTouchEnd(event) {
+    const start = touchStartRef.current;
+    const touch = event.changedTouches?.[0];
+    touchStartRef.current = null;
+    if (!start || !touch) return;
+
+    const deltaX = touch.clientX - start.x;
+    const deltaY = touch.clientY - start.y;
+    if (Math.abs(deltaX) < 70 || Math.abs(deltaY) > 70) return;
+
+    if (start.x < 28 && deltaX > 0) {
+      setSidebarOpen(true);
+    } else if (sidebarOpen && deltaX < 0) {
+      setSidebarOpen(false);
+    }
+  }
+
   return (
     <>
       <ActiveEmergencyBanner />
-      <main className="dashboard-shell">
-      <aside className="sidebar">
+      <main
+        className={`dashboard-shell${sidebarOpen ? ' sidebar-is-open' : ''}`}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
+      <button
+        type="button"
+        className="mobile-sidebar-backdrop"
+        onClick={() => setSidebarOpen(false)}
+        aria-label="Close navigation"
+      />
+      <aside className="sidebar" aria-label={`${config.label} navigation`}>
         <div className="sidebar-brand">
           <img src={smartCampusLogo} alt="Smart Campus" className="dashboard-brand-logo" />
           <div>
             <span>{config.label}</span>
           </div>
+          <button type="button" className="sidebar-close-btn" onClick={() => setSidebarOpen(false)} aria-label="Close navigation">
+            <X size={18} />
+          </button>
         </div>
 
         <nav>
@@ -304,6 +344,9 @@ export function DashboardPage() {
             <h1>{config.sections.find(s => s.key === activeSection)?.label}</h1>
           </div>
           <div className="topbar-actions">
+            <button className="mobile-menu-btn" type="button" onClick={() => setSidebarOpen(true)} aria-label="Open navigation">
+              <Menu size={19} />
+            </button>
             {canInstallApp && (
               <button className="install-app-btn" type="button" onClick={handleInstallApp}>
                 <Download size={16} />
@@ -330,6 +373,7 @@ export function DashboardPage() {
         </div>
       </section>
 
+      {role === 'student' && <StudentQrScannerShortcut />}
       <ChatbotWidget />
 
       {profileOpen && (
