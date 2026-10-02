@@ -307,6 +307,9 @@ export function TeacherAttendanceSection({ data, reload }) {
   }, []);
 
   const activeSession = sessions.find((item) => item.session?.active);
+  const selectedSchedule = (data.schedule || []).find((item) => String(item.id) === String(selectedScheduleId));
+  const activeTotal = (activeSession?.presentCount || 0) + (activeSession?.lateCount || 0) + (activeSession?.absentCount || 0);
+  const attendanceRate = activeTotal ? Math.round(((activeSession?.presentCount || 0) / activeTotal) * 100) : 0;
   const checkInUrl = activeSession?.session?.token
     ? `${attendanceBaseUrl}/attendance/checkin?token=${activeSession.session.token}`
     : '';
@@ -410,7 +413,7 @@ export function TeacherAttendanceSection({ data, reload }) {
   }
 
   return (
-    <div>
+    <div className="teacher-attendance-page">
       <SectionHeader title="Attendance" subtitle="Start a secure QR attendance session and manage records." />
 
       {/* Mode switcher */}
@@ -438,7 +441,42 @@ export function TeacherAttendanceSection({ data, reload }) {
       ) : (
         <>
           <Feedback result={result} />
-          <div className="section-grid">
+          <div className="attendance-command-card">
+            <div className="attendance-command-copy">
+              <span className={activeSession?.session?.active ? 'live-indicator' : 'ready-indicator'}>
+                <RadioTower size={14} />
+                {activeSession?.session?.active ? 'Live QR session' : 'Ready to launch'}
+              </span>
+              <strong>{activeSession?.schedule?.courseTitle || selectedSchedule?.courseTitle || 'Select a class to begin'}</strong>
+              <p>
+                {activeSession
+                  ? `${activeSession.schedule?.courseCode} - ${activeSession.schedule?.roomNumber} - Started ${new Date(activeSession.session.startedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                  : selectedSchedule
+                    ? `${selectedSchedule.courseCode} - ${selectedSchedule.sectionName} - ${selectedSchedule.dayOfWeek}`
+                    : 'Choose a schedule, start attendance, then share the QR code.'}
+              </p>
+            </div>
+            <div className="attendance-command-metrics" aria-label="Current attendance summary">
+              <div>
+                <span>Present</span>
+                <strong>{activeSession?.presentCount || 0}</strong>
+              </div>
+              <div>
+                <span>Late</span>
+                <strong>{activeSession?.lateCount || 0}</strong>
+              </div>
+              <div>
+                <span>Absent</span>
+                <strong>{activeSession?.absentCount || 0}</strong>
+              </div>
+              <div>
+                <span>Rate</span>
+                <strong>{activeTotal ? `${attendanceRate}%` : '-'}</strong>
+              </div>
+            </div>
+          </div>
+
+          <div className="section-grid attendance-workspace">
             {/* Current session panel */}
             <Panel title="Attendance Session" tag={activeSession?.session?.active ? 'Live' : 'Ready'}>
               <form className="ticket-form teacher-attendance-form" onSubmit={startSession}>
@@ -457,12 +495,19 @@ export function TeacherAttendanceSection({ data, reload }) {
                   <div className="teacher-focus">
                     <span>{activeSession.schedule?.courseCode}</span>
                     <strong>{activeSession.schedule?.courseTitle}</strong>
-                    <p>{activeSession.schedule?.roomNumber} - Started {new Date(activeSession.session.startedAt).toLocaleTimeString()}</p>
+                    <p>{activeSession.schedule?.roomNumber} - Started {new Date(activeSession.session.startedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                   </div>
                   {activeSession.session.active && (
-                    <div className="qr-box">
-                      <QRCodeSVG value={checkInUrl} size={154} />
-                      <code>{activeSession.session.token}</code>
+                    <div className="attendance-qr-area">
+                      <div className="qr-box">
+                        <QRCodeSVG value={checkInUrl} size={172} />
+                        <code>{activeSession.session.token}</code>
+                      </div>
+                      <div className="attendance-qr-copy">
+                        <span>Student scan link</span>
+                        <strong>QR check-in is active</strong>
+                        <p>Keep this panel open while students scan. Records refresh automatically during the live session.</p>
+                      </div>
                     </div>
                   )}
                   <div className="stat-list attendance-stats">
@@ -477,7 +522,11 @@ export function TeacherAttendanceSection({ data, reload }) {
                   )}
                 </div>
               ) : (
-                <p className="muted">No active attendance session.</p>
+                <div className="attendance-empty-state">
+                  <BookOpen size={22} />
+                  <strong>No active attendance session</strong>
+                  <p className="muted">Pick a class above and start a QR session when students are ready.</p>
+                </div>
               )}
             </Panel>
 
@@ -509,16 +558,18 @@ export function TeacherAttendanceSection({ data, reload }) {
                   <ClipboardCheck size={17} /> Mark Attendance
                 </button>
               </form>
-              <Table
-                headers={['Student ID', 'Name', 'Status', 'Check-in']}
-                rows={(activeSession?.records || []).map((item) => [
-                  item.studentId,
-                  item.studentName || '-',
-                  item.status,
-                  item.checkedInAt ? new Date(item.checkedInAt).toLocaleTimeString() : '-'
-                ])}
-                empty="No attendance records yet."
-              />
+              <div className="attendance-roster-card">
+                <Table
+                  headers={['Student ID', 'Name', 'Status', 'Check-in']}
+                  rows={(activeSession?.records || []).map((item) => [
+                    item.studentId,
+                    item.studentName || '-',
+                    item.status,
+                    item.checkedInAt ? new Date(item.checkedInAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'
+                  ])}
+                  empty="No attendance records yet."
+                />
+              </div>
             </Panel>
           </div>
         </>
