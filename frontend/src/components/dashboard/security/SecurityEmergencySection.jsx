@@ -50,7 +50,7 @@ export function SecurityEmergencySection() {
         method: 'POST',
         body: JSON.stringify(broadcastForm)
       });
-      setFeedback({ type: 'success', text: `🚨 Emergency alert activated: ${res.data.alertTitle}` });
+      setFeedback({ type: 'success', text: `Emergency alert activated: ${res.data.alertTitle}` });
       setBroadcastForm({ alertTitle: '', alertMessage: '', severity: 'CRITICAL', category: 'SECURITY' });
       setTimeout(() => {
         setBroadcastModalOpen(false);
@@ -98,16 +98,16 @@ export function SecurityEmergencySection() {
             <Siren size={36} className="pulse-icon" />
           </div>
           <div className="sec-emergency-hero-content">
-            <div className="sec-emergency-tag">🚨 ACTIVE CAMPUS EMERGENCY IN PROGRESS</div>
+            <div className="sec-emergency-tag">ACTIVE CAMPUS EMERGENCY IN PROGRESS</div>
             <h2>{activeAlerts[0].alertTitle}</h2>
             <p>{activeAlerts[0].alertMessage}</p>
             <div className="sec-emergency-meta">
               <span>Category: <strong>{activeAlerts[0].category}</strong></span>
-              <span>•</span>
+              <span>|</span>
               <span>Severity: <strong>{activeAlerts[0].severity}</strong></span>
-              <span>•</span>
+              <span>|</span>
               <span>Broadcasted: {new Date(activeAlerts[0].broadcastTime).toLocaleString()}</span>
-              <span>•</span>
+              <span>|</span>
               <span>By: <strong>{activeAlerts[0].broadcastBy}</strong></span>
             </div>
           </div>
@@ -218,7 +218,7 @@ export function SecurityEmergencySection() {
             <header className="profile-modal-head">
               <div>
                 <span style={{ color: '#ef4444', fontWeight: 600 }}>Emergency Protocol</span>
-                <h2>🚨 Broadcast Immediate Campus-Wide Alert</h2>
+                <h2>Broadcast Immediate Campus-Wide Alert</h2>
               </div>
               <button type="button" className="icon-btn" onClick={() => setBroadcastModalOpen(false)}><X size={16} /></button>
             </header>

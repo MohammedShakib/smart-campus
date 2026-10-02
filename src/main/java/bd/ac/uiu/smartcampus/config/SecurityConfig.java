@@ -2,6 +2,7 @@ package bd.ac.uiu.smartcampus.config;
 
 import bd.ac.uiu.smartcampus.security.CustomAuthenticationSuccessHandler;
 import bd.ac.uiu.smartcampus.security.CustomUserDetailsService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -21,11 +22,14 @@ public class SecurityConfig {
 
     private final CustomUserDetailsService userDetailsService;
     private final CustomAuthenticationSuccessHandler successHandler;
+    private final boolean h2ConsoleEnabled;
 
     public SecurityConfig(CustomUserDetailsService userDetailsService,
-                          CustomAuthenticationSuccessHandler successHandler) {
+                          CustomAuthenticationSuccessHandler successHandler,
+                          @Value("${spring.h2.console.enabled:false}") boolean h2ConsoleEnabled) {
         this.userDetailsService = userDetailsService;
         this.successHandler = successHandler;
+        this.h2ConsoleEnabled = h2ConsoleEnabled;
     }
 
     @Bean
@@ -50,13 +54,17 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .csrf(csrf -> csrf.disable()) // Disabled for simple REST & prototype form submissions
-            .authorizeHttpRequests(auth -> auth
+            .authorizeHttpRequests(auth -> {
                 // Static Assets & Public pages
-                .requestMatchers("/app/**", "/css/**", "/js/**", "/images/**", "/uploads/**", "/webjars/**", "/favicon.ico").permitAll()
-                .requestMatchers("/", "/health", "/login", "/register", "/attendance/checkin", "/api/auth/register", "/api/auth/me", "/h2-console/**").permitAll()
+                auth.requestMatchers("/app/**", "/css/**", "/js/**", "/images/**", "/uploads/**", "/webjars/**", "/favicon.ico").permitAll()
+                .requestMatchers("/", "/health", "/login", "/register", "/attendance/checkin", "/api/auth/register", "/api/auth/me").permitAll();
+
+                if (h2ConsoleEnabled) {
+                    auth.requestMatchers("/h2-console/**").hasRole("ADMIN");
+                }
 
                 // Teacher-specific APIs and protected campus actions
-                .requestMatchers("/api/teacher/**").hasRole("TEACHER")
+                auth.requestMatchers("/api/teacher/**").hasRole("TEACHER")
                 // Student APIs
                 .requestMatchers("/api/student/**").hasAnyRole("STUDENT", "ADMIN")
                 .requestMatchers("/api/attendance/checkin").hasRole("STUDENT")
@@ -84,8 +92,8 @@ public class SecurityConfig {
                 .requestMatchers("/dashboard/security/**").hasAnyRole("SECURITY", "ADMIN")
                 .requestMatchers("/dashboard/**").authenticated()
 
-                .anyRequest().authenticated()
-            )
+                .anyRequest().authenticated();
+            })
             .formLogin(form -> form
                 .loginPage("/login")
                 .loginProcessingUrl("/login")
@@ -122,7 +130,11 @@ public class SecurityConfig {
                     response.sendRedirect("/login");
                 })
             )
-            .headers(headers -> headers.frameOptions(frame -> frame.disable())); // For H2 console if used
+            .headers(headers -> {
+                if (h2ConsoleEnabled) {
+                    headers.frameOptions(frame -> frame.sameOrigin());
+                }
+            });
 
         http.authenticationProvider(authenticationProvider());
 

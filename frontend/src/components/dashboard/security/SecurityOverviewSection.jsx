@@ -55,7 +55,7 @@ export function SecurityOverviewSection({ data, reload, setActiveSection }) {
         method: 'POST',
         body: JSON.stringify(emergencyForm)
       });
-      setStatusMessage({ type: 'success', text: `🚨 Emergency alert broadcasted: ${res.data.alertTitle}` });
+      setStatusMessage({ type: 'success', text: `Emergency alert broadcasted: ${res.data.alertTitle}` });
       setEmergencyForm({ alertTitle: '', alertMessage: '', severity: 'CRITICAL', category: 'SECURITY' });
       setTimeout(() => { setEmergencyModalOpen(false); reload(); setStatusMessage(null); }, 1500);
     } catch (err) {
@@ -90,9 +90,9 @@ export function SecurityOverviewSection({ data, reload, setActiveSection }) {
             <p>{activeAlerts[0]?.alertMessage}</p>
             <div className="security-alert-meta">
               <span>Severity: <strong>{activeAlerts[0]?.severity}</strong></span>
-              <span>•</span>
+              <span>|</span>
               <span>Category: <strong>{activeAlerts[0]?.category}</strong></span>
-              <span>•</span>
+              <span>|</span>
               <span>Broadcasted: {new Date(activeAlerts[0]?.broadcastTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
             </div>
           </div>
@@ -110,7 +110,7 @@ export function SecurityOverviewSection({ data, reload, setActiveSection }) {
             <ShieldCheck size={26} />
           </div>
           <div className="security-alert-body">
-            <strong>All Clear • Campus Fully Secured</strong>
+            <strong>All Clear | Campus Fully Secured</strong>
             <p>No active emergency broadcasts. All perimeter gates and telemetry links are operating normally.</p>
           </div>
           <button
@@ -157,7 +157,7 @@ export function SecurityOverviewSection({ data, reload, setActiveSection }) {
           <div className="sec-kpi-details">
             <span>Active Incidents</span>
             <strong>{summary.openIncidentsCount || 0}</strong>
-            <small className="clickable-text">View incident log →</small>
+            <small className="clickable-text">View incident log</small>
           </div>
         </div>
       </div>
@@ -402,7 +402,7 @@ export function SecurityOverviewSection({ data, reload, setActiveSection }) {
             <header className="profile-modal-head">
               <div>
                 <span style={{ color: '#ef4444', fontWeight: 600 }}>Emergency Protocol</span>
-                <h2>🚨 Broadcast Emergency Alert</h2>
+                <h2>Broadcast Emergency Alert</h2>
               </div>
               <button type="button" className="icon-btn" onClick={() => setEmergencyModalOpen(false)}><X size={16} /></button>
             </header>

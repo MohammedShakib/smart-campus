@@ -71,7 +71,7 @@ export function SecurityGateTerminalSection({ data, reload }) {
 
       setFeedback({
         type: 'success',
-        text: `✓ ${actionType === 'ENTRY' ? 'ENTRY (ঢোকা)' : 'EXIT (বের হওয়া)'} সফল: ${res.data?.user?.fullName || identifier} - ${res.data?.gateName || gateName}`
+        text: `${actionType === 'ENTRY' ? 'Entry' : 'Exit'} recorded for ${res.data?.user?.fullName || identifier} at ${res.data?.gateName || gateName}.`
       });
 
       loadHistory();
@@ -301,7 +301,7 @@ export function SecurityGateTerminalSection({ data, reload }) {
               disabled={busy}
             >
               <ArrowDownLeft size={18} />
-              Verify & Record ENTRY (ক্যাম্পাসে প্রবেশ)
+              Verify & Record Entry
             </button>
 
             <button
@@ -321,7 +321,7 @@ export function SecurityGateTerminalSection({ data, reload }) {
               disabled={busy}
             >
               <ArrowUpRight size={18} />
-              Verify & Record EXIT (ক্যাম্পাস থেকে প্রস্থান)
+              Verify & Record Exit
             </button>
 
             <button
@@ -424,10 +424,10 @@ export function SecurityGateTerminalSection({ data, reload }) {
           <table className="sec-table">
             <thead>
               <tr>
-                <th style={{ minWidth: '150px' }}>Date & Time (সময়)</th>
-                <th style={{ minWidth: '220px' }}>Person / Student (ব্যক্তি ও আইডি)</th>
-                <th style={{ minWidth: '130px' }}>Movement (প্রবেশ / প্রস্থান)</th>
-                <th style={{ minWidth: '180px' }}>Gate Location (গেট)</th>
+                <th style={{ minWidth: '150px' }}>Date & Time</th>
+                <th style={{ minWidth: '220px' }}>Person / ID</th>
+                <th style={{ minWidth: '130px' }}>Movement</th>
+                <th style={{ minWidth: '180px' }}>Gate Location</th>
                 <th style={{ minWidth: '140px' }}>Verification Status</th>
                 <th style={{ minWidth: '140px' }}>Security Officer</th>
               </tr>
@@ -530,7 +530,7 @@ export function SecurityGateTerminalSection({ data, reload }) {
                               fontSize: '0.85rem'
                             }}
                           >
-                            <ArrowDownLeft size={14} /> ENTRY (ঢোকা)
+                            <ArrowDownLeft size={14} /> ENTRY
                           </span>
                         ) : (
                           <span
@@ -546,7 +546,7 @@ export function SecurityGateTerminalSection({ data, reload }) {
                               fontSize: '0.85rem'
                             }}
                           >
-                            <ArrowUpRight size={14} /> EXIT (বের হওয়া)
+                            <ArrowUpRight size={14} /> EXIT
                           </span>
                         )}
                       </td>
