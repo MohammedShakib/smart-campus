@@ -589,10 +589,10 @@ export function TeacherAttendanceSection({ data, reload }) {
                         className="action-pill-btn action-pill-btn--reject attendance-remove-record-btn"
                         disabled={removingRecordId === item.id}
                         onClick={() => removeRecord(item)}
+                        aria-label={`Remove attendance for ${item.studentName || item.studentId}`}
                         title="Remove attendance record"
                       >
                         <Trash2 size={13} />
-                        {removingRecordId === item.id ? 'Removing...' : 'Remove'}
                       </button>
                     ) : '-'
                   ])}

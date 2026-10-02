@@ -2240,7 +2240,30 @@
 }
 
 .attendance-roster-card table {
-  min-width: 540px;
+  min-width: 500px;
+}
+
+.attendance-roster-card th,
+.attendance-roster-card td {
+  padding-inline: 0.74rem;
+  white-space: nowrap;
+}
+
+.attendance-roster-card th:last-child,
+.attendance-roster-card td:last-child {
+  width: 52px;
+  text-align: center;
+}
+
+.attendance-remove-record-btn {
+  width: 30px;
+  height: 30px;
+  justify-content: center;
+  padding: 0;
+}
+
+.attendance-remove-record-btn svg {
+  flex: 0 0 auto;
 }
 
 @media (max-width: 1240px) {
