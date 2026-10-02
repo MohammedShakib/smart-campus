@@ -358,6 +358,23 @@ public class TeacherDashboardService {
         return recordRepository.save(record);
     }
 
+    @Transactional
+    public AttendanceSession deleteAttendanceRecord(Long sessionId, Long recordId, String teacherEmail) {
+        AttendanceSession session = ownedSession(sessionId, teacherEmail);
+        if (!session.isActive()) {
+            throw new IllegalArgumentException("Attendance session is already closed.");
+        }
+        AttendanceRecord record = recordRepository.findById(recordId)
+                .orElseThrow(() -> new IllegalArgumentException("Attendance record not found."));
+        if (record.getAttendanceSession() == null
+                || record.getAttendanceSession().getId() == null
+                || !record.getAttendanceSession().getId().equals(session.getId())) {
+            throw new IllegalArgumentException("Attendance record does not belong to this session.");
+        }
+        recordRepository.delete(record);
+        return session;
+    }
+
     /**
      * Student QR check-in — validates ROLE_STUDENT, enrollment, and no duplicate.
      */

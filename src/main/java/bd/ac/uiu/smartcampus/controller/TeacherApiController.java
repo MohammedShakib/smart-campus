@@ -141,6 +141,14 @@ public class TeacherApiController {
                 teacherService.markAttendance(id, userDetails.getUsername(), request));
     }
 
+    @DeleteMapping("/attendance/{id}/records/{recordId}")
+    public ApiResponse<Map<String, Object>> deleteAttendanceRecord(@PathVariable Long id,
+                                                                   @PathVariable Long recordId,
+                                                                   @AuthenticationPrincipal CustomUserDetails userDetails) {
+        AttendanceSession session = teacherService.deleteAttendanceRecord(id, recordId, userDetails.getUsername());
+        return ApiResponse.ok("Attendance record removed", teacherService.attendancePayload(session));
+    }
+
     // ─────────────────────────────────────────────────────────
     // ATTENDANCE HISTORY
     // ─────────────────────────────────────────────────────────

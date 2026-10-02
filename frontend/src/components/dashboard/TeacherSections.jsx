@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { BookOpen, CalendarCheck, ClipboardCheck, History, RadioTower, Wrench } from 'lucide-react';
+import { BookOpen, CalendarCheck, ClipboardCheck, History, RadioTower, Trash2, Wrench } from 'lucide-react';
 import { api } from '../../utils/api';
 import { SectionHeader, NoticeList, Panel, Table, StatRow } from '../shared/SharedComponents';
 
@@ -291,6 +291,7 @@ export function TeacherAttendanceSection({ data, reload }) {
   const [record, setRecord] = useState({ studentId: '', studentName: '', status: 'PRESENT' });
   const [result, setResult] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [removingRecordId, setRemovingRecordId] = useState(null);
   const [attendanceBaseUrl, setAttendanceBaseUrl] = useState(window.location.origin);
 
   useEffect(() => {
@@ -410,6 +411,22 @@ export function TeacherAttendanceSection({ data, reload }) {
       })
       .catch((err) => setResult({ type: 'error', text: err.message }))
       .finally(() => setBusy(false));
+  }
+
+  function removeRecord(item) {
+    if (!activeSession?.session?.id || !item?.id) return;
+    const ok = window.confirm(`Remove attendance for ${item.studentName || item.studentId}?`);
+    if (!ok) return;
+
+    setRemovingRecordId(item.id);
+    setResult(null);
+    api(`/api/teacher/attendance/${activeSession.session.id}/records/${item.id}`, { method: 'DELETE' })
+      .then((res) => {
+        setResult({ type: 'success', text: res.message });
+        refreshAttendance();
+      })
+      .catch((err) => setResult({ type: 'error', text: err.message }))
+      .finally(() => setRemovingRecordId(null));
   }
 
   return (
@@ -560,12 +577,24 @@ export function TeacherAttendanceSection({ data, reload }) {
               </form>
               <div className="attendance-roster-card">
                 <Table
-                  headers={['Student ID', 'Name', 'Status', 'Check-in']}
+                  headers={['Student ID', 'Name', 'Status', 'Check-in', 'Action']}
                   rows={(activeSession?.records || []).map((item) => [
                     item.studentId,
                     item.studentName || '-',
                     item.status,
-                    item.checkedInAt ? new Date(item.checkedInAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'
+                    item.checkedInAt ? new Date(item.checkedInAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-',
+                    activeSession?.session?.active ? (
+                      <button
+                        type="button"
+                        className="action-pill-btn action-pill-btn--reject attendance-remove-record-btn"
+                        disabled={removingRecordId === item.id}
+                        onClick={() => removeRecord(item)}
+                        title="Remove attendance record"
+                      >
+                        <Trash2 size={13} />
+                        {removingRecordId === item.id ? 'Removing...' : 'Remove'}
+                      </button>
+                    ) : '-'
                   ])}
                   empty="No attendance records yet."
                 />

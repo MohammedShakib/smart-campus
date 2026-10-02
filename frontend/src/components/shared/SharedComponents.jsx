@@ -353,6 +353,7 @@ function chipClass(value) {
 }
 
 function renderCell(cell) {
+  if (React.isValidElement(cell)) return cell;
   const text = String(cell ?? '-');
   const className = chipClass(text);
   return className ? <span className={className}>{text}</span> : text;
