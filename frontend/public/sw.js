@@ -1,4 +1,4 @@
-const CACHE_NAME = 'smart-campus-shell-v1';
+const CACHE_NAME = 'smart-campus-shell-v2';
 const APP_SHELL = [
   '/app/',
   '/app/index.html',

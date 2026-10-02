@@ -2,13 +2,14 @@
   "name": "Smart Campus",
   "short_name": "Smart Campus",
   "description": "Smart Campus web app for students, faculty, admins, and security teams.",
+  "id": "/app/",
   "start_url": "/app/",
   "scope": "/app/",
   "display": "standalone",
-  "display_override": ["window-controls-overlay", "standalone", "browser"],
+  "display_override": ["standalone", "fullscreen"],
   "background_color": "#f8fafc",
-  "theme_color": "#4f46e5",
-  "orientation": "any",
+  "theme_color": "#f8fafc",
+  "orientation": "portrait-primary",
   "categories": ["education", "productivity"],
   "icons": [
     {
