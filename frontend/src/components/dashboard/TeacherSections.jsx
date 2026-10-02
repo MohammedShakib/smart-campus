@@ -16,7 +16,17 @@ function formatDate(value) {
 
 function formatDateTime(value) {
   if (!value) return '-';
-  return new Date(value).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const text = String(value);
+  const timePart = text.includes('T') ? text.split('T')[1] : text;
+  const match = timePart.match(/^(\d{2}):(\d{2})/);
+  if (match) {
+    const hour = Number(match[1]);
+    const minute = match[2];
+    const hour12 = hour % 12 || 12;
+    const suffix = hour >= 12 ? 'PM' : 'AM';
+    return `${hour12.toString().padStart(2, '0')}:${minute} ${suffix}`;
+  }
+  return new Date(value).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Dhaka' });
 }
 
 function classRows(schedule = []) {
@@ -234,7 +244,7 @@ function TeacherAttendanceHistory() {
                       ) : detail ? (
                         <div>
                           <div className="history-detail-meta">
-                            {detail.courseCode} - {detail.sectionName} &nbsp;|&nbsp; {detail.date} &nbsp;|&nbsp; {detail.startedAt ? new Date(detail.startedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'} – {detail.endedAt ? new Date(detail.endedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}
+                            {detail.courseCode} - {detail.sectionName} &nbsp;|&nbsp; {detail.date} &nbsp;|&nbsp; {formatDateTime(detail.startedAt)} – {formatDateTime(detail.endedAt)}
                           </div>
                           <table className="history-detail-table">
                             <thead>
@@ -259,7 +269,7 @@ function TeacherAttendanceHistory() {
                                       {r.status}
                                     </span>
                                   </td>
-                                  <td>{r.checkedInAt ? new Date(r.checkedInAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}</td>
+                                  <td>{formatDateTime(r.checkedInAt)}</td>
                                 </tr>
                               ))}
                             </tbody>
@@ -467,7 +477,7 @@ export function TeacherAttendanceSection({ data, reload }) {
               <strong>{activeSession?.schedule?.courseTitle || selectedSchedule?.courseTitle || 'Select a class to begin'}</strong>
               <p>
                 {activeSession
-                  ? `${activeSession.schedule?.courseCode} - ${activeSession.schedule?.roomNumber} - Started ${new Date(activeSession.session.startedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                  ? `${activeSession.schedule?.courseCode} - ${activeSession.schedule?.roomNumber} - Started ${formatDateTime(activeSession.session.startedAt)}`
                   : selectedSchedule
                     ? `${selectedSchedule.courseCode} - ${selectedSchedule.sectionName} - ${selectedSchedule.dayOfWeek}`
                     : 'Choose a schedule, start attendance, then share the QR code.'}
@@ -512,7 +522,7 @@ export function TeacherAttendanceSection({ data, reload }) {
                   <div className="teacher-focus">
                     <span>{activeSession.schedule?.courseCode}</span>
                     <strong>{activeSession.schedule?.courseTitle}</strong>
-                    <p>{activeSession.schedule?.roomNumber} - Started {new Date(activeSession.session.startedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                    <p>{activeSession.schedule?.roomNumber} - Started {formatDateTime(activeSession.session.startedAt)}</p>
                   </div>
                   {activeSession.session.active && (
                     <div className="attendance-qr-area">
@@ -582,7 +592,7 @@ export function TeacherAttendanceSection({ data, reload }) {
                     item.studentId,
                     item.studentName || '-',
                     item.status,
-                    item.checkedInAt ? new Date(item.checkedInAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-',
+                    formatDateTime(item.checkedInAt),
                     activeSession?.session?.active ? (
                       <button
                         type="button"
