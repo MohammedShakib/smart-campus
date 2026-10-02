@@ -1202,6 +1202,12 @@
   font-weight: 700;
 }
 
+.bus-osm-map .leaflet-pane img,
+.bus-osm-map .leaflet-pane svg,
+.bus-osm-map .leaflet-pane canvas {
+  max-width: none;
+}
+
 .bus-route-legend {
   display: flex;
   flex-wrap: wrap;
