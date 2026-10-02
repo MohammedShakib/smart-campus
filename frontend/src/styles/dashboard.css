@@ -235,6 +235,31 @@
   border: 2px solid white;
 }
 
+.install-app-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 36px;
+  padding: 0 0.82rem;
+  border: 1px solid rgba(99,102,241,0.28);
+  border-radius: 10px;
+  background: #ffffff;
+  color: var(--accent-dark);
+  font-size: 0.8rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(15,23,42,0.04);
+  transition: transform 0.18s, border-color 0.18s, background 0.18s, box-shadow 0.18s;
+}
+
+.install-app-btn:hover {
+  transform: translateY(-1px);
+  border-color: var(--accent-border);
+  background: var(--accent-soft);
+  box-shadow: 0 8px 18px rgba(79,70,229,0.12);
+}
+
 .health {
   display: inline-flex;
   align-items: center;
@@ -2642,6 +2667,193 @@
 
   .logout {
     min-height: 34px;
+  }
+}
+
+/* ============================================================
+   APP-WIDE RESPONSIVE FOUNDATION
+   ============================================================ */
+img,
+svg,
+canvas,
+video {
+  max-width: 100%;
+}
+
+.table-wrap,
+.table-wrapper,
+.admin-table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+input,
+select,
+textarea,
+button {
+  min-width: 0;
+}
+
+@media (max-width: 1120px) {
+  .dashboard-shell {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .sidebar {
+    z-index: 12;
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .sidebar nav {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 0.45rem;
+    overflow-x: auto;
+    padding-bottom: 0.18rem;
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .nav-item {
+    flex: 0 0 auto;
+    width: auto;
+    min-width: 144px;
+    justify-content: center;
+    scroll-snap-align: start;
+    white-space: nowrap;
+  }
+
+  .user-card--student {
+    width: 100%;
+    max-width: 360px;
+  }
+}
+
+@media (max-width: 760px) {
+  .sidebar {
+    padding: 0.85rem;
+  }
+
+  .sidebar-brand {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.8rem;
+  }
+
+  .dashboard-brand-logo {
+    width: 112px;
+  }
+
+  .sidebar-brand span {
+    text-align: right;
+  }
+
+  .nav-item {
+    min-width: 132px;
+    min-height: 38px;
+    padding: 0 0.7rem;
+    font-size: 0.78rem;
+  }
+
+  .user-card--student {
+    padding: 0.62rem 0.1rem 0;
+  }
+
+  .topbar {
+    min-height: 56px;
+    flex-direction: row;
+    align-items: center;
+    padding: 0.68rem max(0.95rem, env(safe-area-inset-right)) 0.68rem max(0.95rem, env(safe-area-inset-left));
+  }
+
+  .breadcrumb {
+    display: none;
+  }
+
+  .topbar h1 {
+    max-width: 52vw;
+    overflow: hidden;
+    font-size: 1rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .topbar-actions {
+    justify-content: flex-end;
+    gap: 0.45rem;
+  }
+
+  .install-app-btn {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+  }
+
+  .install-app-btn span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+
+  .content {
+    padding: 1rem max(0.9rem, env(safe-area-inset-right)) calc(1.2rem + env(safe-area-inset-bottom)) max(0.9rem, env(safe-area-inset-left));
+  }
+
+  .panel,
+  .metric-card,
+  .welcome-card,
+  .live-status-banner {
+    border-radius: 14px;
+  }
+
+  .section-grid,
+  .workspace-grid,
+  .metric-grid,
+  .audit-summary-grid,
+  .admin-notification-grid,
+  .student-ticket-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 420px) {
+  .sidebar {
+    padding-inline: 0.65rem;
+  }
+
+  .dashboard-brand-logo {
+    width: 102px;
+  }
+
+  .sidebar-brand span {
+    font-size: 0.62rem;
+  }
+
+  .nav-item {
+    min-width: 118px;
+  }
+
+  .avatar {
+    width: 32px;
+    height: 32px;
+  }
+
+  .user-card strong {
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .topbar h1 {
+    max-width: 48vw;
   }
 }
 

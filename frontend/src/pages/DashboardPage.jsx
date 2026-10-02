@@ -2,11 +2,12 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   Activity, AlertTriangle, Bell, BookOpen, Bus, Building2, CalendarCheck, CalendarDays,
   Camera, Car, ChevronRight, ClipboardCheck, Cpu, DoorOpen, FileText, FileWarning,
-  GraduationCap, IdCard, KeyRound, LogOut, Mail, MapPin, MessageSquare, Presentation, QrCode,
+  Download, GraduationCap, IdCard, KeyRound, LogOut, Mail, MapPin, MessageSquare, Presentation, QrCode,
   RadioTower, Save, Search, ShieldCheck, Upload, UsersRound, Wrench, X
 } from 'lucide-react';
 import { api } from '../utils/api';
 import { initials, prettyRole } from '../utils/helpers';
+import { isStandaloneApp } from '../utils/pwa';
 import { readUrlOption, writeUrlOption } from '../utils/urlState';
 import { ErrorState, LoadingState } from '../components/shared/SharedComponents';
 import { ActiveEmergencyBanner } from '../components/shared/ActiveEmergencyBanner';
@@ -104,6 +105,8 @@ export function DashboardPage() {
   const [profileBusy, setProfileBusy] = useState(false);
   const [profileMessage, setProfileMessage] = useState(null);
   const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '' });
+  const [installPrompt, setInstallPrompt] = useState(null);
+  const [canInstallApp, setCanInstallApp] = useState(false);
 
   const loadDashboard = useCallback(() => {
     api(`/api/dashboard/${role}`)
@@ -155,6 +158,29 @@ export function DashboardPage() {
 
     writeUrlOption('section', activeSection, 'overview');
   }, [activeSection, config.sections]);
+
+  useEffect(() => {
+    if (isStandaloneApp()) return undefined;
+
+    const handleBeforeInstallPrompt = (event) => {
+      event.preventDefault();
+      setInstallPrompt(event);
+      setCanInstallApp(true);
+    };
+
+    const handleInstalled = () => {
+      setInstallPrompt(null);
+      setCanInstallApp(false);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', handleInstalled);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleInstalled);
+    };
+  }, []);
 
   if (error) return <ErrorState error={error} />;
   if (!data || !telemetry) return <LoadingState />;
@@ -218,6 +244,14 @@ export function DashboardPage() {
     }
   }
 
+  async function handleInstallApp() {
+    if (!installPrompt) return;
+    installPrompt.prompt();
+    await installPrompt.userChoice.catch(() => null);
+    setInstallPrompt(null);
+    setCanInstallApp(false);
+  }
+
   return (
     <>
       <ActiveEmergencyBanner />
@@ -270,6 +304,12 @@ export function DashboardPage() {
             <h1>{config.sections.find(s => s.key === activeSection)?.label}</h1>
           </div>
           <div className="topbar-actions">
+            {canInstallApp && (
+              <button className="install-app-btn" type="button" onClick={handleInstallApp}>
+                <Download size={16} />
+                <span>Install App</span>
+              </button>
+            )}
             <button className="topbar-bell" onClick={() => setActiveSection('notifications')} aria-label="Notifications">
                 <Bell size={18} />
                 {unreadNotifications > 0 && <span className="topbar-badge">{unreadNotifications > 99 ? '99+' : unreadNotifications}</span>}
