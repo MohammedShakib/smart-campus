@@ -6582,8 +6582,8 @@ button {
 .sec-map-canvas {
   position: relative;
   width: 100%;
-  aspect-ratio: 16 / 9;
-  min-height: 360px;
+  aspect-ratio: 7 / 5;
+  min-height: 0;
   background: #081225;
   border-radius: 12px;
   border: 1px solid rgba(148, 163, 184, 0.32);
@@ -6595,46 +6595,29 @@ button {
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  filter: saturate(1.05) contrast(1.03) brightness(0.78);
-  transform: scale(1.01);
+  object-fit: contain;
 }
 
-.sec-map-pin {
+.sec-map-hotspot {
   position: absolute;
   transform: translate(-50%, -50%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  width: clamp(2rem, 4vw, 3.25rem);
+  height: clamp(2rem, 4vw, 3.25rem);
   background: transparent;
   border: none;
+  border-radius: 999px;
   color: #10b981;
   cursor: pointer;
-  transition: transform 0.2s;
+  transition: box-shadow 0.2s, transform 0.2s;
   z-index: 10;
-  text-shadow: 0 2px 8px rgba(2, 6, 23, 0.9);
 }
 
-.sec-map-pin:hover,
-.sec-map-pin--selected {
-  transform: translate(-50%, -50%) scale(1.2);
-  color: #38bdf8;
-}
-
-.sec-map-pin--warn {
-  color: #f59e0b;
-}
-
-.sec-pin-label {
-  font-size: 0.68rem;
-  font-weight: 700;
-  color: #ffffff;
-  background: rgba(4, 10, 24, 0.86);
-  padding: 0.1rem 0.35rem;
-  border-radius: 4px;
-  white-space: nowrap;
-  margin-top: 0.15rem;
-  box-shadow: 0 6px 18px rgba(2, 6, 23, 0.28);
+.sec-map-hotspot:hover,
+.sec-map-hotspot:focus-visible,
+.sec-map-hotspot--selected {
+  transform: translate(-50%, -50%) scale(1.08);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.75), 0 0 22px rgba(56, 189, 248, 0.52);
 }
 
 .sec-map-legend {
@@ -8900,7 +8883,7 @@ button {
 }
 
 .sec-map-canvas {
-  height: clamp(360px, 42vw, 480px);
+  height: auto;
 }
 
 .sec-map-main-building {
@@ -8908,18 +8891,9 @@ button {
 }
 
 .sec-map-building span,
-.sec-map-building small,
-.sec-pin-label {
+.sec-map-building small {
   max-width: 150px;
   overflow-wrap: anywhere;
-}
-
-.sec-map-pin {
-  padding: 0.1rem;
-}
-
-.sec-map-pin svg {
-  filter: drop-shadow(0 3px 6px rgba(0,0,0,0.28));
 }
 
 .sec-map-legend {

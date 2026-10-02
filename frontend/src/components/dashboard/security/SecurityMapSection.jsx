@@ -86,31 +86,22 @@ export function SecurityMapSection({ data }) {
               className="sec-map-background"
             />
 
-            {/* Checkpoint Pins */}
+            {/* Clickable hotspots over the annotated map image. */}
             {securityCheckpoints.map((pt) => {
               const isSelected = selectedPin?.id === pt.id;
-              const isWarning = pt.status === 'NEAR_CAPACITY';
 
               return (
                 <button
                   key={pt.id}
                   type="button"
-                  className={`sec-map-pin ${isSelected ? 'sec-map-pin--selected' : ''} ${isWarning ? 'sec-map-pin--warn' : ''}`}
+                  className={`sec-map-hotspot ${isSelected ? 'sec-map-hotspot--selected' : ''}`}
                   style={{ top: pt.coords.top, left: pt.coords.left }}
                   onClick={() => setSelectedPin(pt)}
-                >
-                  <span className="sec-pin-pulse" />
-                  <MapPin size={18} />
-                  <span className="sec-pin-label">{pt.title.split(' - ')[0]}</span>
-                </button>
+                  aria-label={`View telemetry for ${pt.title}`}
+                  title={pt.title}
+                />
               );
             })}
-          </div>
-
-          <div className="sec-map-legend">
-            <span><span className="sec-legend-dot sec-legend-dot--green" /> Operational / Clear</span>
-            <span><span className="sec-legend-dot sec-legend-dot--amber" /> Near Capacity</span>
-            <span><span className="sec-legend-dot sec-legend-dot--blue" /> Security HQ & CCTV</span>
           </div>
         </div>
 
