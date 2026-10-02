@@ -6571,70 +6571,33 @@ button {
 }
 
 .sec-map-canvas-card {
-  background: #0f172a;
+  background: linear-gradient(180deg, #101a31 0%, #081225 100%);
   border-radius: 16px;
   padding: 1.5rem;
   display: flex;
   flex-direction: column;
+  box-shadow: 0 24px 55px rgba(15, 23, 42, 0.2);
 }
 
 .sec-map-canvas {
   position: relative;
   width: 100%;
-  height: 380px;
-  background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+  aspect-ratio: 16 / 9;
+  min-height: 360px;
+  background: #081225;
   border-radius: 12px;
-  border: 1px solid #334155;
+  border: 1px solid rgba(148, 163, 184, 0.32);
   overflow: hidden;
 }
 
-.sec-map-building {
+.sec-map-background {
   position: absolute;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  border-radius: 10px;
-  border: 1px solid rgba(255,255,255,0.15);
-  color: #ffffff;
-  font-size: 0.8rem;
-  font-weight: 600;
-  text-align: center;
-}
-
-.sec-map-main-building {
-  top: 42%;
-  left: 45%;
-  width: 160px;
-  height: 90px;
-  background: rgba(37, 99, 235, 0.25);
-  border-color: #3b82f6;
-}
-
-.sec-map-sports-field {
-  top: 25%;
-  left: 12%;
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  background: rgba(16, 185, 129, 0.15);
-  border-color: #10b981;
-}
-
-.sec-map-road {
-  position: absolute;
-  bottom: 10px;
-  left: 5%;
-  right: 5%;
-  height: 28px;
-  background: rgba(148, 163, 184, 0.15);
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.72rem;
-  color: #94a3b8;
-  letter-spacing: 0.05em;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: saturate(1.05) contrast(1.03) brightness(0.78);
+  transform: scale(1.01);
 }
 
 .sec-map-pin {
@@ -6649,6 +6612,7 @@ button {
   cursor: pointer;
   transition: transform 0.2s;
   z-index: 10;
+  text-shadow: 0 2px 8px rgba(2, 6, 23, 0.9);
 }
 
 .sec-map-pin:hover,
@@ -6665,11 +6629,12 @@ button {
   font-size: 0.68rem;
   font-weight: 700;
   color: #ffffff;
-  background: rgba(15, 23, 42, 0.85);
+  background: rgba(4, 10, 24, 0.86);
   padding: 0.1rem 0.35rem;
   border-radius: 4px;
   white-space: nowrap;
   margin-top: 0.15rem;
+  box-shadow: 0 6px 18px rgba(2, 6, 23, 0.28);
 }
 
 .sec-map-legend {

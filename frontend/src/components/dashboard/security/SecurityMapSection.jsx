@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
-import {
-  MapPin, ShieldCheck, DoorOpen, Car, AlertTriangle, RadioTower,
-  CheckCircle2, Eye, Building2, Flame, UsersRound
-} from 'lucide-react';
+import { MapPin, RadioTower } from 'lucide-react';
 import { SectionHeader, Panel } from '../../shared/SharedComponents';
+import securityCampusMap from '../../../assets/security-campus-map.png';
 
 export function SecurityMapSection({ data }) {
   const [selectedPin, setSelectedPin] = useState(null);
@@ -82,21 +80,11 @@ export function SecurityMapSection({ data }) {
         {/* Left: Map Graphic */}
         <div className="sec-map-canvas-card">
           <div className="sec-map-canvas">
-            {/* Campus Structural Layout Background */}
-            <div className="sec-map-building sec-map-main-building">
-              <Building2 size={24} />
-              <span>UIU Main Academic Building</span>
-              <small>Floors G - 8</small>
-            </div>
-
-            <div className="sec-map-building sec-map-sports-field">
-              <span>Central Sports Ground</span>
-              <small>Emergency Assembly Point</small>
-            </div>
-
-            <div className="sec-map-road sec-map-madani-ave">
-              <span>Madani Avenue (100 Feet)</span>
-            </div>
+            <img
+              src={securityCampusMap}
+              alt="Aerial campus security map"
+              className="sec-map-background"
+            />
 
             {/* Checkpoint Pins */}
             {securityCheckpoints.map((pt) => {
