@@ -332,6 +332,36 @@ export function TeacherAttendanceSection({ data, reload }) {
     return api('/api/teacher/attendance').then((res) => setSessions(res.data || []));
   }
 
+  useEffect(() => {
+    if (mode !== 'session' || !activeSession?.session?.active) return;
+
+    let cancelled = false;
+    const pollAttendance = () => {
+      api('/api/teacher/attendance')
+        .then((res) => {
+          if (!cancelled) setSessions(res.data || []);
+        })
+        .catch(() => {
+          // Keep the live view quiet if a background refresh briefly fails.
+        });
+    };
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden) pollAttendance();
+    };
+
+    const intervalId = window.setInterval(pollAttendance, 2500);
+    window.addEventListener('focus', pollAttendance);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+      window.removeEventListener('focus', pollAttendance);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [mode, activeSession?.session?.id, activeSession?.session?.active]);
+
   function startSession(event) {
     event.preventDefault();
     if (!selectedScheduleId) return;
