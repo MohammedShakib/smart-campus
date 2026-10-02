@@ -2,6 +2,15 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { api } from '../../utils/api';
 import { AlertTriangle, X } from 'lucide-react';
 
+function formatBroadcastTime(value) {
+    if (!value) return '';
+    try {
+        return new Date(value).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } catch {
+        return '';
+    }
+}
+
 export function ActiveEmergencyBanner() {
     const [emergencies, setEmergencies] = useState([]);
     const [dismissedIds, setDismissedIds] = useState([]);
@@ -25,22 +34,37 @@ export function ActiveEmergencyBanner() {
     if (activeToDisplay.length === 0) return null;
 
     return (
-        <div className="fixed top-0 left-0 w-full z-50 flex flex-col gap-1 p-2 pointer-events-none">
+        <div className="emergency-toast-stack" role="region" aria-label="Active emergency notifications">
             {activeToDisplay.map(emergency => (
-                <div key={emergency.id} className="pointer-events-auto bg-red-600 text-white p-4 rounded-lg shadow-lg flex items-start gap-4 animate-pulse">
-                    <AlertTriangle className="w-6 h-6 flex-shrink-0 mt-1" />
-                    <div className="flex-1">
-                        <h3 className="font-bold text-lg uppercase tracking-wider">{emergency.alertTitle}</h3>
-                        <p className="text-sm mt-1">{emergency.alertMessage}</p>
-                        <p className="text-xs mt-2 opacity-80">
-                            Broadcast by {emergency.broadcastBy} at {new Date(emergency.broadcastTime).toLocaleTimeString()}
-                        </p>
+                <div
+                    key={emergency.id}
+                    className={`emergency-toast emergency-toast--${(emergency.severity || 'critical').toLowerCase()}`}
+                    role="status"
+                >
+                    <div className="emergency-toast-icon" aria-hidden="true">
+                        <AlertTriangle size={18} />
                     </div>
-                    <button 
+                    <div className="emergency-toast-body">
+                        <div className="emergency-toast-kicker">
+                            {emergency.category || 'Emergency'} broadcast
+                        </div>
+                        <h3>{emergency.alertTitle}</h3>
+                        <p>{emergency.alertMessage}</p>
+                        <div className="emergency-toast-meta">
+                            <span>{emergency.severity || 'CRITICAL'}</span>
+                            <span>By {emergency.broadcastBy || 'Security Command'}</span>
+                            {formatBroadcastTime(emergency.broadcastTime) && (
+                                <span>{formatBroadcastTime(emergency.broadcastTime)}</span>
+                            )}
+                        </div>
+                    </div>
+                    <button
+                        type="button"
                         onClick={() => setDismissedIds([...dismissedIds, emergency.id])}
-                        className="text-white hover:text-red-200"
+                        className="emergency-toast-close"
+                        aria-label={`Dismiss ${emergency.alertTitle}`}
                     >
-                        <X className="w-5 h-5" />
+                        <X size={16} />
                     </button>
                 </div>
             ))}
