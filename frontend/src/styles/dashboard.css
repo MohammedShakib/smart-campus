@@ -5467,6 +5467,118 @@ button {
   min-height: 42px;
 }
 
+.cafeteria-main-tabs {
+  width: fit-content;
+  max-width: 100%;
+}
+
+.cafeteria-history-panel {
+  border: 1px solid var(--border);
+  background: #ffffff;
+}
+
+.cafeteria-history-table {
+  margin-top: 1rem;
+}
+
+.cafeteria-history-subtext {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.72rem;
+}
+
+.cafeteria-history-items {
+  display: block;
+  max-width: 520px;
+  color: var(--tx-secondary);
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.payment-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  place-items: center;
+  padding: 1.25rem;
+  background: rgba(15, 23, 42, 0.42);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.payment-modal {
+  position: relative;
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr);
+  gap: 0.9rem;
+  width: min(480px, 100%);
+  padding: 1.15rem;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.28);
+}
+
+.payment-modal-icon {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  background: var(--emerald-soft);
+  color: var(--emerald);
+}
+
+.payment-modal--error .payment-modal-icon,
+.payment-modal--warning .payment-modal-icon {
+  background: var(--rose-soft);
+  color: var(--rose);
+}
+
+.payment-modal span {
+  color: var(--tx-muted);
+  font-size: 0.68rem;
+  font-weight: 850;
+  letter-spacing: 0.07em;
+}
+
+.payment-modal h3 {
+  margin: 0.12rem 2rem 0.35rem 0;
+  color: var(--tx-primary);
+  font-size: 1.18rem;
+  font-weight: 850;
+}
+
+.payment-modal p {
+  margin: 0;
+  color: var(--tx-secondary);
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+
+.payment-modal-close {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #ffffff;
+  color: var(--tx-muted);
+  cursor: pointer;
+  transition: border-color 0.16s ease, background 0.16s ease, color 0.16s ease;
+}
+
+.payment-modal-close:hover {
+  border-color: var(--accent-border);
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+}
+
 @media (max-width: 1100px) {
   .meal-tray-panel {
     position: static;

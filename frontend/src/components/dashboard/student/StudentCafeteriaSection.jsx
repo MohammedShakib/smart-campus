@@ -17,7 +17,9 @@ import {
   AlertCircle,
   Banknote,
   CreditCard,
-  Loader2
+  Loader2,
+  ReceiptText,
+  X
 } from 'lucide-react';
 import { SectionHeader, EmptyState } from '../../shared/SharedComponents';
 import { api } from '../../../utils/api';
@@ -45,6 +47,9 @@ export function StudentCafeteriaSection() {
   const [paymentMethod, setPaymentMethod] = useState('SSLCOMMERZ');
   const [checkoutBusy, setCheckoutBusy] = useState(false);
   const [paymentNotice, setPaymentNotice] = useState(null);
+  const [activeCafeteriaTab, setActiveCafeteriaTab] = useState('menu');
+  const [paymentHistory, setPaymentHistory] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
 
   const fetchMenu = async (isManual = false) => {
     if (isManual) setRefreshing(true);
@@ -61,8 +66,21 @@ export function StudentCafeteriaSection() {
     }
   };
 
+  const fetchPaymentHistory = async () => {
+    setHistoryLoading(true);
+    try {
+      const res = await api('/api/student/cafeteria/payments');
+      setPaymentHistory(res?.data || []);
+    } catch (err) {
+      setError(err.message || 'Failed to load payment history.');
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchMenu();
+    fetchPaymentHistory();
   }, []);
 
   useEffect(() => {
@@ -74,19 +92,23 @@ export function StudentCafeteriaSection() {
     const statusCopy = {
       success: {
         type: 'success',
+        title: 'Payment Successful',
         text: `Payment successful${transactionId ? ` for ${transactionId}` : ''}. Your cafeteria order is ready for counter confirmation.`
       },
       failed: {
         type: 'error',
+        title: 'Payment Failed',
         text: `Payment failed${transactionId ? ` for ${transactionId}` : ''}. Please try again or choose cash at counter.`
       },
       cancelled: {
         type: 'warning',
+        title: 'Payment Cancelled',
         text: `Payment cancelled${transactionId ? ` for ${transactionId}` : ''}. Your meal tray was not charged.`
       }
     };
 
     setPaymentNotice(statusCopy[paymentStatus] || null);
+    fetchPaymentHistory();
   }, []);
 
   const showToast = (message) => {
@@ -158,8 +180,10 @@ export function StudentCafeteriaSection() {
 
       setPaymentNotice({
         type: 'success',
+        title: 'Cash Payment Noted',
         text: checkout?.message || 'Cash order noted. Please pay at the cafeteria counter.'
       });
+      fetchPaymentHistory();
       clearTray();
     } catch (err) {
       setError(err.message || 'Unable to start cafeteria checkout.');
@@ -203,6 +227,24 @@ export function StudentCafeteriaSection() {
     }
   };
 
+  const getPaymentStatusClass = (status) => {
+    const s = String(status || '').toUpperCase();
+    if (s === 'PAID' || s === 'COUNTER_PAYMENT') return 'status-active';
+    if (s === 'FAILED' || s === 'CANCELLED' || s === 'INIT_FAILED') return 'status-disabled';
+    return 'status-pending';
+  };
+
+  const formatDateTime = (value) => {
+    if (!value) return '-';
+    return new Date(value).toLocaleString([], {
+      year: 'numeric',
+      month: 'short',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
   if (loading) {
     return (
       <div className="campus-subpage" style={{ padding: '3rem 1rem', textAlign: 'center' }}>
@@ -238,6 +280,35 @@ export function StudentCafeteriaSection() {
         </div>
       )}
 
+      {paymentNotice && (
+        <div className="payment-modal-backdrop" role="presentation" onMouseDown={() => setPaymentNotice(null)}>
+          <section
+            className={`payment-modal payment-modal--${paymentNotice.type}`}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="payment-modal-title"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <button
+              type="button"
+              className="payment-modal-close"
+              onClick={() => setPaymentNotice(null)}
+              aria-label="Close payment message"
+            >
+              <X size={16} />
+            </button>
+            <div className="payment-modal-icon">
+              {paymentNotice.type === 'success' ? <CheckCircle2 size={26} /> : <AlertCircle size={26} />}
+            </div>
+            <div>
+              <span>CAFETERIA PAYMENT</span>
+              <h3 id="payment-modal-title">{paymentNotice.title || 'Payment Update'}</h3>
+              <p>{paymentNotice.text}</p>
+            </div>
+          </section>
+        </div>
+      )}
+
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
         <div>
@@ -258,14 +329,99 @@ export function StudentCafeteriaSection() {
         </button>
       </div>
 
-      {paymentNotice && (
-        <div
-          className={`notice ${paymentNotice.type === 'success' ? 'success' : paymentNotice.type === 'error' ? 'error' : ''}`}
-          style={{ marginBottom: '1.25rem' }}
+      <div className="academic-tabs cafeteria-main-tabs" style={{ marginBottom: '1.25rem' }}>
+        <button
+          type="button"
+          className={`academic-tab${activeCafeteriaTab === 'menu' ? ' is-active' : ''}`}
+          onClick={() => setActiveCafeteriaTab('menu')}
         >
-          {paymentNotice.text}
+          <Utensils size={14} />
+          <span>Menu & Checkout</span>
+        </button>
+        <button
+          type="button"
+          className={`academic-tab${activeCafeteriaTab === 'history' ? ' is-active' : ''}`}
+          onClick={() => {
+            setActiveCafeteriaTab('history');
+            fetchPaymentHistory();
+          }}
+        >
+          <ReceiptText size={14} />
+          <span>Payment History</span>
+        </button>
+      </div>
+
+      {activeCafeteriaTab === 'history' ? (
+        <div className="panel cafeteria-history-panel">
+          <div className="meal-tray-header">
+            <div className="meal-tray-title">
+              <ReceiptText size={18} color="var(--accent-dark)" />
+              <h3>Payment History</h3>
+            </div>
+            <button
+              type="button"
+              className="cafeteria-refresh-btn"
+              onClick={fetchPaymentHistory}
+              disabled={historyLoading}
+              style={{ marginTop: 0 }}
+            >
+              <RotateCw size={15} className={historyLoading ? 'animate-spin' : ''} />
+              <span>{historyLoading ? 'Refreshing' : 'Refresh'}</span>
+            </button>
+          </div>
+
+          {historyLoading ? (
+            <p className="muted" style={{ padding: '2rem 0', textAlign: 'center' }}>Loading payment history...</p>
+          ) : paymentHistory.length === 0 ? (
+            <EmptyState
+              title="No payments yet"
+              message="Your cafeteria checkout and SSLCommerz payment records will appear here."
+            />
+          ) : (
+            <div className="admin-table-wrap cafeteria-history-table">
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>Transaction</th>
+                    <th>Items</th>
+                    <th>Method</th>
+                    <th>Status</th>
+                    <th>Total</th>
+                    <th>Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paymentHistory.map((payment) => (
+                    <tr key={payment.id || payment.transactionId}>
+                      <td>
+                        <strong>{payment.transactionId}</strong>
+                        {payment.gatewayCardType && <span className="muted cafeteria-history-subtext">{payment.gatewayCardType}</span>}
+                      </td>
+                      <td>
+                        <span className="cafeteria-history-items">{payment.itemsSummary}</span>
+                        <span className="muted cafeteria-history-subtext">{payment.totalItems} item{payment.totalItems === 1 ? '' : 's'}</span>
+                      </td>
+                      <td>{payment.paymentMethod === 'SSLCOMMERZ' ? 'SSLCommerz' : 'Cash'}</td>
+                      <td>
+                        <span className={`admin-status-badge ${getPaymentStatusClass(payment.status)}`}>
+                          {String(payment.status || '').replaceAll('_', ' ')}
+                        </span>
+                      </td>
+                      <td>
+                        <strong style={{ color: 'var(--brand-orange, #ea580c)' }}>
+                          BDT {Number(payment.totalAmount || 0).toFixed(2)}
+                        </strong>
+                      </td>
+                      <td>{formatDateTime(payment.paidAt || payment.createdAt)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
-      )}
+      ) : (
+        <>
 
       {/* Metric Cards */}
       <div className="metric-grid" style={{ marginBottom: '1.5rem' }}>
@@ -699,6 +855,8 @@ export function StudentCafeteriaSection() {
           </div>
         )}
       </div>
+        </>
+      )}
     </div>
   );
 }

@@ -228,6 +228,13 @@ public class StudentApiController {
         return ApiResponse.ok(checkout.getMessage(), checkout);
     }
 
+    @GetMapping("/cafeteria/payments")
+    public ApiResponse<List<CafeteriaPaymentHistoryDto>> getCafeteriaPaymentHistory(
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        User student = getAuthenticatedStudent(userDetails);
+        return ApiResponse.ok("Cafeteria payment history", sslCommerzPaymentService.getStudentPaymentHistory(student));
+    }
+
     @GetMapping("/emergencies/active")
     public ApiResponse<List<EmergencyAlert>> getActiveEmergencies() {
         return ApiResponse.ok("Active emergencies", studentPortalService.getActiveEmergencies());

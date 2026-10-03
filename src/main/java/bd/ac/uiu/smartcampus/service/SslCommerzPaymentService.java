@@ -3,9 +3,12 @@ package bd.ac.uiu.smartcampus.service;
 import bd.ac.uiu.smartcampus.dto.CafeteriaCheckoutItemRequest;
 import bd.ac.uiu.smartcampus.dto.CafeteriaCheckoutRequest;
 import bd.ac.uiu.smartcampus.dto.CafeteriaCheckoutResponse;
+import bd.ac.uiu.smartcampus.dto.CafeteriaPaymentHistoryDto;
 import bd.ac.uiu.smartcampus.model.CafeteriaMenuItem;
+import bd.ac.uiu.smartcampus.model.CafeteriaPaymentTransaction;
 import bd.ac.uiu.smartcampus.model.User;
 import bd.ac.uiu.smartcampus.repository.CafeteriaMenuItemRepository;
+import bd.ac.uiu.smartcampus.repository.CafeteriaPaymentTransactionRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
@@ -28,9 +31,16 @@ public class SslCommerzPaymentService {
 
     private static final String PAYMENT_METHOD_SSL = "SSLCOMMERZ";
     private static final String PAYMENT_METHOD_CASH = "CASH";
+    private static final String STATUS_PENDING = "PENDING";
+    private static final String STATUS_PAID = "PAID";
+    private static final String STATUS_COUNTER_PAYMENT = "COUNTER_PAYMENT";
+    private static final String STATUS_FAILED = "FAILED";
+    private static final String STATUS_CANCELLED = "CANCELLED";
+    private static final String STATUS_INIT_FAILED = "INIT_FAILED";
     private static final DateTimeFormatter TRANSACTION_TIME_FORMAT = DateTimeFormatter.ofPattern("yyMMddHHmmss");
 
     private final CafeteriaMenuItemRepository cafeteriaMenuItemRepository;
+    private final CafeteriaPaymentTransactionRepository paymentTransactionRepository;
     private final RestClient restClient;
     private final String storeId;
     private final String storePassword;
@@ -38,12 +48,14 @@ public class SslCommerzPaymentService {
     private final String publicBaseUrl;
 
     public SslCommerzPaymentService(CafeteriaMenuItemRepository cafeteriaMenuItemRepository,
+                                    CafeteriaPaymentTransactionRepository paymentTransactionRepository,
                                     RestClient.Builder restClientBuilder,
                                     @Value("${sslcommerz.store-id:}") String storeId,
                                     @Value("${sslcommerz.store-password:}") String storePassword,
                                     @Value("${sslcommerz.live:false}") boolean liveMode,
                                     @Value("${smart-campus.public-base-url:}") String publicBaseUrl) {
         this.cafeteriaMenuItemRepository = cafeteriaMenuItemRepository;
+        this.paymentTransactionRepository = paymentTransactionRepository;
         this.restClient = restClientBuilder.build();
         this.storeId = storeId;
         this.storePassword = storePassword;
@@ -58,14 +70,25 @@ public class SslCommerzPaymentService {
             throw new IllegalArgumentException("Please add at least one cafeteria item to checkout.");
         }
 
-        BigDecimal total = calculateTotal(items);
+        CheckoutTotals checkoutTotals = calculateTotal(items);
+        BigDecimal total = checkoutTotals.total();
         String transactionId = createTransactionId(student);
+        CafeteriaPaymentTransaction transaction = createTransaction(
+                transactionId,
+                paymentMethod,
+                PAYMENT_METHOD_CASH.equals(paymentMethod) ? STATUS_COUNTER_PAYMENT : STATUS_PENDING,
+                checkoutTotals,
+                student
+        );
 
         if (PAYMENT_METHOD_CASH.equals(paymentMethod)) {
+            transaction.setPaidAt(LocalDateTime.now());
+            transaction.setGatewayResponse("Cash payment selected at cafeteria counter.");
+            paymentTransactionRepository.save(transaction);
             return new CafeteriaCheckoutResponse(
                     transactionId,
                     PAYMENT_METHOD_CASH,
-                    "COUNTER_PAYMENT",
+                    STATUS_COUNTER_PAYMENT,
                     total,
                     null,
                     "Cash order noted. Please pay at the UIU Cafeteria counter."
@@ -76,15 +99,64 @@ public class SslCommerzPaymentService {
             throw new IllegalStateException("SSLCommerz store credentials are not configured.");
         }
 
-        String gatewayUrl = createSslCommerzSession(transactionId, total, student, items, requestBaseUrl);
+        paymentTransactionRepository.save(transaction);
+
+        SslCommerzSession session;
+        try {
+            session = createSslCommerzSession(transactionId, total, student, items, requestBaseUrl);
+        } catch (RuntimeException ex) {
+            transaction.setStatus(STATUS_INIT_FAILED);
+            transaction.setGatewayResponse(ex.getMessage());
+            transaction.setUpdatedAt(LocalDateTime.now());
+            paymentTransactionRepository.save(transaction);
+            throw ex;
+        }
+
+        transaction.setGatewaySessionKey(session.sessionKey());
+        transaction.setGatewayResponse("SSLCommerz session created.");
+        transaction.setUpdatedAt(LocalDateTime.now());
+        paymentTransactionRepository.save(transaction);
+
         return new CafeteriaCheckoutResponse(
                 transactionId,
                 PAYMENT_METHOD_SSL,
                 "REDIRECT_REQUIRED",
                 total,
-                gatewayUrl,
+                session.gatewayUrl(),
                 "Redirecting to SSLCommerz demo gateway."
         );
+    }
+
+    public List<CafeteriaPaymentHistoryDto> getStudentPaymentHistory(User student) {
+        return paymentTransactionRepository.findByStudentEmailOrderByCreatedAtDesc(student.getEmail()).stream()
+                .map(CafeteriaPaymentHistoryDto::from)
+                .toList();
+    }
+
+    public void markGatewayCallback(String transactionId, String callbackStatus, Map<String, String[]> parameters) {
+        if (transactionId == null || transactionId.isBlank()) {
+            return;
+        }
+
+        paymentTransactionRepository.findByTransactionId(transactionId).ifPresent(transaction -> {
+            String normalizedStatus = switch ((callbackStatus == null ? "" : callbackStatus).toLowerCase(Locale.ROOT)) {
+                case "success", "valid", "validated" -> STATUS_PAID;
+                case "cancel", "cancelled" -> STATUS_CANCELLED;
+                case "fail", "failed" -> STATUS_FAILED;
+                default -> transaction.getStatus();
+            };
+
+            transaction.setStatus(normalizedStatus);
+            transaction.setGatewayValidationId(first(parameters, "val_id"));
+            transaction.setGatewayBankTransactionId(first(parameters, "bank_tran_id"));
+            transaction.setGatewayCardType(first(parameters, "card_type"));
+            transaction.setGatewayResponse(first(parameters, "status"));
+            if (STATUS_PAID.equals(normalizedStatus)) {
+                transaction.setPaidAt(LocalDateTime.now());
+            }
+            transaction.setUpdatedAt(LocalDateTime.now());
+            paymentTransactionRepository.save(transaction);
+        });
     }
 
     private String normalizePaymentMethod(String paymentMethod) {
@@ -95,7 +167,7 @@ public class SslCommerzPaymentService {
         return normalized;
     }
 
-    private BigDecimal calculateTotal(List<CafeteriaCheckoutItemRequest> requestItems) {
+    private CheckoutTotals calculateTotal(List<CafeteriaCheckoutItemRequest> requestItems) {
         Map<Long, Integer> requestedQuantities = requestItems.stream()
                 .collect(Collectors.toMap(
                         CafeteriaCheckoutItemRequest::getItemId,
@@ -116,19 +188,48 @@ public class SslCommerzPaymentService {
             throw new IllegalArgumentException("One or more cafeteria items are not available.");
         }
 
-        return menuItems.stream()
-                .map(item -> {
-                    if (!item.isAvailable()) {
-                        throw new IllegalStateException(item.getName() + " is currently out of stock.");
-                    }
-                    return item.getPrice().multiply(BigDecimal.valueOf(requestedQuantities.get(item.getId())));
-                })
-                .reduce(BigDecimal.ZERO, BigDecimal::add)
-                .setScale(2, RoundingMode.HALF_UP);
+        BigDecimal total = BigDecimal.ZERO;
+        int totalItems = 0;
+        StringBuilder summary = new StringBuilder();
+
+        for (CafeteriaMenuItem item : menuItems) {
+            if (!item.isAvailable()) {
+                throw new IllegalStateException(item.getName() + " is currently out of stock.");
+            }
+            int quantity = requestedQuantities.get(item.getId());
+            BigDecimal subtotal = item.getPrice().multiply(BigDecimal.valueOf(quantity));
+            total = total.add(subtotal);
+            totalItems += quantity;
+            if (!summary.isEmpty()) {
+                summary.append("; ");
+            }
+            summary.append(item.getName())
+                    .append(" x ")
+                    .append(quantity)
+                    .append(" = BDT ")
+                    .append(subtotal.setScale(2, RoundingMode.HALF_UP).toPlainString());
+        }
+
+        return new CheckoutTotals(total.setScale(2, RoundingMode.HALF_UP), totalItems, summary.toString());
     }
 
-    private String createSslCommerzSession(String transactionId, BigDecimal total, User student,
-                                           List<CafeteriaCheckoutItemRequest> items, String requestBaseUrl) {
+    private CafeteriaPaymentTransaction createTransaction(String transactionId, String paymentMethod, String status,
+                                                          CheckoutTotals checkoutTotals, User student) {
+        CafeteriaPaymentTransaction transaction = new CafeteriaPaymentTransaction();
+        transaction.setTransactionId(transactionId);
+        transaction.setPaymentMethod(paymentMethod);
+        transaction.setStatus(status);
+        transaction.setTotalAmount(checkoutTotals.total());
+        transaction.setTotalItems(checkoutTotals.totalItems());
+        transaction.setItemsSummary(checkoutTotals.itemsSummary());
+        transaction.setStudentEmail(safe(student.getEmail(), "student@uiu.ac.bd"));
+        transaction.setStudentId(safe(student.getStudentOrEmpId(), "student"));
+        transaction.setStudentName(safe(student.getFullName(), "UIU Student"));
+        return transaction;
+    }
+
+    private SslCommerzSession createSslCommerzSession(String transactionId, BigDecimal total, User student,
+                                                      List<CafeteriaCheckoutItemRequest> items, String requestBaseUrl) {
         String baseUrl = resolveBaseUrl(requestBaseUrl);
         MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
         form.add("store_id", storeId);
@@ -170,7 +271,10 @@ public class SslCommerzPaymentService {
             throw new IllegalStateException(reason);
         }
 
-        return String.valueOf(response.get("GatewayPageURL"));
+        return new SslCommerzSession(
+                String.valueOf(response.get("GatewayPageURL")),
+                response.get("sessionkey") == null ? null : String.valueOf(response.get("sessionkey"))
+        );
     }
 
     private String createTransactionId(User student) {
@@ -202,5 +306,19 @@ public class SslCommerzPaymentService {
 
     private String safe(String value, String fallback) {
         return value == null || value.isBlank() ? fallback : value;
+    }
+
+    private String first(Map<String, String[]> parameters, String key) {
+        if (parameters == null || key == null || !parameters.containsKey(key)) {
+            return null;
+        }
+        String[] values = parameters.get(key);
+        return values == null || values.length == 0 ? null : values[0];
+    }
+
+    private record CheckoutTotals(BigDecimal total, int totalItems, String itemsSummary) {
+    }
+
+    private record SslCommerzSession(String gatewayUrl, String sessionKey) {
     }
 }
