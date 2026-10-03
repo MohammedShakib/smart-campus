@@ -107,8 +107,18 @@ export function StudentCafeteriaSection() {
       }
     };
 
-    setPaymentNotice(statusCopy[paymentStatus] || null);
+    const notice = statusCopy[paymentStatus] || null;
+    if (!notice) return;
+
+    setPaymentNotice(notice);
+    setActiveCafeteriaTab('history');
     fetchPaymentHistory();
+
+    params.delete('payment');
+    params.delete('tran_id');
+    const nextQuery = params.toString();
+    const nextUrl = `${window.location.pathname}${nextQuery ? `?${nextQuery}` : ''}${window.location.hash}`;
+    window.history.replaceState(null, '', nextUrl);
   }, []);
 
   const showToast = (message) => {
