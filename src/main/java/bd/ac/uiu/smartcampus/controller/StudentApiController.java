@@ -6,11 +6,14 @@ import bd.ac.uiu.smartcampus.security.CustomUserDetails;
 import bd.ac.uiu.smartcampus.service.FacultyOfficeHourService;
 import bd.ac.uiu.smartcampus.service.StudentPortalService;
 import bd.ac.uiu.smartcampus.service.NotificationService;
+import bd.ac.uiu.smartcampus.service.SslCommerzPaymentService;
 import bd.ac.uiu.smartcampus.repository.UserRepository;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.util.List;
 import java.util.Map;
@@ -22,15 +25,18 @@ public class StudentApiController {
     private final StudentPortalService studentPortalService;
     private final FacultyOfficeHourService officeHourService;
     private final NotificationService notificationService;
+    private final SslCommerzPaymentService sslCommerzPaymentService;
     private final UserRepository userRepository;
 
     public StudentApiController(StudentPortalService studentPortalService,
                                 FacultyOfficeHourService officeHourService,
                                 NotificationService notificationService,
+                                SslCommerzPaymentService sslCommerzPaymentService,
                                 UserRepository userRepository) {
         this.studentPortalService = studentPortalService;
         this.officeHourService = officeHourService;
         this.notificationService = notificationService;
+        this.sslCommerzPaymentService = sslCommerzPaymentService;
         this.userRepository = userRepository;
     }
 
@@ -205,6 +211,21 @@ public class StudentApiController {
     @GetMapping("/cafeteria")
     public ApiResponse<List<CafeteriaMenuItem>> getCafeteriaMenu() {
         return ApiResponse.ok("Cafeteria menu", studentPortalService.getCafeteriaMenu());
+    }
+
+    @PostMapping("/cafeteria/checkout")
+    public ApiResponse<CafeteriaCheckoutResponse> checkoutCafeteriaMeal(
+            @RequestBody CafeteriaCheckoutRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            HttpServletRequest httpRequest) {
+        User student = getAuthenticatedStudent(userDetails);
+        String requestBaseUrl = ServletUriComponentsBuilder.fromRequestUri(httpRequest)
+                .replacePath(null)
+                .replaceQuery(null)
+                .build()
+                .toUriString();
+        CafeteriaCheckoutResponse checkout = sslCommerzPaymentService.checkout(request, student, requestBaseUrl);
+        return ApiResponse.ok(checkout.getMessage(), checkout);
     }
 
     @GetMapping("/emergencies/active")

@@ -57,7 +57,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> {
                 // Static Assets & Public pages
                 auth.requestMatchers("/app/**", "/css/**", "/js/**", "/images/**", "/uploads/**", "/webjars/**", "/favicon.ico").permitAll()
-                .requestMatchers("/", "/health", "/login", "/register", "/attendance/checkin", "/api/auth/register", "/api/auth/me").permitAll();
+                .requestMatchers("/", "/health", "/login", "/register", "/attendance/checkin", "/api/auth/register", "/api/auth/me", "/api/payments/sslcommerz/**").permitAll();
 
                 if (h2ConsoleEnabled) {
                     auth.requestMatchers("/h2-console/**").hasRole("ADMIN");

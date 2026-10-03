@@ -5413,6 +5413,60 @@ button {
   text-align: center;
 }
 
+.meal-tray-payment {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.meal-tray-payment-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem;
+  padding: 0.25rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+.meal-tray-payment-options button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-width: 0;
+  min-height: 36px;
+  padding: 0 0.55rem;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--tx-secondary);
+  font-size: 0.76rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: border-color 0.18s ease, background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.meal-tray-payment-options button span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.meal-tray-payment-options button.is-active {
+  border-color: rgba(79, 70, 229, 0.24);
+  background: #ffffff;
+  color: var(--accent-dark);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+}
+
+.meal-tray-pay-btn {
+  width: 100%;
+  justify-content: center;
+  min-height: 42px;
+}
+
 @media (max-width: 1100px) {
   .meal-tray-panel {
     position: static;

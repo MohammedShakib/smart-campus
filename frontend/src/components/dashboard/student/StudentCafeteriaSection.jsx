@@ -14,7 +14,10 @@ import {
   Sparkles,
   LayoutGrid,
   List,
-  AlertCircle
+  AlertCircle,
+  Banknote,
+  CreditCard,
+  Loader2
 } from 'lucide-react';
 import { SectionHeader, EmptyState } from '../../shared/SharedComponents';
 import { api } from '../../../utils/api';
@@ -39,6 +42,9 @@ export function StudentCafeteriaSection() {
   const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'table'
   const [tray, setTray] = useState({}); // { [itemId]: { item, count } }
   const [toast, setToast] = useState(null);
+  const [paymentMethod, setPaymentMethod] = useState('SSLCOMMERZ');
+  const [checkoutBusy, setCheckoutBusy] = useState(false);
+  const [paymentNotice, setPaymentNotice] = useState(null);
 
   const fetchMenu = async (isManual = false) => {
     if (isManual) setRefreshing(true);
@@ -57,6 +63,30 @@ export function StudentCafeteriaSection() {
 
   useEffect(() => {
     fetchMenu();
+  }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const paymentStatus = params.get('payment');
+    const transactionId = params.get('tran_id');
+    if (!paymentStatus) return;
+
+    const statusCopy = {
+      success: {
+        type: 'success',
+        text: `Payment successful${transactionId ? ` for ${transactionId}` : ''}. Your cafeteria order is ready for counter confirmation.`
+      },
+      failed: {
+        type: 'error',
+        text: `Payment failed${transactionId ? ` for ${transactionId}` : ''}. Please try again or choose cash at counter.`
+      },
+      cancelled: {
+        type: 'warning',
+        text: `Payment cancelled${transactionId ? ` for ${transactionId}` : ''}. Your meal tray was not charged.`
+      }
+    };
+
+    setPaymentNotice(statusCopy[paymentStatus] || null);
   }, []);
 
   const showToast = (message) => {
@@ -97,6 +127,45 @@ export function StudentCafeteriaSection() {
   const clearTray = () => {
     setTray({});
     showToast('Meal tray cleared.');
+  };
+
+  const checkoutTray = async () => {
+    if (trayItemCount <= 0 || checkoutBusy) return;
+    setCheckoutBusy(true);
+    setError(null);
+
+    try {
+      const payload = {
+        paymentMethod,
+        items: trayItems.map(({ item, count }) => ({
+          itemId: item.id,
+          quantity: count
+        }))
+      };
+      const res = await api('/api/student/cafeteria/checkout', {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      });
+      const checkout = res?.data;
+
+      if (paymentMethod === 'SSLCOMMERZ') {
+        if (!checkout?.gatewayUrl) {
+          throw new Error('Payment gateway did not return a checkout URL.');
+        }
+        window.location.assign(checkout.gatewayUrl);
+        return;
+      }
+
+      setPaymentNotice({
+        type: 'success',
+        text: checkout?.message || 'Cash order noted. Please pay at the cafeteria counter.'
+      });
+      clearTray();
+    } catch (err) {
+      setError(err.message || 'Unable to start cafeteria checkout.');
+    } finally {
+      setCheckoutBusy(false);
+    }
   };
 
   const trayItems = Object.values(tray);
@@ -188,6 +257,15 @@ export function StudentCafeteriaSection() {
           <span>{refreshing ? 'Refreshing' : 'Refresh Menu'}</span>
         </button>
       </div>
+
+      {paymentNotice && (
+        <div
+          className={`notice ${paymentNotice.type === 'success' ? 'success' : paymentNotice.type === 'error' ? 'error' : ''}`}
+          style={{ marginBottom: '1.25rem' }}
+        >
+          {paymentNotice.text}
+        </div>
+      )}
 
       {/* Metric Cards */}
       <div className="metric-grid" style={{ marginBottom: '1.5rem' }}>
@@ -583,8 +661,39 @@ export function StudentCafeteriaSection() {
                   </strong>
                 </div>
                 <p>
-                  Pay at UIU Cafeteria counter via Cash or bKash / Nagad.
+                  Choose cash at counter, or continue to SSLCommerz for bKash, cards, and mobile banking demo payment.
                 </p>
+              </div>
+
+              <div className="meal-tray-payment">
+                <div className="meal-tray-payment-options" role="group" aria-label="Payment method">
+                  <button
+                    type="button"
+                    className={paymentMethod === 'SSLCOMMERZ' ? 'is-active' : ''}
+                    onClick={() => setPaymentMethod('SSLCOMMERZ')}
+                  >
+                    <CreditCard size={15} />
+                    <span>bKash / Online</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={paymentMethod === 'CASH' ? 'is-active' : ''}
+                    onClick={() => setPaymentMethod('CASH')}
+                  >
+                    <Banknote size={15} />
+                    <span>Cash</span>
+                  </button>
+                </div>
+
+                <button
+                  type="button"
+                  className="primary-btn meal-tray-pay-btn"
+                  onClick={checkoutTray}
+                  disabled={checkoutBusy || trayItemCount <= 0}
+                >
+                  {checkoutBusy ? <Loader2 size={16} className="animate-spin" /> : paymentMethod === 'SSLCOMMERZ' ? <CreditCard size={16} /> : <Banknote size={16} />}
+                  <span>{checkoutBusy ? 'Starting Checkout...' : paymentMethod === 'SSLCOMMERZ' ? 'Pay with SSLCommerz' : 'Confirm Cash Payment'}</span>
+                </button>
               </div>
             </div>
           </div>
